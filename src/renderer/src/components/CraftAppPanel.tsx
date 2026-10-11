@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
+import { CraftIcon } from '../craft-icons.tsx'
 import { craft, type CraftBounds } from '../craft.ts'
 import { clearCraftError, craftStateOf, cwdOf, noteCraftError, peekState, useApp } from '../store.ts'
 import { useImagePreviewOpen } from './Attachments.tsx'
-import { AppIcon } from './Dock.tsx'
 
 // The right side when it shows an installed app: an empty region whose window-relative bounds are
 // reported to main, which docks the app's own window exactly over it, as BrowserPanel.tsx does for
@@ -68,7 +68,7 @@ export function CraftAppPanel({ id }: { id: string }) {
     <section className="craft-app" aria-label={name} data-app={id} data-run={state.run}>
       <div className="craft-app-region" ref={region} data-testid="craft-app-region">
         <div className="craft-app-placeholder">
-          {app && <AppIcon app={app} size={56} />}
+          {app && <CraftIcon app={app} size={64} />}
           {state.error ? (
             <>
               <p className="craft-app-error" role="alert">{state.error}</p>

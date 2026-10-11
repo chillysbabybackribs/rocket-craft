@@ -19,10 +19,22 @@ library off returns to the last app, else the shelf. Labels sit under the icons 
 upward, because a docked app window paints over anything drawn across it. A first run, with no
 saved side, opens on the shelf.
 
-The shelf lists every app with its "like …" name, description and size, and Install, Open and
-Remove (Remove asks first when the app is running) or the install's progress; a failed install
-shows main's full-sentence error with Retry. Installing and removing are only the user's: the app
-map has `app {id}`, `shelf`, `app.show` and `shelf.open`, and no install or remove.
+The shelf (`docs/mockups/craft-shelf.html`) is one grid of every app, creative apps first
+(`SHELF_ORDER` in `craft.ts`), centred both ways in the right side and at most 1140px wide: four
+columns at the user's 1912px window, then three, two and one as the region narrows (container
+queries), scrolling only when it must. Each card has the app's icon, its size or an Installed chip,
+its name, "Like …" name and description, and one button: Install (indigo while the card is
+hovered), Open with a ⋯ menu holding the version and Remove (Remove asks first when the app is
+running), the install's progress, or main's full-sentence error with Retry. The ⋯ menu opens
+upward inside its own card, so it never reaches the dock. The header's All / Installed switch
+filters the grid and keeps the header where it was; the disk total sits beside it. Installing and
+removing are only the user's: the app map has `app {id}`, `shelf`, `app.show` and `shelf.open`,
+and no install or remove.
+
+App icons are Craft Studio's own (`craft-icons.tsx`, option B of `docs/mockups/craft-icons.html`):
+one `<CraftIcon app size>` draws a Lucide glyph in white on a squircle of the app's accent colour,
+used on the shelf's cards (56px), in the dock (30px, with a heavier stroke so it stays crisp) and
+in the app region's starting placeholder (64px). The apps' own icons are not used.
 
 The renderer talks to main through `window.craft` (`CraftBridge` in `src/shared/types.ts`, read
 through `src/renderer/src/craft.ts`): `catalog`, `install`, `remove`, `show(id, bounds, folder)`,
@@ -30,7 +42,9 @@ through `src/renderer/src/craft.ts`): `catalog`, `install`, `remove`, `show(id, 
 pixels (main multiplies by the display's scale and the page zoom) with `show` on its first layout,
 along with the chat's folder, `setBounds` on every later change, and `hide` when it leaves
 (shelf, browser, library, a file shown over it, or an image preview open). `studio_ui_where`
-lists every app's install and run state under `craft`. `tests/ui/craft-dock.spec.ts` checks the
+lists every app's install and run state under `craft`. `tests/ui/craft-shelf.spec.ts` checks the
+shelf against the mockup at 1912 × 1068 (order, columns, centring, hover, ⋯ menu, filter, Remove).
+`tests/ui/craft-dock.spec.ts` checks the
 whole flow against a fake bridge (`tests/ui/craft-fake.ts`, installed as `window.__craftFake` by an
 init script, which the renderer prefers over the preload's). `tests/ui/craft-real.spec.ts`
 installs the real PhotoCraft into a scratch apps folder, shows it and checks its X window sits on

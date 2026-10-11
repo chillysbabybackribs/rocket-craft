@@ -22,7 +22,7 @@ test('the dock holds installed apps, shows one in the right side, and hands the 
   await test.step('A first run shows the shelf, every app on it, and a dock with no apps', async () => {
     await expect(shelf).toBeVisible()
     await expect(shelf.locator('.shelf-card')).toHaveCount(12)
-    await expect(shelf.getByRole('article', { name: 'PhotoCraft' })).toContainText('like Photoshop')
+    await expect(shelf.getByRole('article', { name: 'PhotoCraft' })).toContainText('Like Photoshop')
     await expect(shelf.getByRole('article', { name: 'PhotoCraft' })).toContainText('72 MB')
     await expect(shelf).toContainText('Nothing installed yet')
     await expect(dock.locator('[data-app]')).toHaveCount(0)
@@ -45,7 +45,7 @@ test('the dock holds installed apps, shows one in the right side, and hands the 
     await expect(dock.getByRole('button', { name: 'PhotoCraft', exact: true })).toBeVisible()
     await expect(dock.locator('[data-app="photocraft"] .dock-label')).toHaveText('Photo')
     await expect(shelf.getByRole('button', { name: 'Open PhotoCraft' })).toBeVisible()
-    await expect(shelf.getByRole('article', { name: 'PhotoCraft' })).toContainText('Installed · 0.7.0')
+    await expect(shelf.getByRole('article', { name: 'PhotoCraft' }).locator('.shelf-chip')).toHaveText('Installed')
     for (const [id, name] of [['gridcraft', 'GridCraft'], ['deckcraft', 'DeckCraft']] as const) {
       await shelf.getByRole('button', { name: `Install ${name}` }).click()
       await craftControl(page, 'finish', id)
@@ -53,7 +53,8 @@ test('the dock holds installed apps, shows one in the right side, and hands the 
     }
     // The dock keeps the order they were installed in.
     await expect(dock.locator('[data-app] .dock-label')).toHaveText(['Photo', 'Grid', 'Deck'])
-    await expect(shelf).toContainText('3 installed · 159 MB')
+    await expect(shelf).toContainText('159 MB on disk')
+    await expect(shelf.getByRole('button', { name: 'Installed 3' })).toBeVisible()
   })
 
   await test.step('A failed install says why in a full sentence, with Retry', async () => {
@@ -158,10 +159,14 @@ test('the dock holds installed apps, shows one in the right side, and hands the 
   await test.step('Remove takes an app out of the dock; a running one asks first', async () => {
     // DeckCraft was shown and is now resting; as main would after it quit, it is stopped here.
     await craftControl(page, 'run', 'deckcraft', 'stopped')
-    await shelf.getByRole('button', { name: 'Remove DeckCraft' }).click()
+    const removeFromMenu = async (name: string): Promise<void> => {
+      await shelf.getByRole('button', { name: `More for ${name}` }).click()
+      await shelf.getByRole('menu', { name: `${name} actions` }).getByRole('menuitem', { name: 'Remove' }).click()
+    }
+    await removeFromMenu('DeckCraft')
     await expect(dock.locator('[data-app="deckcraft"]')).toHaveCount(0)
     await expect(shelf.getByRole('button', { name: 'Install DeckCraft' })).toBeVisible()
-    await shelf.getByRole('button', { name: 'Remove GridCraft' }).click()
+    await removeFromMenu('GridCraft')
     await expect(shelf.getByRole('article', { name: 'GridCraft' })).toContainText('unsaved work in it is lost')
     await expect(dock.locator('[data-app="gridcraft"]')).toHaveCount(1)
     await shelf.getByRole('button', { name: 'Remove GridCraft now' }).click()

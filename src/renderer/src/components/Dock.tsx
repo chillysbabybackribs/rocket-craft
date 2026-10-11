@@ -1,7 +1,8 @@
 import { useMemo } from 'react'
 import { Globe, LibraryBig, Plus } from 'lucide-react'
 import { act, go } from '../app-map.ts'
-import { initialsOf, isRunning, type CraftAppInfo } from '../craft.ts'
+import { CraftIcon } from '../craft-icons.tsx'
+import { isRunning, type CraftAppInfo } from '../craft.ts'
 import { craftStateOf, dockApps, setBrowserOpen, setLibraryOpen, sideShown, useApp } from '../store.ts'
 
 // The dock under the right side (docs/mockups/craft-studio.html): the installed apps, each an icon
@@ -11,15 +12,6 @@ import { craftStateOf, dockApps, setBrowserOpen, setLibraryOpen, sideShown, useA
 //
 // Nothing here opens upward or shows a hover tooltip: the docked app window above is a native
 // window that paints over anything drawn across it.
-
-/** An app's icon: its initials on its colour, until the release icons are used. */
-export function AppIcon({ app, size = 28 }: { app: CraftAppInfo; size?: number }) {
-  return (
-    <span className="craft-icon" style={{ background: app.accent, width: size, height: size, fontSize: Math.round(size * 0.36) }} aria-hidden>
-      {initialsOf(app)}
-    </span>
-  )
-}
 
 function DockApp({ app, on }: { app: CraftAppInfo; on: boolean }) {
   const state = useApp((current) => craftStateOf(current, app.id))
@@ -36,7 +28,7 @@ function DockApp({ app, on }: { app: CraftAppInfo; on: boolean }) {
       onClick={() => void (installing ? act('shelf.open') : act('app.show', { id: app.id }))}
     >
       <span className="dock-icon">
-        <AppIcon app={app} />
+        <CraftIcon app={app} size={30} />
         {installing && <span className="dock-progress" style={{ '--progress': `${percent}%` } as React.CSSProperties} />}
       </span>
       <span className="dock-label">{app.shortName}</span>
@@ -62,7 +54,7 @@ export function Dock() {
         aria-pressed={side?.kind === 'shelf'}
         onClick={() => void act('shelf.open')}
       >
-        <span className="dock-tool"><Plus size={16} aria-hidden /></span>
+        <span className="dock-tool"><Plus size={16} strokeWidth={2} aria-hidden /></span>
         <span className="dock-label">Add</span>
       </button>
       <span className="dock-fill" />

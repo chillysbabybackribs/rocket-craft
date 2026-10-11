@@ -81,8 +81,8 @@
   background: linear-gradient(90deg, #fff var(--progress), rgba(255, 255, 255, 0.25) var(--progress));
 }
 .dock-tool {
-  width: 28px;
-  height: 28px;
+  width: 30px;
+  height: 30px;
   border-radius: 8px;
   display: grid;
   place-items: center;
@@ -94,75 +94,165 @@
 .dock-fill { flex: 1; }
 .dock-sep { width: 1px; margin: 12px 6px; background: var(--line); }
 
-/* An app's icon: its initials on its colour, until the release icons are used. */
+/* An app's icon (craft-icons.tsx, docs/mockups/craft-icons.html option B): a white glyph on a
+   squircle of the app's colour, lit from the top left. The coloured shadow is the card's; the
+   dock's icons get a tighter one so they stay crisp at 30px. */
 .craft-icon {
   display: grid;
   place-items: center;
   flex: none;
-  border-radius: 7px;
   color: #fff;
-  font-weight: 650;
-  letter-spacing: -0.2px;
+  background: linear-gradient(145deg, color-mix(in srgb, var(--a) 70%, white) 0%, var(--a) 55%, color-mix(in srgb, var(--a) 75%, black) 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 6px 16px color-mix(in srgb, var(--a) 30%, transparent);
 }
+.craft-icon.is-small { box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 2px 6px color-mix(in srgb, var(--a) 28%, transparent); }
+.craft-icon svg { display: block; }
 
 /* ── Shelf ─────────────────────────────────────────────────────────── */
 
+/* The region scrolls only when it must; the inner block's auto margins centre it both ways and,
+   unlike centring by alignment, never push its top out of reach when it is taller than the region.
+   Columns follow the region's own width (4, 3, then 2 and 1), not the window's. */
 .shelf {
+  container: shelf / inline-size;
+  position: relative;
   border: 1px solid var(--line);
   border-radius: var(--card-radius);
-  background: var(--sheen), var(--panel);
-  padding: 22px 26px;
+  background: var(--panel);
   display: flex;
-  flex-direction: column;
-  gap: 14px;
   min-width: 0;
   min-height: 0;
   overflow-y: auto;
 }
-.shelf-head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
-.shelf-head h2 { margin: 0; font-size: 15px; font-weight: 600; }
-.shelf-head p { margin: 0; color: var(--text-3); }
-.shelf-disk { margin-left: auto; color: var(--text-3); font-size: 12px; }
-.shelf-empty { margin: 0; color: var(--text-3); }
-.shelf-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; }
-.shelf-card {
+.shelf-inner {
+  margin: auto;
+  width: 100%;
+  max-width: 1140px;
+  padding: 40px 40px 48px;
   display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  padding: 12px;
-  border-radius: 10px;
-  background: var(--hover);
+  flex-direction: column;
+  gap: 28px;
+}
+.shelf-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px 24px; flex-wrap: wrap; }
+.shelf-head h2 { margin: 0 0 6px; font-size: 26px; font-weight: 600; letter-spacing: -0.02em; line-height: 1.2; }
+.shelf-head p { margin: 0; color: var(--text-3); font-size: 14px; }
+.shelf-meta { display: flex; align-items: center; gap: 14px; }
+.shelf-seg { display: flex; padding: 3px; border-radius: 9px; background: rgba(255, 255, 255, 0.04); border: 1px solid var(--line); }
+.shelf-seg button { padding: 5px 12px; border-radius: 7px; font-weight: 500; font-size: 12.5px; color: var(--text-3); line-height: 1.5; }
+.shelf-seg button:hover { color: var(--text-2); }
+.shelf-seg button.is-on { background: rgba(255, 255, 255, 0.08); color: var(--text); box-shadow: inset 0 0.5px 0 rgba(255, 255, 255, 0.1); }
+.shelf-seg em { font-style: normal; color: var(--text-4); margin-left: 6px; font-variant-numeric: tabular-nums; }
+.shelf-disk { color: var(--text-4); font-size: 12.5px; white-space: nowrap; }
+.shelf-empty { margin: 0; color: var(--text-3); display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.shelf-empty p { margin: 0; }
+.shelf-error { margin: 0; color: #f87171; line-height: 1.45; user-select: text; }
+
+.shelf-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+@container shelf (max-width: 1000px) { .shelf-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@container shelf (max-width: 720px) {
+  .shelf-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .shelf-inner { padding: 28px 24px 32px; gap: 22px; }
+}
+@container shelf (max-width: 440px) { .shelf-grid { grid-template-columns: minmax(0, 1fr); } }
+
+/* A card grows past its height only for a long error sentence; the row grows with it. */
+.shelf-card {
+  position: relative;
+  min-height: 236px;
+  padding: 22px;
+  border-radius: 16px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.015));
   border: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  transition: transform 150ms, border-color 150ms, box-shadow 150ms;
 }
-.shelf-card.is-installed { border-color: rgba(76, 183, 130, 0.35); }
-.shelf-card.is-failed { border-color: rgba(235, 87, 87, 0.4); }
-.shelf-body { flex: 1; min-width: 0; }
-.shelf-name { font-weight: 510; }
-.shelf-like { display: block; color: var(--text-3); font-size: 11px; }
-.shelf-what { color: var(--text-3); font-size: 11.5px; margin: 3px 0 9px; line-height: 1.35; }
-.shelf-row { display: flex; align-items: center; gap: 8px; font-size: 11px; color: var(--text-3); min-height: 24px; flex-wrap: wrap; }
-.shelf-note { white-space: nowrap; }
-.shelf-right { margin-left: auto; }
-.shelf-ask { white-space: normal; flex-basis: 100%; color: var(--text-2); }
-.shelf-error { margin: 0 0 8px; color: #f87171; font-size: 11.5px; line-height: 1.4; user-select: text; }
+.shelf-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(120% 70% at 0% 0%, color-mix(in srgb, var(--a) 14%, transparent), transparent 60%);
+  opacity: 0.55;
+  pointer-events: none;
+  transition: opacity 150ms;
+}
+.shelf-card:hover, .shelf-card:focus-within { border-color: var(--line-strong); }
+.shelf-card:hover { transform: translateY(-2px); box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35); }
+.shelf-card:hover::before, .shelf-card:focus-within::before { opacity: 1; }
+.shelf-card:has(.shelf-menu) { z-index: 2; }
+.shelf-card > * { position: relative; }
+.shelf-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+.shelf-chip { font-size: 11.5px; color: var(--text-4); padding: 3px 8px; border-radius: 999px; border: 1px solid var(--line); white-space: nowrap; line-height: 1.4; }
+.shelf-chip.is-ok { color: var(--ok); border-color: rgba(76, 183, 130, 0.28); background: rgba(76, 183, 130, 0.08); }
+.shelf-chip.is-ok::before { content: ''; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--ok); margin-right: 6px; vertical-align: 1px; }
+.shelf-name { margin-top: 14px; font-size: 16px; font-weight: 600; letter-spacing: -0.01em; line-height: 1.4; }
+.shelf-like { color: var(--text-4); font-size: 12.5px; }
+.shelf-desc { margin: 10px 0 0; min-height: 38px; color: var(--text-2); font-size: 13px; line-height: 1.45; }
+.shelf-ask { color: var(--warn); }
+.shelf-desc.shelf-error { color: #f87171; }
+.shelf-desc.shelf-error, .shelf-desc.shelf-ask { margin-bottom: 12px; }
+.shelf-foot { margin-top: auto; display: flex; gap: 8px; align-items: center; min-height: 34px; }
+
 .shelf-btn {
-  height: 24px;
-  padding: 0 10px;
-  border-radius: 6px;
-  display: inline-flex;
-  align-items: center;
-  font-size: 11.5px;
+  height: 34px;
+  padding: 0 14px;
+  border-radius: 9px;
+  display: inline-grid;
+  place-items: center;
+  font-weight: 500;
+  font-size: 13px;
   color: var(--text);
-  background: rgba(255, 255, 255, 0.1);
-  box-shadow: inset 0 0.5px 0 rgba(255, 255, 255, 0.16), inset 0 0 0 0.5px rgba(255, 255, 255, 0.08), 0 1px 3px rgba(0, 0, 0, 0.35);
+  background: rgba(255, 255, 255, 0.07);
+  box-shadow: inset 0 0.5px 0 rgba(255, 255, 255, 0.12), inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+  transition: background 150ms, color 150ms;
 }
-.shelf-btn:hover { background: rgba(255, 255, 255, 0.15); }
-.shelf-btn.is-primary { background: var(--accent); box-shadow: none; }
+.shelf-foot .shelf-btn { flex: 1; }
+.shelf-btn:hover { background: rgba(255, 255, 255, 0.11); }
+.shelf-btn:focus-visible, .shelf-more:focus-visible, .shelf-seg button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+/* Install turns indigo while the card is pointed at: the card says what it would do. */
+.shelf-card:hover .shelf-btn.is-install, .shelf-btn.is-install:focus-visible, .shelf-btn.is-primary { background: var(--accent); box-shadow: none; }
+.shelf-card:hover .shelf-btn.is-install:hover, .shelf-btn.is-primary:hover { background: #8382ff; }
+.shelf-btn.is-open { background: var(--text); color: #0b0c0d; box-shadow: none; }
+.shelf-btn.is-open:hover { background: #fff; }
 .shelf-btn.is-danger { background: #c2413b; box-shadow: none; }
-.shelf-btn.is-quiet { background: none; box-shadow: none; color: var(--text-3); padding: 0 4px; }
+.shelf-btn.is-danger:hover { background: #d24b44; }
+.shelf-foot .shelf-btn.is-quiet { flex: none; background: none; box-shadow: none; color: var(--text-3); }
 .shelf-btn.is-quiet:hover { color: var(--text); }
-.shelf-progress { flex: 1; height: 4px; border-radius: 2px; background: rgba(255, 255, 255, 0.1); overflow: hidden; }
-.shelf-progress i { display: block; height: 100%; background: var(--accent); transition: width 200ms; }
+
+.shelf-more-box { position: relative; flex: none; }
+.shelf-more {
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  display: grid;
+  place-items: center;
+  color: var(--text-3);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--line);
+  fill: currentColor;
+}
+.shelf-more:hover, .shelf-more.is-open { color: var(--text); background: rgba(255, 255, 255, 0.08); }
+/* Opens upward over the card's own description, so it never reaches the dock or another card. */
+.shelf-menu {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 6px);
+  min-width: 168px;
+  padding: 4px;
+  border-radius: 9px;
+  background: var(--menu);
+  box-shadow: var(--menu-shadow);
+}
+.shelf-menu-note { padding: 4px 10px 5px; font-size: 11.5px; color: var(--text-4); font-variant-numeric: tabular-nums; }
+.shelf-menu button { display: block; width: 100%; text-align: left; padding: 6px 10px; border-radius: 6px; font-size: 13px; color: var(--text-2); }
+.shelf-menu button:hover, .shelf-menu button:focus-visible { background: var(--selected); color: var(--text); outline: none; }
+.shelf-menu button.is-danger:hover, .shelf-menu button.is-danger:focus-visible { color: #ff8a84; }
+
+.shelf-progress { flex: 1; display: flex; flex-direction: column; gap: 7px; }
+.shelf-bar { display: block; height: 6px; border-radius: 3px; background: rgba(255, 255, 255, 0.08); overflow: hidden; }
+.shelf-bar i { display: block; height: 100%; border-radius: 3px; background: linear-gradient(90deg, var(--accent), #9b9aff); transition: width 200ms; }
+.shelf-progress small { color: var(--text-3); font-size: 12px; display: flex; justify-content: space-between; font-variant-numeric: tabular-nums; }
 
 /* ── An app's region ───────────────────────────────────────────────── */
 
@@ -178,7 +268,6 @@
 }
 .craft-app-region { flex: 1; display: grid; place-items: center; min-width: 0; min-height: 0; }
 .craft-app-placeholder { display: flex; flex-direction: column; align-items: center; gap: 14px; max-width: 420px; text-align: center; }
-.craft-app-placeholder .craft-icon { border-radius: 14px; }
 .craft-app-status { margin: 0; display: flex; align-items: center; gap: 8px; color: var(--text-2); }
 .craft-app-error { margin: 0; color: #f87171; line-height: 1.45; user-select: text; }
 .craft-spinner {
