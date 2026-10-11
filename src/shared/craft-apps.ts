@@ -138,7 +138,7 @@ const BRIDGE = ['mcp', '--bridge', '127.0.0.1:{port}']
 export const CRAFT_APPS: readonly CraftAppManifest[] = [
   entry({
     id: 'photocraft', name: 'PhotoCraft', likeName: 'Photoshop', shortName: 'Photo', initials: 'Ph', accent: '#1f6feb',
-    description: 'Photos, layers, masks, PSD',
+    description: 'Photos, layers, masks and PSD files',
     version: '0.7.0', sha256: '641f831252fd31b43ee1a12e572d7442e5652c2e5bf623de085741c370f0c91d', downloadBytes: 76_259_298, unpackedBytes: 150_724_142,
     control: PORT, auth: { kind: 'tokenFile', flag: '--control-token-file' },
     roots: { read: '--automation-read-root', write: '--automation-write-root' },
@@ -149,7 +149,7 @@ export const CRAFT_APPS: readonly CraftAppManifest[] = [
   }),
   entry({
     id: 'vectorcraft', name: 'VectorCraft', likeName: 'Illustrator', shortName: 'Vector', initials: 'Ve', accent: '#d9822b',
-    description: 'Logos, paths, illustration',
+    description: 'Logos, paths and illustration',
     version: '0.9.0', sha256: 'afbc4a0904740dfd1208e717664eb294965055e74c227c2ac3dc53af502e46a4', downloadBytes: 82_864_021, unpackedBytes: 172_674_571,
     control: PORT, auth: NONE,
     roots: { read: '--automation-read-root', write: '--automation-write-root' },
@@ -173,21 +173,21 @@ export const CRAFT_APPS: readonly CraftAppManifest[] = [
   }),
   entry({
     id: 'pdfcraft', name: 'PdfCraft', likeName: 'Acrobat', shortName: 'PDF', initials: 'Pd', accent: '#d93f3f',
-    description: 'Read, sign, combine PDFs',
+    description: 'Read, sign and combine PDFs',
     version: '0.6.0', sha256: '9a136e71e37b459ed5746dbe19a364ce84cf5d995c6f6c98af6147d818390a53', downloadBytes: 81_865_581, unpackedBytes: 218_485_546,
     control: { kind: 'file', flag: '--control' }, auth: { kind: 'controlFile' }, roots: null, bridge: null,
     extensions: ['pdf']
   }),
   entry({
     id: 'effectcraft', name: 'EffectCraft', likeName: 'After Effects', shortName: 'Effect', initials: 'Ef', accent: '#a855f7',
-    description: 'Motion graphics, compositing',
+    description: 'Motion graphics and compositing',
     version: '0.8.0', sha256: '725c88cf379122d70f941dd3edacb54479d63ff1e2a00fae318eaee02ad762c4', downloadBytes: 61_045_164, unpackedBytes: 149_344_517,
     control: PORT, auth: NONE, roots: null, bridge: BRIDGE,
     extensions: ['ecproj', 'ecprojx', 'mp4', 'mov', 'mkv', 'webm', 'png', 'jpg', 'psd', 'svg', 'pdf', 'ai', 'exr', 'wav', 'gltf']
   }),
   entry({
     id: 'designcraft', name: 'DesignCraft', likeName: 'InDesign', shortName: 'Design', initials: 'De', accent: '#e0457b',
-    description: 'Page layout, magazines, books',
+    description: 'Page layout, magazines and books',
     version: '0.6.0', sha256: 'abb661cd2fc53677d040fe0be3f241bbb8c0fad9619192a83109d53bd514bfb9', downloadBytes: 70_445_125, unpackedBytes: 147_823_455,
     control: PORT, auth: NONE, roots: null, bridge: CONNECT,
     extensions: ['designcraft', 'idml', 'png', 'jpg', 'jpeg', 'tif', 'psd', 'svg', 'pdf', 'ai', 'eps', 'docx', 'rtf', 'md', 'xlsx']

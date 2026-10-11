@@ -8,13 +8,13 @@ import type { ElectronApplication } from 'playwright'
 
 /** The catalog as the mockup has it; sizes are the upstream Linux download sizes it quotes. */
 export const FAKE_CATALOG = [
-  ['photocraft', 'PhotoCraft', 'Photoshop', 'Photo', '#1f6feb', 'Photos, layers, masks, PSD', 72],
-  ['vectorcraft', 'VectorCraft', 'Illustrator', 'Vector', '#d9822b', 'Logos, paths, illustration', 79],
+  ['photocraft', 'PhotoCraft', 'Photoshop', 'Photo', '#1f6feb', 'Photos, layers, masks and PSD files', 72],
+  ['vectorcraft', 'VectorCraft', 'Illustrator', 'Vector', '#d9822b', 'Logos, paths and illustration', 79],
   ['filmcraft', 'FilmCraft', 'Premiere Pro', 'Film', '#7c3aed', 'Video editing and timelines', 64],
   ['lightcraft', 'LightCraft', 'Lightroom', 'Light', '#0e9fb8', 'Photo library and RAW develop', 93],
-  ['pdfcraft', 'PdfCraft', 'Acrobat', 'PDF', '#d93f3f', 'Read, sign, combine PDFs', 78],
-  ['effectcraft', 'EffectCraft', 'After Effects', 'Effect', '#a855f7', 'Motion graphics, compositing', 58],
-  ['designcraft', 'DesignCraft', 'InDesign', 'Design', '#e0457b', 'Page layout, magazines, books', 67],
+  ['pdfcraft', 'PdfCraft', 'Acrobat', 'PDF', '#d93f3f', 'Read, sign and combine PDFs', 78],
+  ['effectcraft', 'EffectCraft', 'After Effects', 'Effect', '#a855f7', 'Motion graphics and compositing', 58],
+  ['designcraft', 'DesignCraft', 'InDesign', 'Design', '#e0457b', 'Page layout, magazines and books', 67],
   ['soundcraft', 'SoundCraft', 'Pro Tools', 'Sound', '#16a34a', 'Multitrack audio and mixing', 14],
   ['deckcraft', 'DeckCraft', 'PowerPoint', 'Deck', '#ea580c', 'Slides and presentations', 71],
   ['cadcraft', 'CADCraft', 'AutoCAD', 'CAD', '#0284c7', '2D drafting and plans', 21],
