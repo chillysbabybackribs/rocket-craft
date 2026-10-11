@@ -73,7 +73,8 @@ test('a real PhotoCraft installs from the shelf and docks exactly over the app r
     await page.waitForTimeout(1_000)
     await rocket.capture('real-browser-over-parked-app')
     await dock.getByRole('button', { name: 'Add apps' }).click()
-    await shelf.getByRole('button', { name: 'Remove PhotoCraft' }).click()
+    await shelf.getByRole('button', { name: 'More for PhotoCraft' }).click()
+    await shelf.getByRole('menu', { name: 'PhotoCraft actions' }).getByRole('menuitem', { name: 'Remove' }).click()
     // It is still running, parked, so the shelf asks first.
     await shelf.getByRole('button', { name: 'Remove PhotoCraft now' }).click()
     await expect(dock.locator('[data-app="photocraft"]')).toHaveCount(0, { timeout: 30_000 })
