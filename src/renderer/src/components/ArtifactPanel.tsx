@@ -46,7 +46,7 @@ function UndoConfirm({ chatId, turnId, paths, onDone }: { chatId: string; turnId
 
 export function ArtifactPanel() {
   const artifact = useApp((state) => state.artifact)
-  const fromLibrary = useApp((state) => state.libraryOpen)
+  const fromLibrary = useApp((state) => state.side.kind === 'library')
   const turn = useApp((state) => (artifact?.kind === 'changes' ? viewOf(state, artifact.chatId).turns.find((entry) => entry.id === artifact.turnId) ?? null : null))
   const running = useApp((state) => (artifact?.kind === 'changes' ? state.running.has(artifact.chatId) : false))
   const selected = useRef<HTMLSpanElement>(null)

@@ -22,15 +22,18 @@ export function describeWhere(where: UiWhereForChat): string {
   const own = where.yourPane === null ? 'this chat is not on screen' : `this chat is pane ${where.yourPane} (ui.pane(${where.yourPane}))`
   const others = where.panes.filter((pane) => pane.index !== where.yourPane).map((pane) => `pane ${pane.index}: ${pane.title}${pane.running ? ', running' : ''}`)
   let side: string
-  if (where.side === 'chat') side = 'no side panel'
-  else if (where.side === 'browser') side = 'the browser is open beside the chat'
-  else if (where.side === 'artifact') side = `an artifact panel is open${where.artifact?.path ? ` (${where.artifact.path})` : ''}`
-  else if (where.side === 'library') {
+  const shownApp = where.craft?.apps.find((app) => app.id === where.craft?.shown)
+  if (where.side === 'app') side = shownApp ? `${shownApp.name} is shown on the right side (${shownApp.run})` : 'an app is shown on the right side'
+  else if (where.side === 'shelf') side = 'the app shelf is shown on the right side'
+  else if (where.side === 'browser') side = 'the browser is shown on the right side'
+  else if (where.side === 'artifact') side = `an artifact panel is open on the right side${where.artifact?.path ? ` (${where.artifact.path})` : ''}`
+  else {
     const library = where.library
     const filters = library ? Object.entries(library.filters).map(([name, value]) => `${name} ${value}`).join(', ') : ''
-    side = library ? `the library is open beside the chat (${library.view}, ${library.shown} of ${library.total} files${filters ? `, filtered by ${filters}` : ''})` : 'the library is open beside the chat'
+    side = library ? `the library is shown on the right side (${library.view}, ${library.shown} of ${library.total} files${filters ? `, filtered by ${filters}` : ''})` : 'the library is shown on the right side'
   }
-  else side = 'tool health is open beside the chat'
+  const installed = where.craft?.apps.filter((app) => app.installState === 'installed').map((app) => app.name) ?? []
+  if (where.craft) side += installed.length ? `; installed apps: ${installed.join(', ')}` : '; no apps are installed yet'
   const board = where.board
   const workers = board
     ? `; the worker board beside it has ${board.workers.length} worker${board.workers.length === 1 ? '' : 's'} (${board.workers.filter((worker) => worker.status === 'running').length} running) for a ${board.run.status} run${board.run.reason ? `: ${board.run.reason}` : ''}${board.run.actionPending ? ', run action pending' : ''}${board.expanded ? `, worker ${board.expanded} expanded` : ''}`

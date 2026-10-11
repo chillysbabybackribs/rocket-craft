@@ -6,11 +6,13 @@ the architecture; read it before changing how the processes talk to each other.
 
 ## What this is
 
-A copy of Rocket Orchestrator that will host open-source Craft apps on the right of the chat,
-under a dock of installed apps. Read `docs/craft-studio-own-apps-plan.md` (direction, phases) and
+A copy of Rocket Orchestrator that hosts open-source Craft apps on the right of the chat, under
+a dock of installed apps. Read `docs/craft-studio-own-apps-plan.md` (direction, phases) and
 `docs/craft-studio-performance-plan.md` (resource states, install on demand) before building any
-of it; `docs/mockups/craft-studio.html` is the agreed UI. **The Craft apps, the dock, the shelf
-and the app tools are not built yet.** The ArtCraft name and logo are trademarks and must not
+of it; `docs/mockups/craft-studio.html` is the agreed UI. The shelf, the dock, installs and
+native docking are built (`src/shared/craft-apps.ts`, `src/main/craft-*.ts`,
+`src/renderer/src/components/{Dock,Shelf,CraftAppPanel}.tsx`); **the model tools for driving the
+apps are not built yet.** The ArtCraft name and logo are trademarks and must not
 appear anywhere in the app.
 
 Craft Studio runs beside the user's Rocket apps and must never share anything with them: its

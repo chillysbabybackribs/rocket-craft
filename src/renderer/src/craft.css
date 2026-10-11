@@ -1,0 +1,192 @@
+/* Craft Studio's right side (App.tsx, docs/mockups/craft-studio.html): one of an installed app,
+   the shelf, the browser or the library, over the dock. Built from styles.css's tokens. */
+
+/* The chat column keeps about the mockup's 420px at a 1360px window and grows slowly with it. A
+   run's worker board needs the orchestrator column and one board column (340 + 10 + 300px,
+   OrchestratorShell.tsx), so a run splits the window in half and at 1360px the board stays drawn;
+   the leader's open plan takes more again, and in a narrower window the board folds to its rail.
+   The minimums fit the window's least width (880px, src/main/index.ts). */
+.app.orch-app.craft-layout { grid-template-columns: minmax(340px, 0.45fr) minmax(480px, 1fr); }
+.app.orch-app.craft-layout.has-run { grid-template-columns: minmax(340px, 1fr) minmax(480px, 1fr); }
+.app.orch-app.craft-layout.has-side { grid-template-columns: minmax(340px, 1.6fr) minmax(480px, 1fr); }
+.orch-shell.is-solo { grid-template-columns: minmax(0, 1fr); }
+
+.craft-right {
+  margin-left: var(--gap);
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+.craft-region { flex: 1; display: flex; min-width: 0; min-height: 0; }
+.craft-region > * { flex: 1; margin-left: 0; margin-bottom: 0; }
+
+/* ── Dock ──────────────────────────────────────────────────────────── */
+
+/* Labels sit under the icons rather than in tooltips, which would open over the docked window. */
+.dock {
+  flex: none;
+  height: 60px;
+  display: flex;
+  align-items: stretch;
+  gap: 2px;
+  padding: 6px 4px 4px;
+}
+.dock-item {
+  position: relative;
+  width: 56px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  border-radius: 9px;
+  color: var(--text-3);
+  font-size: 10.5px;
+  line-height: 1.1;
+}
+.dock-item:hover { background: var(--hover); color: var(--text-2); }
+.dock-item.is-on { background: var(--hover); color: var(--text); }
+.dock-item.is-on::before {
+  content: '';
+  position: absolute;
+  top: -5px;
+  left: 15px;
+  right: 15px;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--text);
+}
+.dock-label { max-width: 52px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dock-icon { position: relative; display: grid; }
+.dock-item.is-running .dock-icon::after {
+  content: '';
+  position: absolute;
+  right: -3px;
+  top: -3px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--ok);
+  box-shadow: 0 0 0 2px var(--canvas);
+}
+.dock-item.is-installing .craft-icon { opacity: 0.45; }
+.dock-progress {
+  position: absolute;
+  left: 3px;
+  right: 3px;
+  bottom: 3px;
+  height: 3px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, #fff var(--progress), rgba(255, 255, 255, 0.25) var(--progress));
+}
+.dock-tool {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  background: rgba(255, 255, 255, 0.055);
+  box-shadow: inset 0 0.5px 0 rgba(255, 255, 255, 0.16), inset 0 0 0 0.5px rgba(255, 255, 255, 0.08), 0 1px 3px rgba(0, 0, 0, 0.35);
+}
+.dock-item.is-on .dock-tool { background: rgba(255, 255, 255, 0.14); }
+.dock-add .dock-tool { background: none; box-shadow: none; border: 1px dashed rgba(255, 255, 255, 0.25); }
+.dock-fill { flex: 1; }
+.dock-sep { width: 1px; margin: 12px 6px; background: var(--line); }
+
+/* An app's icon: its initials on its colour, until the release icons are used. */
+.craft-icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  border-radius: 7px;
+  color: #fff;
+  font-weight: 650;
+  letter-spacing: -0.2px;
+}
+
+/* ── Shelf ─────────────────────────────────────────────────────────── */
+
+.shelf {
+  border: 1px solid var(--line);
+  border-radius: var(--card-radius);
+  background: var(--sheen), var(--panel);
+  padding: 22px 26px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+}
+.shelf-head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.shelf-head h2 { margin: 0; font-size: 15px; font-weight: 600; }
+.shelf-head p { margin: 0; color: var(--text-3); }
+.shelf-disk { margin-left: auto; color: var(--text-3); font-size: 12px; }
+.shelf-empty { margin: 0; color: var(--text-3); }
+.shelf-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; }
+.shelf-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 10px;
+  background: var(--hover);
+  border: 1px solid var(--line);
+}
+.shelf-card.is-installed { border-color: rgba(76, 183, 130, 0.35); }
+.shelf-card.is-failed { border-color: rgba(235, 87, 87, 0.4); }
+.shelf-body { flex: 1; min-width: 0; }
+.shelf-name { font-weight: 510; }
+.shelf-like { display: block; color: var(--text-3); font-size: 11px; }
+.shelf-what { color: var(--text-3); font-size: 11.5px; margin: 3px 0 9px; line-height: 1.35; }
+.shelf-row { display: flex; align-items: center; gap: 8px; font-size: 11px; color: var(--text-3); min-height: 24px; flex-wrap: wrap; }
+.shelf-note { white-space: nowrap; }
+.shelf-right { margin-left: auto; }
+.shelf-ask { white-space: normal; flex-basis: 100%; color: var(--text-2); }
+.shelf-error { margin: 0 0 8px; color: #f87171; font-size: 11.5px; line-height: 1.4; user-select: text; }
+.shelf-btn {
+  height: 24px;
+  padding: 0 10px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  font-size: 11.5px;
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.1);
+  box-shadow: inset 0 0.5px 0 rgba(255, 255, 255, 0.16), inset 0 0 0 0.5px rgba(255, 255, 255, 0.08), 0 1px 3px rgba(0, 0, 0, 0.35);
+}
+.shelf-btn:hover { background: rgba(255, 255, 255, 0.15); }
+.shelf-btn.is-primary { background: var(--accent); box-shadow: none; }
+.shelf-btn.is-danger { background: #c2413b; box-shadow: none; }
+.shelf-btn.is-quiet { background: none; box-shadow: none; color: var(--text-3); padding: 0 4px; }
+.shelf-btn.is-quiet:hover { color: var(--text); }
+.shelf-progress { flex: 1; height: 4px; border-radius: 2px; background: rgba(255, 255, 255, 0.1); overflow: hidden; }
+.shelf-progress i { display: block; height: 100%; background: var(--accent); transition: width 200ms; }
+
+/* ── An app's region ───────────────────────────────────────────────── */
+
+/* Main docks the app's window over the region; what is drawn here shows only before it arrives. */
+.craft-app {
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--card-radius);
+  background: var(--panel);
+  overflow: hidden;
+}
+.craft-app-region { flex: 1; display: grid; place-items: center; min-width: 0; min-height: 0; }
+.craft-app-placeholder { display: flex; flex-direction: column; align-items: center; gap: 14px; max-width: 420px; text-align: center; }
+.craft-app-placeholder .craft-icon { border-radius: 14px; }
+.craft-app-status { margin: 0; display: flex; align-items: center; gap: 8px; color: var(--text-2); }
+.craft-app-error { margin: 0; color: #f87171; line-height: 1.45; user-select: text; }
+.craft-spinner {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  border-top-color: var(--text-2);
+  animation: craft-spin 800ms linear infinite;
+}
+@keyframes craft-spin { to { transform: rotate(360deg); } }

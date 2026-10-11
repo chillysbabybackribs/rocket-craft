@@ -24,11 +24,18 @@ test('every place in the app map is reachable by name and reports itself', async
       const result = await go(place)
       expect(result.ok, `${place}: ${result.ok ? '' : result.error}`).toBe(true)
       expect(result.where.place).toBe(place)
-      if (place === 'tools') await expect(page.locator('.tools-panel [data-nav="tools"]')).toBeVisible()
+      expect(result.where.side).toBe(place)
+      // The dock's control for the place shows as on.
+      await expect(page.locator(`.dock [data-nav="${place}"]`)).toHaveAttribute('aria-pressed', 'true')
     }
-    await expect(page.locator('.tools-ledger')).toBeVisible()
-    await go('chat')
-    await expect(page.locator('.tools-panel')).toHaveCount(0)
+    // An app is reached by id, and only an installed one; with none installed the choices say so.
+    const noApp = await go('app')
+    expect(noApp.ok ? '' : noApp.error).toContain('Give id')
+    const notInstalled = await go('app', { id: 'no-such-app' })
+    expect(notInstalled.ok).toBe(false)
+    // The tool ledger's panel and the chat-alone place are not in Craft Studio's map.
+    for (const gone of ['tools', 'chat']) expect((await go(gone)).ok).toBe(false)
+    expect((await act('tools.refresh')).ok).toBe(false)
   })
 
   await test.step('A required parameter that is missing or wrong is refused with the choices', async () => {
@@ -56,12 +63,15 @@ test('every place in the app map is reachable by name and reports itself', async
     expect(fresh.where.panes).toHaveLength(1)
     await expect(page.locator('.pane')).toHaveCount(1)
     // An action belonging to a place opens that place first.
-    await go('chat')
-    const refreshed = await act('tools.refresh')
-    expect(refreshed.ok).toBe(true)
-    expect(refreshed.where.place).toBe('tools')
-    expect(refreshed.where.side).toBe('tools')
-    await expect(page.locator('.tools-panel')).toBeVisible()
+    await go('shelf')
+    const cleared = await act('library.clear')
+    expect(cleared.ok).toBe(true)
+    expect(cleared.where.place).toBe('library')
+    expect(cleared.where.side).toBe('library')
+    await expect(page.getByRole('complementary', { name: 'Library', exact: true })).toBeVisible()
+    const shelf = await act('shelf.open')
+    expect(shelf.ok).toBe(true)
+    expect(shelf.where.side).toBe('shelf')
   })
 
   await test.step('The host’s tools reach the same dispatcher and add the image', async () => {
@@ -75,20 +85,20 @@ test('every place in the app map is reachable by name and reports itself', async
       return { result: payload.result, data: JSON.parse(payload.result.content[0]!.text!) as { where: { place: string; yourPane: number | null }; summary: string } }
     }
     const seen = await mcp('studio_ui_where', {})
-    expect(seen.data.where.place).toBe('tools')
-    expect(seen.data.summary).toContain('tool health is open beside the chat')
+    expect(seen.data.where.place).toBe('shelf')
+    expect(seen.data.summary).toContain('the app shelf is shown on the right side')
     const went = await mcp('studio_ui_go', { place: 'library', params: { view: 'list' } })
     expect(went.result.isError).toBeFalsy()
     expect(went.data.where.place).toBe('library')
     expect(went.result.content.some((part) => part.type === 'image')).toBe(true)
-    await expect(page.locator('.tools-panel')).toHaveCount(0)
+    await expect(page.getByRole('region', { name: 'Apps shelf' })).toHaveCount(0)
     const refused = await mcp('studio_ui_act', { action: 'chat.open', params: { chatId: 'no-such-chat' }, capture: false })
     expect(refused.result.isError).toBe(true)
     expect(refused.result.content[0]!.text).toContain('There is no chat')
   })
 
   await test.step('A worker expands over the board and collapses back', async () => {
-    await go('chat')
+    await go('shelf')
     await page.locator('.composer-folder').click()
     await page.getByRole('textbox', { name: 'Message', exact: true }).fill('UI check: good evening')
     await page.getByRole('button', { name: 'Send', exact: true }).click()
@@ -122,7 +132,7 @@ test('every place in the app map is reachable by name and reports itself', async
     await expect(page.getByRole('region', { name: 'Orchestrator progress' })).toBeVisible()
     const wrongSection = await go('progress', { section: 'notes' })
     expect(wrongSection.ok ? '' : wrongSection.error).toContain('section is one of now, needs, plan, workers, activity')
-    await go('chat')
+    await go('shelf')
     const added = await act('plan.edit', { change: 'add', text: 'A step from the map' })
     expect(added.ok, added.ok ? '' : added.error).toBe(true)
     expect(added.where.place).toBe('progress')

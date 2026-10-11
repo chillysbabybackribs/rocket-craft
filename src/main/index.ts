@@ -22,6 +22,7 @@ import { liveUiConnection } from './ui-connection.ts'
 import { OrchestratorNotifications } from './orchestrator-notifications.ts'
 import { notificationTestTransport } from './orchestrator-notifications-test.ts'
 import { publishLivePort } from './live-port.ts'
+import { CraftStudio } from './craft-studio.ts'
 
 // Electron's main process does three things and nothing else: it owns the window, it owns the
 // embedded browser view, and it forks the agent host and introduces it to the renderer over a
@@ -58,6 +59,10 @@ let browser: BrowserPane | null = null
 let browserAgent: BrowserAgent | null = null
 let screenCapture: ScreenCapture | null = null
 let quitting = false
+// The Craft apps: installs, the docked windows and their processes (craft-studio.ts).
+let craft: CraftStudio | null = null
+let craftQuit: Promise<void> | null = null
+let craftDone = false
 const notificationTest = testProfile ? notificationTestTransport(testProfile) : null
 if (notificationTest) Object.assign(globalThis, { rocketNotificationTest: notificationTest.seam })
 const notifications = new OrchestratorNotifications({
@@ -183,6 +188,7 @@ function createWindow(): void {
   })
   browser = new BrowserPane(window)
   browserAgent = new BrowserAgent(browser)
+  craft?.attach(window)
   screenCapture = new ScreenCapture(window, () => browser)
   window.once('ready-to-show', () => window?.show())
   window.on('closed', () => {
@@ -305,6 +311,10 @@ if (!ownsInstance) {
     await publishLivePort(app.getPath('userData'), process.pid, livePort)
     if (testProfile) isolateUiTestNetwork(process.env.CRAFT_UI_TEST_ORIGIN)
     host = startHost()
+    craft = new CraftStudio((message) => appendJournal(join(app.getPath('userData'), 'journal.jsonl'), {
+      at: Date.now(), source: 'craft', severity: 'info', kind: 'observation', message
+    }))
+    craft.registerIpc()
     createWindow()
     if (!testProfile) void firstRunCookieImport()
     const first = openTargetOf(process.argv, process.cwd())
@@ -316,6 +326,15 @@ app.on('window-all-closed', () => app.quit())
 
 app.on('before-quit', (event) => {
   notifications.dispose()
+  // Every Craft app this run started stops first (each gets SIGTERM, then SIGKILL after 3 s).
+  if (craft && !craftDone) {
+    event.preventDefault()
+    craftQuit ??= craft.quit().finally(() => {
+      craftDone = true
+      app.quit()
+    })
+    return
+  }
   if (quitting || !host) return
   // Let the host stop its provider processes before it goes; it exits on its own when done.
   quitting = true

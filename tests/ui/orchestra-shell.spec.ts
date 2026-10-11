@@ -12,7 +12,9 @@ test('orchestra-shell fresh profile keeps the leader full height below the title
   await expect(page.locator('.orch-shell')).toBeVisible()
   const leader = page.getByTestId('orchestrator-chat')
   await expect(leader).toBeVisible()
-  await expect(page.getByTestId('worker-board-empty')).toBeVisible()
+  // Without a run there is no board: the chat has the left side, and the shelf the right.
+  await expect(page.getByTestId('worker-board')).toHaveCount(0)
+  await expect(page.getByRole('region', { name: 'Apps shelf' })).toBeVisible()
   const shell = await page.locator('.orch-shell').boundingBox()
   const column = await leader.boundingBox()
   expect(shell).not.toBeNull()

@@ -22,13 +22,18 @@ import '../orchestrator.css'
 // over the board with a reply box of its own, which sends to that worker's chat, not to pane 0.
 // The test ids and labels here are a contract with tests/ui/orchestra-shell.spec.ts.
 //
-// A side panel (browser, artifact, library, tools) keeps its usual share of the window, so the
-// shell gives up width: the orchestrator column and the board each shrink to a smaller minimum,
-// and when even those do not fit, the board folds to a rail of status counts that opens over the
-// shell. The side panel itself is never moved or covered.
+// Craft Studio's right side (an app, the shelf, browser or library, over the dock) is always
+// shown, so the shell gives up width: the orchestrator column and the board each shrink to a
+// smaller minimum, and when even those do not fit, the board folds to a rail of status counts that
+// opens over the shell. The right side itself is never moved or covered. Without a run the board
+// is not drawn at all; the chat column has the left side alone.
 
-/** The orchestrator column's and the board's least widths, alone and beside a side panel. */
-const ORCH_MIN = { alone: 420, beside: 340 }
+/**
+ * The orchestrator column's and the board's least widths, alone and beside a side panel. With its
+ * plan open the column needs room for the conversation and the drawer side by side, so the board
+ * folds to its rail sooner.
+ */
+const ORCH_MIN = { alone: 420, beside: 340, plan: 560 }
 const BOARD_MIN = { alone: 360, beside: 300 }
 /** The divider between them, as styles.css's --gap. */
 const GAP = 10
@@ -437,13 +442,17 @@ export function OrchestratorShell({ children }: { children: React.ReactNode }) {
   const width = useApp((state) => state.board.width)
   const expandedId = useApp((state) => state.board.expanded)
   const railOpen = useApp((state) => state.board.railOpen)
-  const beside = useApp((state) => state.browserOpen || state.artifact !== null || state.libraryOpen || state.toolsOpen)
   const expanded = run?.tasks.find((task) => task.chatId === expandedId) ?? null
   const expandedStatus = useApp((state) => (run && expanded ? workerStatus(state, run, expanded) : 'running'))
   const shell = useRef<HTMLDivElement>(null)
   const shellWidth = useWidth(shell)
-  const orchMin = beside ? ORCH_MIN.beside : ORCH_MIN.alone
-  const boardMin = beside ? BOARD_MIN.beside : BOARD_MIN.alone
+  const planOpen = useApp((state) => {
+    const chatId = state.panes[0]?.chatId
+    return chatId != null && state.views[chatId]?.planTurnId != null
+  })
+  // The right side is never empty in Craft Studio, so the shell always takes its smaller minimums.
+  const orchMin = planOpen ? ORCH_MIN.plan : ORCH_MIN.beside
+  const boardMin = BOARD_MIN.beside
   // Too narrow for both columns: the board folds to its rail, and opens over the shell on demand.
   const rail = shellWidth > 0 && shellWidth - orchMin - GAP < boardMin
   const overlay = rail && (railOpen || expanded !== null)
@@ -479,8 +488,16 @@ export function OrchestratorShell({ children }: { children: React.ReactNode }) {
   }
 
   const style = { '--orch-min': `${orchMin}px`, '--board-min': `${boardMin}px`, ...(width ? { '--orch-width': `${width}px` } : {}) } as React.CSSProperties
+  // Without a run there are no workers, and the chat has the left side to itself.
+  if (!run) {
+    return (
+      <div ref={shell} className="orch-shell is-solo">
+        <section className="orch-chat" data-testid="orchestrator-chat" aria-label="Orchestrator chat">{children}</section>
+      </div>
+    )
+  }
   return (
-    <div ref={shell} className={`orch-shell${beside ? ' is-beside' : ''}${rail ? ' is-rail' : ''}`} style={style}>
+    <div ref={shell} className={`orch-shell is-beside${rail ? ' is-rail' : ''}`} style={style}>
       <section className="orch-chat" data-testid="orchestrator-chat" aria-label="Orchestrator chat">
         {run && <RunHead run={run} />}
         {children}

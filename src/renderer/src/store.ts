@@ -16,7 +16,7 @@ import { PROVIDERS, TURN_PAGE, planItemId } from '../../shared/types.ts'
 import type { LibraryEntry, LibraryFilters, LibraryPreview, LibraryView } from '../../shared/library.ts'
 import { call, connectHost } from './host.ts'
 import { clampSpeed } from '../../shared/reading.ts'
-import { DEFAULT_TOOLBAR, normalizeToolbar, type ToolbarPrefs } from './toolbar.ts'
+import { craft, type CraftAppInfo, type CraftState } from './craft.ts'
 
 // Client state. Two kinds of subscription keep a fast token stream cheap: components that care
 // about structure (which chats, which turns, which items exist) read `useApp`, and each
@@ -83,19 +83,17 @@ export type AppState = {
   progress: { section: ProgressSection; jump: number }
   /** Hands-free reading's speed, one for web pages and files alike (shared/reading.ts). */
   readingSpeed: number
-  browserOpen: boolean
-  /** The tool ledger's health view beside the chat (ToolLedgerPanel.tsx). */
-  toolsOpen: boolean
   /**
-   * Bumped by the tool ledger's Refresh; the panel reloads when it changes. It lives here so the
-   * app map's `tools.refresh` does what the panel's own button does.
+   * What the right side shows under the artifact, if one is open: an installed app, the shelf, the
+   * browser or the library. It is never empty; the dock under it switches between them.
    */
-  toolsRefresh: number
-  /** The library beside the chat: every file the chats touched (docs/library-plan.md). */
-  libraryOpen: boolean
+  side: Side
+  /** The app last shown, which the side returns to when the browser or library is toggled off. */
+  lastApp: string | null
+  /** The Craft apps: the catalog, each app's install and run state, and the dock's order. */
+  craft: CraftStore
+  /** The library's shelf of every file the chats touched (docs/library-plan.md). */
   library: LibraryState
-  /** The toolbar's sections: the drawer open or not, and what the user kept, renamed and reordered. */
-  toolbar: ToolbarPrefs
   /** The width of the side pane beside a chat (the plan drawer), in pixels. */
   sideWidth: number
   /** The folder a new chat starts in: the last one the user chose, or their home folder. */
@@ -121,6 +119,20 @@ export type BoardState = RunControlState & {
 }
 
 export type WorkerFilter = 'all' | 'running' | 'done'
+
+export type Side = { kind: 'app'; id: string } | { kind: 'shelf' } | { kind: 'browser' } | { kind: 'library' }
+
+export type CraftStore = {
+  apps: CraftAppInfo[]
+  /** Whether the catalog has been read; until then the shelf says it is loading. */
+  loaded: boolean
+  /** Why the catalog could not be read, as a full sentence. */
+  error: string | null
+  /** Each app's latest state from main, by id; an app absent here is as its catalog entry says. */
+  states: Record<string, CraftState>
+  /** Installed apps in the order the user installed them, which is the dock's order. */
+  order: string[]
+}
 
 export const PROGRESS_SECTIONS = ['now', 'needs', 'plan', 'workers', 'activity'] as const
 export type ProgressSection = typeof PROGRESS_SECTIONS[number]
@@ -157,12 +169,11 @@ type Prefs = {
   modelChoice?: ModelChoices
   /** chatId → that chat's choice. */
   selections?: Record<string, Selection>
-  browserOpen?: boolean
-  toolsOpen?: boolean
+  side?: Side
+  lastApp?: string | null
+  dockOrder?: string[]
   readingSpeed?: number
-  libraryOpen?: boolean
   libraryView?: 'grid' | 'list'
-  toolbar?: ToolbarPrefs
   sideWidth?: number
   orchWidth?: number | null
   /** Chats whose plan drawer the user closed; it no longer opens by itself there. */
@@ -238,12 +249,10 @@ let state: AppState = {
   usage: {},
   models: {},
   readingSpeed: clampSpeed(prefs.readingSpeed ?? 1),
-  browserOpen: prefs.browserOpen === true,
-  toolsOpen: prefs.toolsOpen === true,
-  toolsRefresh: 0,
-  libraryOpen: prefs.libraryOpen === true,
+  side: savedSide(prefs.side),
+  lastApp: typeof prefs.lastApp === 'string' ? prefs.lastApp : null,
+  craft: { apps: [], loaded: false, error: null, states: {}, order: Array.isArray(prefs.dockOrder) ? prefs.dockOrder.filter((id) => typeof id === 'string') : [] },
   library: { entries: [], loaded: false, error: null, filters: {}, view: prefs.libraryView === 'list' ? 'list' : 'grid', selected: null, previews: {} },
-  toolbar: normalizeToolbar(prefs.toolbar),
   sideWidth: prefs.sideWidth ?? 400,
   defaultCwd: prefs.cwd || window.rocket.homeDir,
   error: null
@@ -686,54 +695,37 @@ export function setReadingSpeed(speed: number, fromBrowser = false): void {
   if (!fromBrowser) window.rocket.browser.send({ type: 'readingSpeed', speed: readingSpeed })
 }
 
-export function patchToolbar(patch: Partial<ToolbarPrefs>): void {
-  const toolbar = { ...state.toolbar, ...patch }
-  setState({ toolbar })
-  writePrefs({ toolbar })
+/** The dock item shown as on: none while an artifact covers the right side. */
+export function sideShown(current: AppState): Side | null {
+  return current.artifact ? null : current.side
 }
 
-/** Back to every section in the drawer under its own name, leaving the drawer as it stands. */
-export function resetToolbar(): void {
-  patchToolbar({ ...DEFAULT_TOOLBAR, open: state.toolbar.open })
-}
-
-/** The side panel the toolbar shows as on: an artifact covers them all. */
-export function sideShown(state: AppState): 'library' | 'tools' | 'browser' | null {
-  if (state.artifact) return null
-  if (state.libraryOpen) return 'library'
-  if (state.toolsOpen) return 'tools'
-  return state.browserOpen ? 'browser' : null
-}
-
-export function setBrowserOpen(browserOpen: boolean): void {
+/** Show something on the right side; it closes an artifact over it. */
+export function showSide(side: Side): void {
   linkRequest++
-  const toolsOpen = browserOpen ? false : state.toolsOpen
-  const libraryOpen = browserOpen ? false : state.libraryOpen
-  setState({ browserOpen, toolsOpen, libraryOpen, artifact: null })
-  writePrefs({ browserOpen, toolsOpen, libraryOpen })
+  const lastApp = side.kind === 'app' ? side.id : state.lastApp
+  setState({ side, lastApp, artifact: null })
+  writePrefs({ side, lastApp })
+  if (side.kind === 'library' && !state.library.loaded) void loadLibrary()
 }
 
-/** Show or hide the tool ledger beside the chat; it takes the side from the browser and the library. */
-export function setToolsOpen(toolsOpen: boolean): void {
-  const libraryOpen = toolsOpen ? false : state.libraryOpen
-  setState({ toolsOpen, libraryOpen, browserOpen: toolsOpen ? false : state.browserOpen, artifact: null })
-  writePrefs({ toolsOpen, libraryOpen, browserOpen: toolsOpen ? false : state.browserOpen })
+/** Where the side goes when the browser or library is toggled off: the last app, else the shelf. */
+function fallbackSide(): Side {
+  const id = state.lastApp
+  return id && isInstalled(state, id) ? { kind: 'app', id } : { kind: 'shelf' }
 }
 
-/** Reload the tool ledger panel. */
-export function refreshTools(): void {
-  setState({ toolsRefresh: state.toolsRefresh + 1 })
+export function setBrowserOpen(open: boolean): void {
+  if (open) showSide({ kind: 'browser' })
+  else if (state.side.kind === 'browser') showSide(fallbackSide())
 }
 
 // ── Library ───────────────────────────────────────────────────────────
 
-/** Show or hide the library beside the chat; it takes the side from the browser and the tool ledger. */
-export function setLibraryOpen(libraryOpen: boolean): void {
-  linkRequest++
-  const others = libraryOpen ? { browserOpen: false, toolsOpen: false } : {}
-  setState({ libraryOpen, ...others, artifact: null })
-  writePrefs({ libraryOpen, ...others })
-  if (libraryOpen && !state.library.loaded) void loadLibrary()
+/** Show or hide the library on the right side; hiding it goes back to the last app or the shelf. */
+export function setLibraryOpen(open: boolean): void {
+  if (open) showSide({ kind: 'library' })
+  else if (state.side.kind === 'library') showSide(fallbackSide())
 }
 
 export function patchLibrary(patch: Partial<LibraryState>): void {
@@ -861,6 +853,10 @@ async function loadView(chatId: string): Promise<void> {
     ;(turnItems[item.turnId] ??= []).push(item.id)
   }
   setState({ views: { ...state.views, [chatId]: { turns: snapshot.turns, turnItems, queued: snapshot.queued ?? [], planTurnId: null, hasOlder: snapshot.hasOlder } } })
+  // A plan that arrived before the view did came in the snapshot, not as an event, so it opens
+  // here, as it would have from the event (and as showChat does for the column's chat).
+  const planning = snapshot.turns.findLast((turn) => turn.status === 'running' && items.has(planItemId(turn.id)))
+  if (planning) openPlanIfNew(chatId, planning.id)
 }
 
 /** The current state without subscribing, for the dispatcher. */
@@ -936,6 +932,7 @@ export function start(): void {
     }
   })
   void load()
+  void loadCraft()
   // Some readings start a provider's CLI, so none are taken for a window nobody is looking at.
   const refreshAll = (): void => {
     if (!document.hidden) for (const provider of PROVIDERS) refreshUsage(provider.id)
@@ -1004,8 +1001,7 @@ export async function openChatLink(href: string, cwd?: string): Promise<void> {
     const target = await window.rocket.openChatLink(href, folder)
     if (request !== linkRequest) return
     if (target.kind === 'browser') {
-      setState({ artifact: null, browserOpen: true })
-      writePrefs({ browserOpen: true })
+      showSide({ kind: 'browser' })
       window.rocket.browser.send({ type: 'newTab', url: target.url })
     } else {
       setState({ artifact: target })
@@ -1217,4 +1213,149 @@ export async function activateRunNotification(target: import('../../shared/types
   } else {
     patchBoard({ expanded: null, railOpen: false, focusTarget: { runId: run.id, kind: 'run', chatId: null } })
   }
+}
+
+// ── Craft apps ────────────────────────────────────────────────────────
+
+/** A saved side as it can be trusted; a first run, with none saved, opens on the shelf. */
+function savedSide(saved: unknown): Side {
+  const record = saved && typeof saved === 'object' ? saved as Record<string, unknown> : {}
+  if (record.kind === 'app' && typeof record.id === 'string') return { kind: 'app', id: record.id }
+  if (record.kind === 'browser' || record.kind === 'library') return { kind: record.kind }
+  return { kind: 'shelf' }
+}
+
+type HasCraft = Pick<AppState, 'craft'>
+
+/** The states of apps main has not reported on, kept so a component reading one gets the same object each time. */
+const unreported = new Map<string, CraftState>()
+
+/** An app's state as main last reported it, or as its catalog entry has it before any report. */
+export function craftStateOf(current: HasCraft, id: string): CraftState {
+  const reported = current.craft.states[id]
+  if (reported) return reported
+  const installed = current.craft.apps.find((entry) => entry.id === id)?.installed === true
+  const key = `${id}:${installed}`
+  let fallback = unreported.get(key)
+  if (!fallback) unreported.set(key, fallback = { id, installState: installed ? 'installed' : 'none', run: 'stopped' })
+  return fallback
+}
+
+export function isInstalled(current: HasCraft, id: string): boolean {
+  return craftStateOf(current, id).installState === 'installed'
+}
+
+/**
+ * The dock's apps: the installed ones and those installing, in the order they were installed, with
+ * any the order does not know (installed before this profile) after them in the catalog's order.
+ */
+export function dockApps(current: HasCraft): CraftAppInfo[] {
+  const { apps, order } = current.craft
+  const docked = apps.filter((app) => {
+    const { installState } = craftStateOf(current, app.id)
+    return installState === 'installed' || installState === 'installing'
+  })
+  const rank = (id: string): number => {
+    const at = order.indexOf(id)
+    return at === -1 ? order.length + apps.findIndex((app) => app.id === id) : at
+  }
+  return docked.sort((a, b) => rank(a.id) - rank(b.id))
+}
+
+function patchCraft(patch: Partial<CraftStore>): void {
+  setState({ craft: { ...state.craft, ...patch } })
+  if (patch.order) writePrefs({ dockOrder: patch.order })
+}
+
+function putCraftState(next: CraftState): void {
+  patchCraft({ states: { ...state.craft.states, [next.id]: next } })
+}
+
+/** The shown side must name an installed app; one that is gone puts the shelf there. */
+function checkShownApp(): void {
+  if (!state.craft.loaded) return
+  if (state.side.kind === 'app' && !isInstalled(state, state.side.id)) showSide({ kind: 'shelf' })
+  if (state.lastApp && !isInstalled(state, state.lastApp)) {
+    setState({ lastApp: null })
+    writePrefs({ lastApp: null })
+  }
+}
+
+let craftSubscribed = false
+
+/** Read the catalog and follow main's reports of installs and running apps. */
+export async function loadCraft(): Promise<void> {
+  if (!craftSubscribed) {
+    craftSubscribed = true
+    craft().onState((next) => {
+      const before = craftStateOf(state, next.id).installState
+      putCraftState(next)
+      // A finished install or removal changes the catalog's version and size on disk.
+      if (before !== next.installState && (next.installState === 'installed' || next.installState === 'none')) void loadCraft()
+      if (next.installState === 'installed' && !state.craft.order.includes(next.id)) patchCraft({ order: [...state.craft.order, next.id] })
+      if (next.installState === 'none') patchCraft({ order: state.craft.order.filter((id) => id !== next.id) })
+      checkShownApp()
+    })
+  }
+  try {
+    const apps = await craft().catalog()
+    // A report from main is newer than the catalog for anything but whether it is installed now.
+    const states = Object.fromEntries(Object.entries(state.craft.states).filter(([id, entry]) => {
+      const app = apps.find((each) => each.id === id)
+      if (!app) return false
+      if (entry.installState === 'none' || entry.installState === 'installing') return !app.installed
+      return entry.installState !== 'installed' || app.installed
+    }))
+    patchCraft({ apps, states, loaded: true, error: null })
+    checkShownApp()
+  } catch (error) {
+    patchCraft({ loaded: true, error: error instanceof Error ? error.message : 'The app catalog could not be read. Close the shelf and open it again.' })
+  }
+}
+
+/** Show an installed app on the right side; main starts it on the first show. */
+export function showApp(id: string): void {
+  const app = state.craft.apps.find((entry) => entry.id === id)
+  if (!app) throw new Error(`There is no app "${id}". The apps are ${state.craft.apps.map((entry) => entry.id).join(', ') || 'not loaded yet'}.`)
+  if (!isInstalled(state, id)) throw new Error(`${app.name} is not installed. The user installs apps from the shelf; suggest it to them.`)
+  showSide({ kind: 'app', id })
+}
+
+/** Install an app from the shelf. Only the user does this: the app map has no install action. */
+export async function installApp(id: string): Promise<void> {
+  const current = craftStateOf(state, id)
+  if (current.installState === 'installing' || current.installState === 'installed') return
+  putCraftState({ id, installState: 'installing', progress: 0, run: 'stopped' })
+  patchCraft({ order: [...state.craft.order.filter((each) => each !== id), id] })
+  try {
+    await craft().install(id)
+    void loadCraft()
+  } catch (error) {
+    const name = state.craft.apps.find((app) => app.id === id)?.name ?? 'The app'
+    putCraftState({ id, installState: 'failed', run: 'stopped', error: error instanceof Error ? error.message : `${name} could not be installed. Check your connection and try again.` })
+  }
+}
+
+/** Remove an installed app from the shelf; the side leaves it first if it is shown. */
+export async function removeApp(id: string): Promise<void> {
+  if (state.side.kind === 'app' && state.side.id === id) showSide({ kind: 'shelf' })
+  try {
+    await craft().remove(id)
+    putCraftState({ id, installState: 'none', run: 'stopped' })
+    patchCraft({ order: state.craft.order.filter((each) => each !== id) })
+    checkShownApp()
+    void loadCraft()
+  } catch (error) {
+    fail(error)
+  }
+}
+
+/** A show that main refused before it could report a state, so the app's region can say why. */
+export function noteCraftError(id: string, message: string): void {
+  putCraftState({ ...craftStateOf(state, id), run: 'stopped', error: message })
+}
+
+export function clearCraftError(id: string): void {
+  const { error: _cleared, ...rest } = craftStateOf(state, id)
+  putCraftState(rest)
 }

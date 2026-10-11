@@ -23,10 +23,15 @@ export type ActionSpec = {
 }
 
 export const PLACES = {
-  chat: { description: 'The orchestrator chat alone, with no side panel.', file: 'src/renderer/src/App.tsx' },
-  browser: { description: 'The built-in browser beside the chat.', file: 'src/renderer/src/components/BrowserPanel.tsx' },
+  app: {
+    description: 'An installed Craft app on the right side, its own window docked there; showing one starts it if it is not running. Only installed apps can be shown (studio_ui_where lists them under craft.apps); a model cannot install one, only suggest it to the user.',
+    file: 'src/renderer/src/components/CraftAppPanel.tsx',
+    params: { id: 'app id, an installed one from craft.apps (required)' }
+  },
+  shelf: { description: 'The app shelf on the right side: every Craft app with its install state. The user installs and removes apps here; a model can show it when suggesting an install. Showing any place on the right side closes a file or progress view shown over it.', file: 'src/renderer/src/components/Shelf.tsx' },
+  browser: { description: 'The built-in browser on the right side.', file: 'src/renderer/src/components/BrowserPanel.tsx' },
   library: {
-    description: 'The library beside the chat: every file the chats attached, downloaded, wrote as plans or opened, as a grid or list. Filters given here replace the shown ones; library_list lists the same files.',
+    description: 'The library on the right side: every file the chats attached, downloaded, wrote as plans or opened, as a grid or list. Filters given here replace the shown ones; library_list lists the same files.',
     file: 'src/renderer/src/components/LibraryPanel.tsx',
     params: {
       source: 'attachment, download, plan or opened',
@@ -38,13 +43,9 @@ export const PLACES = {
     }
   },
   progress: {
-    description: 'The orchestrator\'s progress view beside the chat, for the run the orchestrator column\'s chat owns: Now, Needs you, Plan, Workers and Activity. Any link to a run\'s progress.md shows it too.',
+    description: 'The orchestrator\'s progress view on the right side, for the run the orchestrator column\'s chat owns: Now, Needs you, Plan, Workers and Activity. Any link to a run\'s progress.md shows it too.',
     file: 'src/renderer/src/components/ProgressView.tsx',
     params: { section: 'now, needs, plan, workers or activity' }
-  },
-  tools: {
-    description: 'Tool health beside the chat: the MCP tool ledger\'s failure groups, review queue and per-tool success, with a call\'s evidence and its review.',
-    file: 'src/renderer/src/components/ToolLedgerPanel.tsx'
   }
 } satisfies Record<string, PlaceSpec>
 
@@ -53,7 +54,8 @@ export type PlaceName = keyof typeof PLACES
 export const ACTIONS = {
   'chat.open': { description: 'Show a chat in the orchestrator column.', params: { chatId: 'chat id (required)', pane: 'only 0, the default: the column is the one pane' } },
   'chat.new': { description: 'Show the new-chat screen in the orchestrator column.', params: { pane: 'only 0, the default' } },
-  'tools.refresh': { description: 'Reload the tool ledger.', place: 'tools' },
+  'app.show': { description: 'Show an installed Craft app on the right side, as its dock icon does; it starts on its first show.', params: { id: 'app id, an installed one from craft.apps (required)' } },
+  'shelf.open': { description: 'Show the app shelf on the right side, as the dock\'s + Add does. Nothing is installed by showing it.' },
   'library.clear': { description: 'Clear the library\'s filters and search.', place: 'library' },
   'library.open': { description: 'Open a library file in the side panel (text, Markdown, PDF pages or a picture); closing it returns to the library.', params: { id: 'file id from library_list (required)' }, place: 'library' },
   'plan.edit': {

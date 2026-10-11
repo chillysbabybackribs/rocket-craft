@@ -4,17 +4,20 @@ import './library.css'
 import { useEffect, useState } from 'react'
 import { Images, X } from 'lucide-react'
 import { PaneContext, usePane, usePaneChatId, usePaneView } from './pane.ts'
-import { currentChatId, dismissError, paneAt, useApp } from './store.ts'
+import { boardRun, currentChatId, dismissError, paneAt, useApp } from './store.ts'
 import { ArtifactPanel } from './components/ArtifactPanel.tsx'
 import { AttachmentNotice, copyTo } from './components/AttachmentMenu.tsx'
 import { BrowserPanel } from './components/BrowserPanel.tsx'
+import { CraftAppPanel } from './components/CraftAppPanel.tsx'
+import { Dock } from './components/Dock.tsx'
+import { Shelf } from './components/Shelf.tsx'
+import './craft.css'
 import { LibraryPanel } from './components/LibraryPanel.tsx'
 import { Composer } from './components/Composer.tsx'
 import { OrchestratorShell } from './components/OrchestratorShell.tsx'
 import { PlanDrawer } from './components/PlanDrawer.tsx'
 import { Split } from './components/Split.tsx'
 import { TitleStrip } from './components/TitleStrip.tsx'
-import { ToolLedgerPanel } from './components/ToolLedgerPanel.tsx'
 import { Transcript } from './components/Transcript.tsx'
 
 function greeting(): string {
@@ -116,6 +119,27 @@ function ChatCard() {
   )
 }
 
+/**
+ * The right side: one of an installed app, the shelf, the browser or the library, with the dock
+ * under it. A file a link opened (or a run's progress view) shows over it until closed.
+ */
+function RightSide() {
+  const artifact = useApp((state) => state.artifact !== null)
+  const side = useApp((state) => state.side)
+  let shown: React.ReactNode
+  if (artifact) shown = <ArtifactPanel />
+  else if (side.kind === 'app') shown = <CraftAppPanel key={side.id} id={side.id} />
+  else if (side.kind === 'browser') shown = <BrowserPanel />
+  else if (side.kind === 'library') shown = <LibraryPanel />
+  else shown = <Shelf />
+  return (
+    <div className="craft-right">
+      <div className="craft-region">{shown}</div>
+      <Dock />
+    </div>
+  )
+}
+
 export function App() {
   useEffect(() => {
     // Files dropped outside a chat must not navigate the Electron shell away from the app.
@@ -129,23 +153,20 @@ export function App() {
       window.removeEventListener('drop', preventNavigation)
     }
   }, [])
-  const artifact = useApp((state) => state.artifact)
-  const browserOpen = useApp((state) => state.browserOpen)
-  const toolsOpen = useApp((state) => state.toolsOpen)
-  const libraryOpen = useApp((state) => state.libraryOpen)
-  const error = useApp((state) => state.error)
-  // The side of the column, when it has one: the card then takes the larger share beside the browser.
+  const hasRun = useApp((state) => boardRun(state) !== null)
+  // The side of the column, when it has one: the chat column then takes a larger share.
   const split = useApp((state) => {
     const chatId = currentChatId(state)
     return chatId !== null && state.views[chatId]?.planTurnId != null
   })
+  const error = useApp((state) => state.error)
   return (
-    <div className={`app orch-app${toolsOpen && !artifact ? ' has-tools' : ''}${libraryOpen && !artifact ? ' has-library' : ''}${browserOpen || artifact ? ' has-browser' : ''}${split ? ' has-side' : ''}`}>
+    <div className={`app orch-app craft-layout${hasRun ? ' has-run' : ''}${split ? ' has-side' : ''}`}>
       <TitleStrip />
       <OrchestratorShell>
         <ChatCard />
       </OrchestratorShell>
-      {artifact ? <ArtifactPanel /> : libraryOpen ? <LibraryPanel /> : toolsOpen ? <ToolLedgerPanel /> : browserOpen && <BrowserPanel />}
+      <RightSide />
       <AttachmentNotice />
       {error && (
         <div className="toast" role="alert">

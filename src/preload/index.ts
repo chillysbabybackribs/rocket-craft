@@ -1,6 +1,6 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import { homedir } from 'node:os'
-import type { BrowserState, RocketBridge, SuggestionList, OrchestratorNotificationTarget } from '../shared/types.ts'
+import type { BrowserState, CraftBridge, CraftState, RocketBridge, SuggestionList, OrchestratorNotificationTarget } from '../shared/types.ts'
 import { HOST_PORT_MESSAGE } from '../shared/types.ts'
 
 // The renderer's only way out. Chat traffic does not go through here at all: main sends a
@@ -47,3 +47,25 @@ const bridge: RocketBridge = {
 }
 
 contextBridge.exposeInMainWorld('rocket', bridge)
+
+// The Craft apps (main's craft-studio.ts). A new listener first gets every app's current state, so
+// the dock and the shelf never wait for the next change to draw.
+const craft: CraftBridge = {
+  catalog: () => ipcRenderer.invoke('craft:catalog'),
+  install: (id) => ipcRenderer.invoke('craft:install', id),
+  remove: (id) => ipcRenderer.invoke('craft:remove', id),
+  show: (id, bounds, folder) => ipcRenderer.invoke('craft:show', id, bounds, folder ?? null),
+  setBounds: (bounds) => ipcRenderer.invoke('craft:set-bounds', bounds),
+  hide: () => ipcRenderer.invoke('craft:hide'),
+  onState: (listener) => {
+    const stop = listen<CraftState>('craft:state', listener)
+    void ipcRenderer.invoke('craft:states').then((states: CraftState[]) => { for (const state of states) listener(state) }, () => {})
+    return stop
+  }
+}
+
+contextBridge.exposeInMainWorld('craft', craft)
+
+// A press anywhere on the page takes the keyboard back from a docked app (the focus guard in
+// craft-dock/x11-helper.ts). Capture phase, so nothing on the page can stop it first.
+window.addEventListener('pointerdown', () => ipcRenderer.send('craft:pointerdown'), true)

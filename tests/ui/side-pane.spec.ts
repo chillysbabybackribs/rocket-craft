@@ -1,55 +1,7 @@
 import type { Page } from 'playwright'
 import { test, expect } from './app'
 
-// After Goals left the app and Evals became Tools: the toolbar's drawer names the four sections
-// that remain, saved preferences that still name goals or evals load and customize without error
-// (evals as Tools, in its place), and the plan drawer
-// keeps working in the split that the goal pane used to share (now the side pane).
-test('the sections drawer lists four sections, and preferences naming goals still load', async ({ rocket }) => {
-  const sections = rocket.page.getByRole('button', { name: 'Sections', exact: true })
-
-  await test.step('The drawer lists exactly Chats, Library, Tools and Browser', async () => {
-    await sections.click()
-    await expect(sections).toHaveAttribute('aria-expanded', 'true')
-    await expect(rocket.page.locator('.tb-drawer [data-section]')).toHaveText(['Chats', 'Library', 'Tools', 'Browser'])
-    await rocket.capture('drawer-four-sections')
-  })
-
-  await test.step('Preferences saved while Goals existed load after a restart', async () => {
-    await rocket.page.evaluate(() => {
-      const prefs = JSON.parse(localStorage.getItem('rocket.prefs') ?? '{}')
-      prefs.toolbar = { open: true, order: ['goals', 'browser', 'chats', 'library', 'evals'], kept: ['goals', 'library'], names: { goals: 'Aims', chats: 'History' } }
-      prefs.goalWidth = 520
-      localStorage.setItem('rocket.prefs', JSON.stringify(prefs))
-    })
-    await rocket.restart()
-    const page = rocket.page
-    await expect(page.getByRole('button', { name: 'Sections', exact: true })).toHaveAttribute('aria-expanded', 'true')
-    await expect(page.locator('.toolbar [data-section="goals"]')).toHaveCount(0)
-    await expect(page.locator('.toolbar [data-section]')).toHaveCount(4)
-    await expect(page.locator('.tb-drawer [data-section]')).toHaveText(['Browser', 'History', 'Tools'])
-    await expect(page.getByRole('button', { name: 'Library', exact: true })).toBeVisible()
-    await rocket.capture('drawer-saved-goals')
-  })
-
-  await test.step('Customize opens with the four sections, and Restore Defaults clears the old choices', async () => {
-    const page = rocket.page
-    await page.getByRole('button', { name: 'Customize sections…', exact: true }).click()
-    const dialog = page.getByRole('dialog', { name: 'Customize sections' })
-    await expect(dialog).toBeVisible()
-    await expect(dialog.locator('[data-section]')).toHaveCount(4)
-    await expect(dialog.getByRole('textbox', { name: 'Name for Chats' })).toHaveValue('History')
-    await rocket.capture('customize-saved-goals')
-    await dialog.getByRole('button', { name: 'Restore Defaults', exact: true }).click()
-    await expect(dialog.getByRole('textbox', { name: 'Name for Chats' })).toHaveValue('Chats')
-    await dialog.getByRole('button', { name: 'Done', exact: true }).click()
-    await expect(dialog).toHaveCount(0)
-    const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('rocket.prefs') ?? '{}').toolbar)
-    expect(JSON.stringify(saved)).not.toContain('goals')
-    expect(JSON.stringify(saved)).not.toContain('evals')
-  })
-})
-
+// The plan drawer opens in the chat's own side pane, which resizes and keeps its width.
 test('the plan drawer opens in the side pane and resizes', async ({ rocket }, info) => {
   const { page } = rocket
   await page.locator('.composer-folder').click()

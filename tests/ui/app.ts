@@ -217,15 +217,13 @@ export const test = base.extend<{ rocket: Studio; rocketEnv: Record<string, stri
 
 export { expect }
 
-export type SectionName = 'Chats' | 'Library' | 'Tools' | 'Browser'
+export type SectionName = 'Chats' | 'Library' | 'Browser'
 
 /**
- * A toolbar section's button: the only way to Chats, Library, Tools and Browser. A section
- * in the closed Sections drawer is reached by opening the drawer first.
+ * Where a section is opened: Chats is the title strip's menu; Browser and Library are toggles at
+ * the right end of the apps dock under the right side (docs/mockups/craft-studio.html).
  */
 export async function section(page: Page, name: SectionName): Promise<Locator> {
-  const id = name.toLowerCase()
-  const toggle = page.getByRole('button', { name: 'Sections', exact: true })
-  if (await toggle.getAttribute('aria-expanded') !== 'true' && await page.locator(`.tb-drawer [data-section="${id}"]`).count()) await toggle.click()
-  return page.locator(`.toolbar [data-section="${id}"]`)
+  if (name === 'Chats') return page.locator('.toolbar [data-section="chats"]')
+  return page.getByRole('navigation', { name: 'Apps dock' }).getByRole('button', { name, exact: true })
 }

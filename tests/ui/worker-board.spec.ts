@@ -139,6 +139,12 @@ test('the leader\'s plan drawer stays in the leader\'s column and the board\'s c
     expect(shown.x + shown.width).toBeLessThanOrEqual(column.x + column.width + 1)
     expect(shown.width).toBeGreaterThanOrEqual(220)
     expect(typed.width).toBeGreaterThanOrEqual(240)
+    // Beside Craft Studio's right side there is no room for the leader, its plan and the board at
+    // 1360px, so the board folds to its rail; the rail opens the board with its controls usable.
+    const rail = page.getByTestId('worker-rail')
+    await expect(rail).toBeVisible()
+    expect(await uncovered(rail)).toBe(true)
+    await rail.click()
     const board = page.getByTestId('worker-board')
     for (const control of [board.getByRole('button', { name: 'Running' }), board.getByRole('button', { name: 'Stop worker' }), board.getByRole('button', { name: 'Expand worker' })]) {
       await expect(control).toBeVisible()

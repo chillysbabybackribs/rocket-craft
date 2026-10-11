@@ -35,8 +35,7 @@ test('default UI scripts operate on the attached live window and leave it open',
   await expect(rocket.page.locator('.pane').getByRole('textbox', { name: 'Message', exact: true })).toHaveValue('Existing live draft')
   await info.attach('Live UI: one orchestrator pane', { path: first.data.captures[0].images[0].path, contentType: 'image/png' })
   const second = await call({ code: `
-    await page.getByRole('button',{name:'Sections',exact:true}).click()
-    await page.getByRole('button',{name:'Browser',exact:true}).click()
+    await page.getByRole('navigation',{name:'Apps dock'}).getByRole('button',{name:'Browser',exact:true}).click()
     const browser = await ui.surface('browser')
     await browser.getByRole('textbox',{name:'Test input',exact:true}).fill('Live browser draft')
     return await ui.pane(0).getByRole('textbox',{name:'Message',exact:true}).inputValue()
@@ -44,8 +43,7 @@ test('default UI scripts operate on the attached live window and leave it open',
   expect(second.result.isError, JSON.stringify(second.data)).toBeUndefined()
   expect(second.data.value).toBe('Existing live draft')
   await expect((await rocket.surface('browser')).getByRole('textbox', { name: 'Test input', exact: true })).toHaveValue('Live browser draft')
-  // A side panel folds the board into a rail; open it, then the worker, so both composers exist.
-  await rocket.page.getByRole('button', { name: 'Show workers', exact: true }).click()
+  // The board stays drawn beside the right side at this width; expand the worker so both composers exist.
   await rocket.page.getByRole('button', { name: 'Expand worker', exact: true }).click()
   await expect(rocket.page.getByTestId('worker-expanded')).toBeVisible()
   const failed = await call({ capture: false, code: `throw new Error('Deliberate live failure')` })

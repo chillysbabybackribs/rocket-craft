@@ -3,8 +3,8 @@ import { firstSentence, pendingChanges, type Orchestration, type PlanEdit } from
 import type { UiMapResult, UiWhere } from '../../shared/types.ts'
 import { filterEntries, parseFilters } from '../../shared/library.ts'
 import {
-  PROGRESS_SECTIONS, answerNeed, boardRun, closeArtifact, editPlan, expandWorker, loadLibrary, openChat,
-  openLibraryEntry, openProgress, patchLibrary, peekState, progressRun, refreshTools, setBrowserOpen, setLibraryOpen, setToolsOpen, stepWorker,
+  PROGRESS_SECTIONS, answerNeed, boardRun, craftStateOf, editPlan, expandWorker, loadCraft, loadLibrary, openChat,
+  openLibraryEntry, openProgress, patchLibrary, peekState, progressRun, setBrowserOpen, setLibraryOpen, showApp, showSide, stepWorker,
   wrapUpRun, resumeRun, workerStatus, type AppState, type ProgressSection
 } from './store.ts'
 
@@ -15,13 +15,20 @@ import {
 
 type Params = Record<string, unknown>
 
+/** The progress view when it is shown, else what the right side shows, even under a file opened over it (`side` says so). */
 function placeOf(state: AppState): PlaceName {
   if (progressRun(state)) return 'progress'
-  if (state.artifact) return 'chat'
-  if (state.libraryOpen) return 'library'
-  if (state.toolsOpen) return 'tools'
-  if (state.browserOpen) return 'browser'
-  return 'chat'
+  return state.side.kind
+}
+
+function craftWhere(state: AppState): NonNullable<UiWhere['craft']> {
+  return {
+    shown: !state.artifact && state.side.kind === 'app' ? state.side.id : null,
+    apps: state.craft.apps.map((app) => {
+      const { installState, run } = craftStateOf(state, app.id)
+      return { id: app.id, name: app.name, likeName: app.likeName, installState, run }
+    })
+  }
 }
 
 function libraryWhere(state: AppState): NonNullable<UiWhere['library']> {
@@ -79,9 +86,10 @@ export function where(): UiWhere {
         planOpen: pane.chatId !== null && state.views[pane.chatId]?.planTurnId != null
       }
     }),
-    side: state.artifact ? 'artifact' : state.libraryOpen ? 'library' : state.toolsOpen ? 'tools' : state.browserOpen ? 'browser' : 'chat',
+    side: state.artifact ? 'artifact' : state.side.kind,
     artifact: state.artifact ? { kind: state.artifact.kind, path: state.artifact.kind === 'artifact' ? state.artifact.path : null } : null,
-    library: state.libraryOpen ? libraryWhere(state) : null,
+    craft: craftWhere(state),
+    library: !state.artifact && state.side.kind === 'library' ? libraryWhere(state) : null,
     progress: progressWhere(state),
     board: boardWhere(state)
   }
@@ -118,24 +126,25 @@ async function painted(): Promise<void> {
 // ── Places ────────────────────────────────────────────────────────────
 
 const places: Record<PlaceName, (params: Params) => Promise<void>> = {
-  chat: async () => {
-    closeArtifact()
-    if (peekState().toolsOpen) setToolsOpen(false)
-    if (peekState().browserOpen) setBrowserOpen(false)
-    if (peekState().libraryOpen) setLibraryOpen(false)
+  app: async (params) => {
+    const id = text(params, 'id')
+    if (!peekState().craft.loaded) await loadCraft()
+    const installed = craftWhere(peekState()).apps.filter((app) => app.installState === 'installed').map((app) => app.id)
+    if (!id) throw new Error(`Give id: one of the installed apps, ${installed.join(', ') || 'none yet (suggest one to the user; only they install apps)'}.`)
+    showApp(id)
   },
+  shelf: async () => { showSide({ kind: 'shelf' }) },
+  browser: async () => { setBrowserOpen(true) },
   library: async (params) => {
     const view = text(params, 'view')
     if (view !== undefined && view !== 'grid' && view !== 'list') throw new Error('view is "grid" or "list".')
     const filtering = ['source', 'kind', 'chat', 'added', 'q'].some((name) => params[name] !== undefined)
     const filters = filtering ? parseFilters(params) : undefined
     if (filters?.chat && !peekState().chats.some((chat) => chat.id === filters.chat)) throw new Error(`There is no chat "${filters.chat}". studio_ui_where lists the chats on screen; library_list shows each file's chat.`)
-    if (!peekState().libraryOpen || peekState().artifact) setLibraryOpen(true)
+    if (peekState().side.kind !== 'library' || peekState().artifact) setLibraryOpen(true)
     if (!peekState().library.loaded) await loadLibrary()
     patchLibrary({ ...(filters ? { filters } : {}), ...(view ? { view } : {}) })
   },
-  browser: async () => { setBrowserOpen(true) },
-  tools: async () => { if (!peekState().toolsOpen || peekState().artifact) setToolsOpen(true) },
   progress: async (params) => {
     const section = text(params, 'section')
     if (section !== undefined && !(PROGRESS_SECTIONS as readonly string[]).includes(section)) throw new Error(`section is one of ${PROGRESS_SECTIONS.join(', ')}.`)
@@ -178,7 +187,8 @@ const actions: Record<ActionName, (params: Params) => Promise<unknown>> = {
     await openChat(chatId, paneIndex(params))
   },
   'chat.new': async (params) => { await openChat(null, paneIndex(params)) },
-  'tools.refresh': async () => { refreshTools() },
+  'app.show': async (params) => { await places.app(params) },
+  'shelf.open': async () => { await places.shelf({}) },
   'library.clear': async () => { patchLibrary({ filters: {} }) },
   'library.open': async (params) => {
     const id = text(params, 'id')

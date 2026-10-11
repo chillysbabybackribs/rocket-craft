@@ -472,8 +472,17 @@ export type UiMapOp =
 export type UiWhere = {
   place: string
   panes: Array<{ index: number; chatId: string | null; title: string; provider: ProviderId; running: boolean; planOpen: boolean }>
-  side: 'chat' | 'browser' | 'tools' | 'artifact' | 'library'
+  /** What the right side shows; an artifact (a file or the progress view) covers whatever is under it. */
+  side: 'app' | 'shelf' | 'browser' | 'library' | 'artifact'
   artifact: { kind: string; path: string | null } | null
+  /**
+   * The Craft apps: the one shown on the right side (null when it shows something else) and every
+   * app in the catalog with its install and run state. Models show installed apps; only the user installs.
+   */
+  craft?: {
+    shown: string | null
+    apps: Array<{ id: string; name: string; likeName: string; installState: 'none' | 'installing' | 'installed' | 'failed'; run: 'stopped' | 'starting' | 'shown' | 'working' | 'resting' }>
+  }
   /** The progress view: its run, the section in view, the plan, and what is waiting; null while it is not shown. */
   progress?: {
     runId: string
@@ -624,3 +633,72 @@ export type RocketBridge = {
 }
 
 export const HOST_PORT_MESSAGE = 'rocket:host-port'
+
+// ---- Craft apps --------------------------------------------------------------------------------
+// The open-source Craft apps hosted on the right side. Main installs them (`craft-install.ts`) and
+// docks their native windows (`craft-dock.ts`); the preload exposes this contract on `window.craft`.
+// The manifest itself is `craft-apps.ts`; these are only the shapes that cross into the renderer.
+
+/** One app as the shelf and the dock show it: the manifest's identity plus what is installed. */
+export type CraftAppInfo = {
+  id: string
+  name: string
+  /** The well-known app it stands in for, for the shelf's "like Photoshop". */
+  likeName: string
+  /** The dock's label under the icon. */
+  shortName: string
+  /** Two letters for the icon until the release icons are used. */
+  initials: string
+  /** The icon's colour. */
+  accent: string
+  description: string
+  /** `storytold/<app>` */
+  repo: string
+  /** The pinned version Craft Studio installs. */
+  version: string
+  extensions: string[]
+  /** The pinned release download, in bytes. */
+  downloadBytes: number
+  /** The download size until installed, then the bytes the install takes on disk. */
+  sizeBytes: number
+  installed: boolean
+  installedVersion: string | null
+}
+
+export type CraftInstallState = 'none' | 'installing' | 'installed' | 'failed'
+/**
+ * stopped: no process. starting: launched, its window not docked yet. shown: on screen, no limits.
+ * working: hidden, recently used or called by a model, lower CPU share. resting: hidden and idle
+ * for two minutes, memory squeezed and lowest CPU share. Every state but stopped has a process.
+ */
+export type CraftRunState = 'stopped' | 'starting' | 'shown' | 'working' | 'resting'
+
+export type CraftState = {
+  id: string
+  installState: CraftInstallState
+  /** 0 to 1 while installing. */
+  progress?: number
+  run: CraftRunState
+  /** A full sentence, for a failed install or start. */
+  error?: string
+}
+
+/** The right side's app region in CSS pixels, relative to the window's content. */
+export type CraftBounds = Bounds
+
+/** What the preload exposes on `window.craft`. */
+export type CraftBridge = {
+  catalog: () => Promise<CraftAppInfo[]>
+  /** Only the UI may install or remove apps; model tools never can. */
+  install: (id: string) => Promise<void>
+  remove: (id: string) => Promise<void>
+  /**
+   * Shows the app in the region, starting it first if it is not running, and parks whichever app
+   * was shown. `folder` is the chat's folder: an app started now may read and write only there.
+   */
+  show: (id: string, bounds: CraftBounds, folder?: string | null) => Promise<void>
+  setBounds: (bounds: CraftBounds) => Promise<void>
+  /** Parks the shown app, when the shelf, the browser or the library takes the region. */
+  hide: () => Promise<void>
+  onState: (listener: (state: CraftState) => void) => () => void
+}

@@ -11,7 +11,9 @@ export default defineConfig({
       index: resolve('src/main/index.ts'),
       host: resolve('src/host/index.ts'),
       // One browser_run script runs in a worker thread of the host, loaded from this file.
-      'script-worker': resolve('src/host/tools/script-worker.ts')
+      'script-worker': resolve('src/host/tools/script-worker.ts'),
+      // The Craft dock's X11 helper, a utility process of main (src/main/craft-dock/x11-helper.ts).
+      'craft-x11': resolve('src/main/craft-dock/x11-helper.ts')
     } } }
   },
   preload: {

@@ -53,9 +53,10 @@ test('every action with a place names a place that exists, and names are well fo
     assert.match(name, /^[a-z]+(\.[a-zA-Z]+)*$/, `place ${name}`)
     assert.match(spec.file, /^src\/renderer\//, `place ${name} names its component`)
   }
-  assert.ok(isPlace('tools'))
-  assert.ok(!isPlace('tools.nowhere'))
-  assert.ok(isAction('tools.refresh'))
+  assert.ok(isPlace('app') && isPlace('shelf') && isAction('app.show') && isAction('shelf.open'))
+  assert.ok(!isPlace('app.nowhere'))
+  // Models never install or remove an app, and the tool ledger's panel was dropped.
+  for (const name of [...Object.keys(PLACES), ...Object.keys(ACTIONS)]) assert.doesNotMatch(name, /install|remove|tools/)
   // The eval scenario panel is gone; its names must not linger in the map.
   assert.ok(!isPlace('evals.scenario') && !isPlace('evals.tools') && !isAction('evals.run.start'))
   assert.ok(!isAction('toString'))

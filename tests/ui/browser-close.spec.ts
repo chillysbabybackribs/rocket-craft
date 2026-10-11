@@ -1,6 +1,6 @@
 import { readFile, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
-import { test, expect } from './app'
+import { test, expect, section } from './app'
 
 for (const active of [0, 8]) test(`closing every restored tab with active index ${active} keeps Craft Studio and its draft alive`, async ({ rocket }) => {
   await writeFile(join(rocket.profile, 'browser-tabs.json'), JSON.stringify({ active, tabs: Array.from({ length: 9 }, (_, i) => ({
@@ -9,8 +9,7 @@ for (const active of [0, 8]) test(`closing every restored tab with active index 
   // Restore only happens when the browser is first used; the fixture has not opened it yet.
   const pid = await rocket.app.evaluate(() => process.pid)
   await rocket.page.getByRole('textbox', { name: 'Message', exact: true }).fill('Keep this draft')
-  await rocket.page.getByRole('button', { name: 'Sections', exact: true }).click()
-  await rocket.page.getByRole('button', { name: 'Browser', exact: true }).click()
+  await (await section(rocket.page, 'Browser')).click()
   await expect((await rocket.surface('browser')).getByRole('heading', { name: 'Craft Studio browser check' })).toBeVisible()
   await rocket.app.evaluate(({ app }) => {
     const state = globalThis as typeof globalThis & { createdForCloseTest: number }

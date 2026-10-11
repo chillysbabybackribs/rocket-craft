@@ -5,6 +5,93 @@ chat: the chat on the left, and on the right one of an installed Craft app, the 
 library, or the app shelf. It runs beside the user's Rocket apps without sharing a profile, port,
 lock or environment variable with them.
 
+## The right side and the dock
+
+The agreed UI is `docs/mockups/craft-studio.html`. The chat column is on the left; the right side
+(`App.tsx`'s `RightSide`, styles in `craft.css`) shows exactly one of an installed app
+(`CraftAppPanel.tsx`), the shelf (`Shelf.tsx`), the browser or the library, chosen by `side` in
+`store.ts`. A file a link opens, a turn's changes and the orchestrator's progress view still open
+in the artifact panel, over whatever the side shows, until closed. Under the right side the dock
+(`Dock.tsx`) holds the installed apps (icon and short name, in install order; a bar on the shown
+one; a green dot while it runs; an app installing sits there dimmed with its progress), then
+**+ Add** for the shelf, a divider, and the Browser and Library toggles. Toggling the browser or
+library off returns to the last app, else the shelf. Labels sit under the icons and nothing opens
+upward, because a docked app window paints over anything drawn across it. A first run, with no
+saved side, opens on the shelf.
+
+The shelf lists every app with its "like …" name, description and size, and Install, Open and
+Remove (Remove asks first when the app is running) or the install's progress; a failed install
+shows main's full-sentence error with Retry. Installing and removing are only the user's: the app
+map has `app {id}`, `shelf`, `app.show` and `shelf.open`, and no install or remove.
+
+The renderer talks to main through `window.craft` (`CraftBridge` in `src/shared/types.ts`, read
+through `src/renderer/src/craft.ts`): `catalog`, `install`, `remove`, `show(id, bounds, folder)`,
+`setBounds`, `hide` and `onState`. The app region sends its window-content-relative bounds in CSS
+pixels (main multiplies by the display's scale and the page zoom) with `show` on its first layout,
+along with the chat's folder, `setBounds` on every later change, and `hide` when it leaves
+(shelf, browser, library, a file shown over it, or an image preview open). `studio_ui_where`
+lists every app's install and run state under `craft`. `tests/ui/craft-dock.spec.ts` checks the
+whole flow against a fake bridge (`tests/ui/craft-fake.ts`, installed as `window.__craftFake` by an
+init script, which the renderer prefers over the preload's). `tests/ui/craft-real.spec.ts`
+installs the real PhotoCraft into a scratch apps folder, shows it and checks its X window sits on
+the region's edges; it downloads about 80 MB, so it runs only with `CRAFT_UI_REAL_APPS=1`.
+
+The worker board stays in the left column, drawn only while the chat owns a run. A run splits
+the window in half, so at 1360px the orchestrator column and one board column fit beside the
+right side; the leader's open plan, or a narrower window, folds the board to its rail of status
+counts, which opens the board over the chat. The run's
+head in the chat column keeps its Progress link, which opens the progress view on the right side.
+Rocket's tool ledger panel (Tools) was dropped from the UI and the map; the ledger and
+`studio_tool_review` still work.
+
+## The Craft apps: install, dock and processes
+
+Main owns the apps (`src/main/craft-*.ts`); the renderer only asks through `window.craft`
+(`CraftBridge` in `src/shared/types.ts`, exposed by the preload). `show(id, bounds, folder?)` takes
+the chat's folder as an optional third argument: an app started then may read and write only there,
+where the app supports it (PhotoCraft and VectorCraft). A new `onState` listener first gets every
+app's current state. A capture-phase `pointerdown` on the page (in the preload) gives the keyboard
+back to the page when a docked app had it.
+
+- **Manifest** (`src/shared/craft-apps.ts`): the 12 apps, each pinned to a release (tag, tar.gz,
+  size, SHA-256) and with its own control, token, roots and MCP-bridge flags, read from each app's
+  source at that tag. The file's header lists every app's quirks with the version and date.
+  `npm run craft:manifest` compares it with GitHub.
+- **Install** (`craft-install.ts`): only from the UI's IPC, never from model tools. The pinned
+  tar.gz and `SHA256SUMS.txt` are fetched over HTTPS; the archive must match both the list and the
+  pinned hash (a release republished under the same tag is refused), its members must stay in its
+  one folder, and its links inside it. It unpacks to `~/.local/share/craft-studio/apps/<id>/<version>/`
+  (`$XDG_DATA_HOME` honoured; `CRAFT_APPS_DIR` replaces the whole `craft-studio` folder, for tests).
+  A marker file is written last; the profile's `craft-apps.json` records which apps this profile
+  installed. Remove deletes the unpacked app only; the app's settings (`settings/<id>`) and the
+  user's documents stay.
+- **Processes** (`craft-launch.ts`): an app starts on its first show (or a model's first call) in its
+  own `systemd-run --user --scope` unit `craft-studio-<id>-<pid>-<n>`, with a free loopback control
+  port (PdfCraft: a control file), a 0600 token file where the app takes one, private XDG folders
+  under `settings/<id>`, and no `WAYLAND_DISPLAY`. Nothing ever closes an app except the user
+  (Remove, or the app's own close) and Craft Studio quitting, which stops every scope (SIGTERM, then
+  SIGKILL after 3 s) before the agent host.
+- **States** (`craft-dock.ts`): shown (no limits), working (hidden, used in the last two minutes:
+  `CPUWeight=50`), resting (hidden and idle two minutes: `MemoryHigh=64M`, `CPUWeight=5`; under
+  memory pressure, `/proc/pressure/memory` some avg10 above 10, `32M` and `1`). Limits are lifted
+  before an app is shown or called. A parked app is Composite-redirected while working (it keeps
+  drawing, so a model's screenshot works) and unredirected when it rests (it then draws nothing,
+  animations included); `touch(id)` redirects it again before a model's call.
+- **Docking** (`craft-dock/x11-helper.ts`, a utility process built as `out/main/craft-x11.js`,
+  pure Node on the `x11` package): it watches the root for `CreateNotify`, asks X-Resource which
+  process made the window, and if it is the launch (its pid, a child, or anything in its scope)
+  makes the window override-redirect and reparents it into Craft Studio's window under a server
+  grab, before the app maps it, so the window manager never sees it. A window managed anyway is
+  withdrawn and reparented only after the WM hands it back. Parked windows are moved out of view,
+  never unmapped. The focus guard (an InputOnly shield per app, keys forwarded to Electron, a
+  synchronous click grab replayed to the app, FocusIn redirected back to the app) runs in the same
+  process, so a busy main process never freezes the pointer.
+
+`npm run craft:e2e -- <evidence dir> [--wm=openbox|mutter] [--rest]` builds Craft Studio into a temp
+folder and checks all of this on a private Xvfb display with real downloads, in UI-test mode (no
+real model can receive anything typed there). Never point it at your own display: it clicks and
+types.
+
 ## What this is
 
 - Direction and phases: `docs/craft-studio-own-apps-plan.md`.
@@ -12,8 +99,10 @@ lock or environment variable with them.
   `docs/craft-studio-performance-plan.md`.
 - Per-app notes and licences: `docs/craft-studio-plan.md`. Agreed UI: `docs/mockups/craft-studio.html`.
 
-**Not built yet:** the Craft apps, the dock, the app shelf and the app tool set. What runs today
-is Rocket Orchestrator renamed and isolated (Phase 1). Everything below describes that base.
+**Built so far:** Rocket Orchestrator renamed and isolated (Phase 1), and Phase 2: the app
+manager behind `window.craft` (main and the preload) and the right side's dock, shelf and app
+region (see "The right side and the dock" below). **Not built yet:** the model tool set for
+driving apps. The rest of this README describes the Rocket base.
 Other `docs/` files cited below (mockups, plans) were not copied; they are in Rocket
 Orchestrator's repository, `~/Desktop/rocket-orchestrator/docs/`.
 
@@ -168,7 +257,7 @@ turn's timing, and `studio_diagnostics` summarizes them per provider and model.
 Craft Studio is laid out around one run (`docs/mockups/orchestrator-shell.html`,
 `src/renderer/src/components/OrchestratorShell.tsx`, `orchestrator.css`). On the left, full height
 below the title strip, is the orchestrator's chat: pane 0, the only pane. At start it shows the chat owning a running orchestration when its own
-chat owns none. A divider resizes it (min 420px, 340px beside a side panel; double-click resets to 40%). On the right, the
+chat owns none. Without a run the chat has the left side alone. With one, a divider resizes it (min 340px, since the right side is always shown; double-click resets to 40%). On its right, the
 worker board has one small window per task of the run that chat owns, with no cap: running first,
 then queued, then finished, newest first, filtered All / Running / Done, and the board scrolls.
 Each window is the worker chat's real transcript drawn read-only through `ShownChatContext`
@@ -241,17 +330,10 @@ reason as the toolbar's menus. The strip is the window's drag handle wherever no
 
 ### The toolbar
 
-The toolbar in the title strip is Mac-style and unified (`Toolbar.tsx`, design in
-`docs/mockups/titlebar-nav-drawer-mac.html`). Its Sections icon slides a drawer out to the right
-with the app's four sections by name (no icons), and is their only home: Chats opens its menu
-under it, and Library, Tools and Browser show or hide the side column. The drawer's last button, or a right-click on the icon,
-opens Customize: rename a section, drag it (or use the arrow keys on its handle) to reorder, and
-choose **Keep** to show it in the toolbar at all times or **Consolidate** to leave it in the
-drawer. A renamed section keeps its real name for screen readers and the app map, so a model asked
-for the tool ledger still finds it. The choices, and whether the drawer is open, are kept with the
-other preferences (`toolbar.ts`); choices saved when Tools was called Evals load under Tools.
-The focused chat's title, provider and folder follow. Every menu and popover is pulled left to end
-inside the chat card, since the browser's page is a native view that would paint over it.
+The toolbar in the title strip (`Toolbar.tsx`) is one button, Chats, which opens the list of every
+chat. Rocket's Sections drawer and Customize are gone: Browser and Library are dock toggles, and
+Tools was dropped. The menu is pulled left to end inside the chat card, since the browser's page
+and a docked app are native views that would paint over it.
 
 ### Images and files in chat
 
@@ -327,7 +409,7 @@ redirect it.
 
 ### Library
 
-The toolbar's Library section opens every file the chats have touched, beside the chat
+The dock's Library toggle opens every file the chats have touched, on the right side
 (`components/LibraryPanel.tsx`, agreed in `docs/mockups/document-library.html`; the plan is
 `docs/library-plan.md`). Four sources fill it, and nothing else on the disk is listed:
 attachments a chat has sent (a draft's are not on the shelf until sent), files a model downloaded
@@ -615,15 +697,15 @@ Captures, per-call JSON results, `runner.log` and traces remain in the session d
 
 The shell is finite, so a model navigates it by name rather than hunting for buttons in a
 screenshot. `src/shared/app-map.ts` is a hand-written map of every **place** the shell can show
-(`chat`, `browser`, `library`, `tools`, `progress`, with the parameters a place takes, such as the
+(`chat`, `app`, `shelf`, `browser`, `library`, `progress`, with the parameters a place takes, such as the
 library's filters or the progress view's section) and every **action** a model can take (`chat.open`,
-`library.open`, `tools.refresh`, `worker.expand`, `plan.edit`, `need.answer` …), each naming the component
+`app.show`, `shelf.open`, `library.open`, `worker.expand`, `plan.edit`, `need.answer` …), each naming the component
 file that renders it. The renderer's dispatcher (`src/renderer/src/app-map.ts`) implements the map:
 `where()` reads the shell's state in the map's words, `go(place, params)` shows a place and
 `act(action, params)` does an action, going to its place first when that is not on screen. The
 dashboard's own buttons call the same `go` and `act`, so what a click does and what a model does is
 one path, and the tables are typed against the map so a missing handler fails the typecheck. What a
-panel shows lives in the store for this reason (the library's filters, `toolsRefresh`, the progress
+panel shows lives in the store for this reason (the right side, the library's filters, the progress
 view's section in `store.ts`).
 Mapped controls carry `data-nav="<place>"`, which `studio_ui_snapshot` reports as `nav`.
 
@@ -830,10 +912,8 @@ still needing review.
 Records are pruned after 30 days or beyond 10,000 finished/previous-instance calls, at startup
 and every 100 starts. Active calls are preserved. Captures and traces are not deleted by ledger
 pruning. See [tool-failure-history.md](docs/tool-failure-history.md) for format, redaction,
-retention and query details. The toolbar's **Tools** section (`ToolLedgerPanel.tsx`, the app
-map's `tools` place) shows the ledger's health: failure groups, the review queue, per-tool success
-and a call's detail, where a call can be marked diagnosed or verified or linked to its retry.
-`tests/ui/tool-ledger.spec.ts` covers it.
+retention and query details. Craft Studio dropped Rocket's Tools panel (`ToolLedgerPanel.tsx`) and its
+`tools` place; the ledger and `studio_tool_review` are unchanged.
 
 Tools was once the Evals section, which also ran scenarios across providers and scored tools
 from those runs. That panel, its runners and `docs/evals` were removed; a profile's old
@@ -913,9 +993,7 @@ that edit (`UI check: edit as <name>` in the assignment) make the same change fr
 first is accepted and merged, the second is refused as a conflict naming `auth.js`, then rejected
 and its worktree and branch removed. A controlled worker may write its report outside its worktree
 when it is inside the main folder the worktree was made from.
-`tests/ui/side-pane.spec.ts` checks that the Sections drawer names Chats, Library, Tools and
-Browser, that saved preferences still naming the removed Goals section or the old Evals section
-load and customize, and
+`tests/ui/side-pane.spec.ts` checks
 that the plan drawer's side pane resizes, saves its width and restores it after a restart.
 
 Prefer accessible controls and observable state;
