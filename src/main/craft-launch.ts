@@ -6,6 +6,7 @@ import { createServer, type AddressInfo } from 'node:net'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
 import { launchArgs, type CraftAppManifest } from '../shared/craft-apps.ts'
+import { seedAppSettings } from './craft-seed.ts'
 import type { Limits, Started } from './craft-dock.ts'
 
 // Starting a docked app's process. Each launch runs in its own systemd user scope, so the dock can
@@ -43,7 +44,7 @@ export function freePort(): Promise<number> {
 }
 
 /** The environment a docked app starts with. */
-export function appEnv(base: NodeJS.ProcessEnv, settings: string): NodeJS.ProcessEnv {
+export function appEnv(base: NodeJS.ProcessEnv, settings: string, app?: CraftAppManifest): NodeJS.ProcessEnv {
   const env: NodeJS.ProcessEnv = {}
   for (const [name, value] of Object.entries(base)) {
     if (/^(CRAFT_|ROCKET_|ELECTRON_|CHROME_|GOOGLE_API|NODE_OPTIONS$|WAYLAND_DISPLAY$|ORIGINAL_XDG_CURRENT_DESKTOP$)/.test(name)) continue
@@ -55,6 +56,8 @@ export function appEnv(base: NodeJS.ProcessEnv, settings: string): NodeJS.Proces
   env.XDG_DATA_HOME = join(settings, 'data')
   env.XDG_CACHE_HOME = join(settings, 'cache')
   env.XDG_STATE_HOME = join(settings, 'state')
+  // Some apps keep their whole settings folder behind a variable; it points inside the same config home.
+  if (app?.configEnv) env[app.configEnv.name] = join(settings, 'config', app.configEnv.folder)
   return env
 }
 
@@ -121,6 +124,9 @@ export class CraftLauncher {
     const settings = this.options.settingsOf(app.id)
     for (const sub of ['config', 'data', 'cache', 'state']) await mkdir(join(settings, sub), { recursive: true })
 
+    const seedProblem = await seedAppSettings(app, join(settings, 'config'))
+    if (seedProblem) console.warn(seedProblem)
+
     const port = app.control.kind === 'port' ? await freePort() : null
     const controlFile = app.control.kind === 'file' ? join(runtimeDir, `${app.id}-${launch}.control.json`) : null
     if (controlFile) await rm(controlFile, { force: true })
@@ -130,7 +136,7 @@ export class CraftLauncher {
       await writeFile(tokenFile, randomBytes(32).toString('hex'), { mode: 0o600 })
     }
     const args = launchArgs(app, { port: port ?? undefined, controlFile: controlFile ?? undefined, tokenFile: tokenFile ?? undefined, folder })
-    const env = appEnv(process.env, settings)
+    const env = appEnv(process.env, settings, app)
     const cwd = folder || homedir()
     const log = openSync(join(logsDir, `${app.id}.log`), 'a')
     const unit = (await systemdAvailable()) ? `craft-studio-${app.id}-${this.tag}-${launch}` : null

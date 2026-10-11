@@ -68,7 +68,11 @@ back to the page when a docked app had it.
 - **Processes** (`craft-launch.ts`): an app starts on its first show (or a model's first call) in its
   own `systemd-run --user --scope` unit `craft-studio-<id>-<pid>-<n>`, with a free loopback control
   port (PdfCraft: a control file), a 0600 token file where the app takes one, private XDG folders
-  under `settings/<id>`, and no `WAYLAND_DISPLAY`. Nothing ever closes an app except the user
+  under `settings/<id>` (PhotoCraft's `PHOTOCRAFT_CONFIG_DIR` points at `config/photocraft` there),
+  and no `WAYLAND_DISPLAY`. Before each launch `craft-seed.ts` merges the manifest's `seedSettings`
+  into the app's settings file (the seeded keys always win; other keys are kept; an unreadable file is left alone and logged):
+  PhotoCraft no start-screen links and no in-app caption buttons, VectorCraft no home screen,
+  WordCraft no Discord pill. Nothing ever closes an app except the user
   (Remove, or the app's own close) and Craft Studio quitting, which stops every scope (SIGTERM, then
   SIGKILL after 3 s) before the agent host.
 - **States** (`craft-dock.ts`): shown (no limits), working (hidden, used in the last two minutes:
