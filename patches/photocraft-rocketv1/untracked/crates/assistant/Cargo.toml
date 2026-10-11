@@ -1,0 +1,14 @@
+[package]
+name = "photocraft-assistant"
+description = "The Chat panel's model runner: drives the Claude, Codex and Cursor CLIs on the user's own subscriptions, with PhotoCraft's MCP bridge as their tools"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+serde_json = { workspace = true }
+base64 = "0.22"

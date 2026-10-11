@@ -1,0 +1,14 @@
+# Dependencies and build output
+node_modules/
+out/
+dist/
+release/
+target/
+*.AppImage
+# Downloaded app builds and archives stay out of the repo; they are fetched and checksummed on install
+*.tar.gz
+*.zip
+downloads/
+.cache/
+# Local logs and app data
+*.log

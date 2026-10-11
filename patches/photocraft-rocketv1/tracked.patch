@@ -1,0 +1,738 @@
+diff --git a/Cargo.lock b/Cargo.lock
+index 5d31563..d95280c 100644
+--- a/Cargo.lock
++++ b/Cargo.lock
+@@ -4189,6 +4189,7 @@ dependencies = [
+  "objc2-app-kit 0.3.2",
+  "objc2-foundation 0.3.2",
+  "open",
++ "photocraft-assistant",
+  "photocraft-automation",
+  "photocraft-codecs",
+  "photocraft-color",
+@@ -4235,6 +4236,14 @@ dependencies = [
+  "serde_json",
+ ]
+ 
++[[package]]
++name = "photocraft-assistant"
++version = "0.6.0"
++dependencies = [
++ "base64",
++ "serde_json",
++]
++
+ [[package]]
+ name = "photocraft-automation"
+ version = "0.6.0"
+@@ -4564,6 +4573,7 @@ dependencies = [
+  "flate2",
+  "log",
+  "photocraft-algo",
++ "photocraft-assistant",
+  "photocraft-cms",
+  "photocraft-codecs",
+  "photocraft-color",
+diff --git a/Cargo.toml b/Cargo.toml
+index afcfdd1..f73a2ea 100644
+--- a/Cargo.toml
++++ b/Cargo.toml
+@@ -35,6 +35,7 @@ photocraft-engine = { path = "crates/engine" }
+ photocraft-ui-egui = { path = "crates/ui-egui" }
+ photocraft-testkit = { path = "crates/testkit" }
+ photocraft-tablet = { path = "crates/tablet" }
++photocraft-assistant = { path = "crates/assistant" }
+ 
+ # external
+ thiserror = "2"
+diff --git a/apps/photocraft-web/Cargo.toml b/apps/photocraft-web/Cargo.toml
+index 6b4c627..caf6cf5 100644
+--- a/apps/photocraft-web/Cargo.toml
++++ b/apps/photocraft-web/Cargo.toml
+@@ -26,6 +26,7 @@ photocraft-doc = { workspace = true }
+ photocraft-ui-egui = { workspace = true }
+ egui = { workspace = true }
+ log = { workspace = true }
++serde_json = { workspace = true }
+ 
+ [target.'cfg(target_arch = "wasm32")'.dependencies]
+ # `wgpu` pulls egui-wgpu's defaults: WebGPU plus the WebGL2 fallback.
+diff --git a/apps/photocraft-web/src/main.rs b/apps/photocraft-web/src/main.rs
+index 5ba75f5..c1c65d2 100644
+--- a/apps/photocraft-web/src/main.rs
++++ b/apps/photocraft-web/src/main.rs
+@@ -12,13 +12,17 @@
+ //! - dropped files are read asynchronously by `web::WebShell` and delivered through the inbox.
+ //!
+ //! URL query flags: `?cpu` forces the CPU canvas path (same as `PHOTOCRAFT_CPU_CANVAS=1`);
+-//! `?webgl` forces the WebGL2 backend instead of WebGPU.
++//! `?webgl` forces the WebGL2 backend instead of WebGPU; `?control` gives a host page
++//! `window.photocraft`, the control channel without TCP (`control_bridge`).
+ 
+ #![deny(clippy::unwrap_used, clippy::expect_used, clippy::panic, clippy::unimplemented, clippy::todo, clippy::unreachable)]
+ 
+ #[cfg(any(target_arch = "wasm32", test))]
+ mod preset_bridge;
+ 
++#[cfg(any(target_arch = "wasm32", test))]
++mod control_bridge;
++
+ #[cfg(target_arch = "wasm32")]
+ mod indexed_presets;
+ 
+diff --git a/apps/photocraft-web/src/web.rs b/apps/photocraft-web/src/web.rs
+index 21c55a8..aa0d2ed 100644
+--- a/apps/photocraft-web/src/web.rs
++++ b/apps/photocraft-web/src/web.rs
+@@ -54,6 +54,7 @@ pub fn start() {
+         };
+         let q = query();
+         let force_cpu = q.contains("cpu");
++        let control = q.contains("control");
+         let mut options = eframe::WebOptions::default();
+         photocraft_ui_egui::gpu_canvas::use_adapter_limits(&mut options.wgpu_options.wgpu_setup);
+         if q.contains("webgl")
+@@ -83,7 +84,18 @@ pub fn start() {
+                     load_font_manifest(served.clone(), cc.egui_ctx.clone());
+                     let (session, warnings) = crate::preset_bridge::session(presets.clone());
+                     preset_warnings.extend(warnings);
+-                    let mut app = PhotocraftApp::new(session, services(inbox.clone()));
++                    let files = crate::control_bridge::Files::default();
++                    let mut services = services(inbox.clone());
++                    if control {
++                        files.attach(&mut services);
++                    }
++                    let mut app = PhotocraftApp::new(session, services);
++                    if control {
++                        match crate::control_bridge::install(cc.egui_ctx.clone(), files) {
++                            Ok(rx) => app = app.with_control(rx),
++                            Err(e) => log::error!("photocraft-web: control bridge not installed: {e}"),
++                        }
++                    }
+                     if !preset_warnings.is_empty() {
+                         photocraft_ui_egui::notices::post(&mut app, i18n::t("Some brush presets could not be loaded"), preset_warnings, true, None);
+                     }
+diff --git a/apps/photocraft/Cargo.toml b/apps/photocraft/Cargo.toml
+index c031c44..6cbceb1 100644
+--- a/apps/photocraft/Cargo.toml
++++ b/apps/photocraft/Cargo.toml
+@@ -27,6 +27,7 @@ photocraft-io = { workspace = true }
+ photocraft-format = { workspace = true }
+ photocraft-automation = { workspace = true }
+ photocraft-ui-egui = { workspace = true }
++photocraft-assistant = { workspace = true }
+ # Pen tablet pressure/tilt on macOS and X11 (the workspace's one isolated unsafe helper crate).
+ photocraft-tablet = { workspace = true }
+ eframe = { workspace = true, features = ["default_fonts", "wgpu", "accesskit", "wayland", "x11", "persistence"] }
+diff --git a/apps/photocraft/src/control_server.rs b/apps/photocraft/src/control_server.rs
+index 932e31e..f715cbd 100644
+--- a/apps/photocraft/src/control_server.rs
++++ b/apps/photocraft/src/control_server.rs
+@@ -16,15 +16,20 @@ use photocraft_ui_egui::control::{REPLY_DEADLINE, timeout_error};
+ use serde_json::{Value, json};
+ 
+ pub fn start(port: u16, token: String, ctx: egui::Context) -> Receiver<ControlRequest> {
+-    let (tx, rx) = channel::<ControlRequest>();
+     let listener = match TcpListener::bind(("127.0.0.1", port)) {
+         Ok(l) => l,
+         Err(e) => {
+             eprintln!("photocraft: control server failed to bind 127.0.0.1:{port}: {e}");
+-            return rx;
++            return channel::<ControlRequest>().1;
+         }
+     };
+     eprintln!("photocraft: control server listening on 127.0.0.1:{port}");
++    start_on(listener, token, ctx)
++}
++
++/// Serve on a listener already bound (the Chat panel's, on a free port).
++pub fn start_on(listener: TcpListener, token: String, ctx: egui::Context) -> Receiver<ControlRequest> {
++    let (tx, rx) = channel::<ControlRequest>();
+     std::thread::spawn(move || {
+         let limiter = ConnectionLimiter::new(MAX_CONNECTIONS);
+         let token = Arc::new(token);
+diff --git a/apps/photocraft/src/main.rs b/apps/photocraft/src/main.rs
+index 709c2b9..3681941 100644
+--- a/apps/photocraft/src/main.rs
++++ b/apps/photocraft/src/main.rs
+@@ -26,6 +26,7 @@ mod appearance;
+ #[cfg(target_os = "macos")]
+ mod apple_events;
+ mod caps_lock;
++mod chat;
+ mod control_server;
+ mod crash_guard;
+ mod cursor;
+@@ -263,6 +264,15 @@ fn main() -> eframe::Result {
+     } else {
+         None
+     };
++    // Window › Chat reaches this window through the control server: the one given with
++    // --control, or one of its own on a free loopback port.
++    let chat = chat::prepare(control.as_ref().map(|(port, token, _)| (*port, token.as_str())));
++    let (chat_control, chat_setup) = match chat {
++        Some((c, s)) => (c, Some(s)),
++        None => (None, None),
++    };
++    let chat_workspace = chat_setup.as_ref().and_then(|s| s.workspace.clone());
++    let chat_tooling = chat_setup.map(|s| s.tooling);
+     // Finder / Dock / Open With deliver files as Apple events, not arguments; catch the one that
+     // launched us as well as later ones. Lives until the event loop returns.
+     #[cfg(target_os = "macos")]
+@@ -334,7 +344,7 @@ fn main() -> eframe::Result {
+         options,
+         Box::new(move |cc| {
+             created_in_callback.store(true, std::sync::atomic::Ordering::Relaxed);
+-            let automation = control.as_ref().map(|(_, _, workspace)| workspace.clone());
++            let automation = control.as_ref().map(|(_, _, workspace)| workspace.clone()).or(chat_workspace.clone());
+             let mut services = services::native(automation);
+             services.preset_store = presets;
+             #[cfg(target_os = "linux")]
+@@ -348,6 +358,7 @@ fn main() -> eframe::Result {
+                         services::xwayland_command(var("FLATPAK_ID").as_deref(), var("APPIMAGE").as_deref(), std::env::var_os("DISPLAY").is_some());
+                 }
+             }
++            services.chat = chat_tooling.clone().map(chat::services);
+             let mut app = PhotocraftApp::new(Session::new(), services);
+             app.integrated_titlebar = cfg!(target_os = "macos");
+             app.custom_titlebar = custom_titlebar;
+@@ -433,6 +444,9 @@ fn main() -> eframe::Result {
+             if let Some((port, token, _)) = control {
+                 let rx = control_server::start(port, token, cc.egui_ctx.clone());
+                 app = app.with_control(rx);
++            } else if let Some(c) = chat_control {
++                let rx = control_server::start_on(c.listener, c.token, cc.egui_ctx.clone());
++                app = app.with_control(rx);
+             }
+             #[cfg(target_os = "macos")]
+             {
+diff --git a/crates/ui-egui/Cargo.toml b/crates/ui-egui/Cargo.toml
+index 479de86..3a67191 100644
+--- a/crates/ui-egui/Cargo.toml
++++ b/crates/ui-egui/Cargo.toml
+@@ -16,6 +16,7 @@ photocraft-doc = { workspace = true }
+ photocraft-compose = { workspace = true }
+ photocraft-gpu = { workspace = true }
+ photocraft-engine = { workspace = true }
++photocraft-assistant = { workspace = true }
+ photocraft-io = { workspace = true }
+ photocraft-plugins = { workspace = true }
+ photocraft-algo = { workspace = true }
+diff --git a/crates/ui-egui/src/canvas.rs b/crates/ui-egui/src/canvas.rs
+index 7de7b1d..cc49f9b 100644
+--- a/crates/ui-egui/src/canvas.rs
++++ b/crates/ui-egui/src/canvas.rs
+@@ -2630,8 +2630,9 @@ pub fn canvas_view(app: &mut PhotocraftApp, ui: &mut egui::Ui, idx: usize, rect:
+     // Under an open dialog the canvas widget is inert, but the image still pans and zooms.
+     let under_dialog = !app.ui.dialogs.is_empty();
+     let free_hover = under_dialog && crate::dialogs::free_pointer_over(&ctx, rect).is_some();
+-    // Navigation (wheel_nav.rs): scroll pans (⇧ or ⌘/Ctrl sideways); pinch and ⌥-scroll zoom around the pointer.
+-    let wheel = crate::wheel_nav::read(&ctx, app.session.prefs().general.zoom_with_scroll_wheel);
++    // Navigation (wheel_nav.rs): scroll pans (⇧ or ⌘/Ctrl sideways); pinch and ⌥-scroll zoom around
++    // the pointer, a ⌥-scroll notch gliding in over a few frames.
++    let wheel = crate::wheel_nav::read_gliding(&ctx, egui::Id::new(("pc-canvas-wheel", idx)), app.session.prefs().general.zoom_with_scroll_wheel);
+     // The wheel also scrolls over the scrollbars drawn on top of the canvas (last frame's hover).
+     let bars_id = egui::Id::new(("pc-canvas-bars-hover", idx));
+     let over_bars = ctx.data(|d| d.get_temp::<bool>(bars_id)).unwrap_or(false);
+diff --git a/crates/ui-egui/src/control.rs b/crates/ui-egui/src/control.rs
+index fac19f6..3421b7d 100644
+--- a/crates/ui-egui/src/control.rs
++++ b/crates/ui-egui/src/control.rs
+@@ -973,6 +973,21 @@ fn dispatch(app: &mut PhotocraftApp, ctx: &egui::Context, req: &ControlRequest)
+             }
+             None => err("missing `path`"),
+         },
++        // File › Place Embedded without its file picker: the image comes through the read root, as
++        // `app.open` does, and lands as a new layer of the active document.
++        "app.place" => match s("path") {
++            Some(path) => {
++                if let Err(e) = app.active_doc_id() {
++                    return err(format!("{e}: open or create a document to place into"));
++                }
++                let read = match app.services.automation_read.as_mut() {
++                    Some(read) => read(path),
++                    None => Err("automation read authority is not configured".into()),
++                };
++                wrap(read.and_then(|(name, bytes)| app.place_bytes(&name, bytes, None)).map(|placed| json!({"path": path, "placed": placed})))
++            }
++            None => err("missing `path`"),
++        },
+         "app.save" => wrap(app.save_automation(s("path").map(str::to_string)).map(|(p, w)| json!({"path": p, "warnings": w}))),
+         "app.quit" => {
+             app.allow_close = true;
+@@ -1770,6 +1785,32 @@ mod tests {
+         assert_eq!(error, "filesystem command denied");
+     }
+ 
++    #[test]
++    fn automation_place_adds_the_image_as_a_layer_of_the_active_document() {
++        let png = photocraft_codecs::encode(
++            &photocraft_codecs::Image::from_u8(2, 2, photocraft_codecs::ChannelLayout::Rgba, vec![255; 16]).unwrap(),
++            photocraft_codecs::Format::Png,
++            &photocraft_codecs::EncodeOptions::default(),
++        )
++        .unwrap();
++        let services = crate::Services {
++            automation_read: Some(Box::new(move |path: &str| Ok((path.rsplit('/').next().unwrap_or(path).to_string(), png.clone())))),
++            ..Default::default()
++        };
++        let mut app = PhotocraftApp::new(photocraft_engine::Session::new(), services);
++        let ctx = egui::Context::default();
++        let r = call(&mut app, &ctx, "app.place", json!({"path": "in/sky.png"}));
++        assert_eq!(r["ok"], false, "no document to place into: {r}");
++        app.run("file.new", json!({"width": 8, "height": 8})).unwrap();
++        let before = app.session.active().unwrap().doc.layers.len();
++        let r = call(&mut app, &ctx, "app.place", json!({"path": "in/sky.png"}));
++        assert_eq!(r["ok"], true, "{r}");
++        assert_eq!(r["result"]["path"], "in/sky.png");
++        assert_eq!(app.session.active().unwrap().doc.layers.len(), before + 1, "a new layer");
++        let r = call(&mut app, &ctx, "app.place", json!({}));
++        assert!(r["error"].as_str().unwrap().contains("missing `path`"), "{r}");
++    }
++
+     #[test]
+     fn automation_open_and_save_use_the_roots_and_reply_with_warnings() {
+         use photocraft_color::{ColorMode, SampleType};
+diff --git a/crates/ui-egui/src/i18n/cs.tsv b/crates/ui-egui/src/i18n/cs.tsv
+index 23339c7..34ff481 100644
+--- a/crates/ui-egui/src/i18n/cs.tsv
++++ b/crates/ui-egui/src/i18n/cs.tsv
+@@ -2441,3 +2441,4 @@ fontWeight	Italic	Kurzíva
+ 	Front Image	Přední obraz
+ 	Search settings…	Hledat nastavení…
+ 	No matching settings	Žádná odpovídající nastavení
++	Chat	Chat
+diff --git a/crates/ui-egui/src/i18n/de.tsv b/crates/ui-egui/src/i18n/de.tsv
+index fa9bd5b..787150d 100644
+--- a/crates/ui-egui/src/i18n/de.tsv
++++ b/crates/ui-egui/src/i18n/de.tsv
+@@ -2479,3 +2479,4 @@ fontWeight	Italic	Kursiv
+ 	Front Image	Vorderes Bild
+ 	Search settings…	Einstellungen durchsuchen…
+ 	No matching settings	Keine passenden Einstellungen
++	Chat	Chat
+diff --git a/crates/ui-egui/src/i18n/el.tsv b/crates/ui-egui/src/i18n/el.tsv
+index 4c79317..457a26e 100644
+--- a/crates/ui-egui/src/i18n/el.tsv
++++ b/crates/ui-egui/src/i18n/el.tsv
+@@ -3548,3 +3548,4 @@ fontWeight	Thin	Πολύ λεπτά
+ 	Front Image	Μπροστινή εικόνα
+ 	Search settings…	Αναζήτηση ρυθμίσεων…
+ 	No matching settings	Δεν βρέθηκαν ρυθμίσεις
++	Chat	Συνομιλία
+diff --git a/crates/ui-egui/src/i18n/es.tsv b/crates/ui-egui/src/i18n/es.tsv
+index a8be679..7e2a67c 100644
+--- a/crates/ui-egui/src/i18n/es.tsv
++++ b/crates/ui-egui/src/i18n/es.tsv
+@@ -2520,3 +2520,4 @@ fontWeight	Italic	Cursiva
+ 	Front Image	Imagen frontal
+ 	Search settings…	Buscar ajustes…
+ 	No matching settings	No hay ajustes que coincidan
++	Chat	Chat
+diff --git a/crates/ui-egui/src/i18n/fr.tsv b/crates/ui-egui/src/i18n/fr.tsv
+index 25c8e0f..0538e9d 100644
+--- a/crates/ui-egui/src/i18n/fr.tsv
++++ b/crates/ui-egui/src/i18n/fr.tsv
+@@ -2858,3 +2858,4 @@ fontWeight	Italic	Italique
+ 	Front Image	Image de premier plan
+ 	Search settings…	Rechercher des réglages…
+ 	No matching settings	Aucun réglage correspondant
++	Chat	Discussion
+diff --git a/crates/ui-egui/src/i18n/id.tsv b/crates/ui-egui/src/i18n/id.tsv
+index 9030e72..05b2cd4 100644
+--- a/crates/ui-egui/src/i18n/id.tsv
++++ b/crates/ui-egui/src/i18n/id.tsv
+@@ -2845,3 +2845,4 @@ fontWeight	Italic	Miring
+ 	Front Image	Gambar Depan
+ 	Search settings…	Cari pengaturan…
+ 	No matching settings	Tidak ada pengaturan yang cocok
++	Chat	Obrolan
+diff --git a/crates/ui-egui/src/i18n/it.tsv b/crates/ui-egui/src/i18n/it.tsv
+index 9993449..8066600 100644
+--- a/crates/ui-egui/src/i18n/it.tsv
++++ b/crates/ui-egui/src/i18n/it.tsv
+@@ -2510,3 +2510,4 @@ fontWeight	Italic	Corsivo
+ 	Front Image	Immagine in primo piano
+ 	Search settings…	Cerca impostazioni…
+ 	No matching settings	Nessuna impostazione corrispondente
++	Chat	Chat
+diff --git a/crates/ui-egui/src/i18n/ja.tsv b/crates/ui-egui/src/i18n/ja.tsv
+index 310650e..808aaf8 100644
+--- a/crates/ui-egui/src/i18n/ja.tsv
++++ b/crates/ui-egui/src/i18n/ja.tsv
+@@ -3459,3 +3459,4 @@ fontWeight	Italic	斜体
+ 	Front Image	前面の画像
+ 	Search settings…	設定を検索…
+ 	No matching settings	一致する設定はありません
++	Chat	チャット
+diff --git a/crates/ui-egui/src/i18n/ko.tsv b/crates/ui-egui/src/i18n/ko.tsv
+index 21cf014..d62a224 100644
+--- a/crates/ui-egui/src/i18n/ko.tsv
++++ b/crates/ui-egui/src/i18n/ko.tsv
+@@ -3019,3 +3019,4 @@ fontWeight	Italic	기울임
+ 	Front Image	전면 이미지
+ 	Search settings…	설정 검색…
+ 	No matching settings	일치하는 설정 없음
++	Chat	채팅
+diff --git a/crates/ui-egui/src/i18n/nl.tsv b/crates/ui-egui/src/i18n/nl.tsv
+index 20370b4..4ab2ec2 100644
+--- a/crates/ui-egui/src/i18n/nl.tsv
++++ b/crates/ui-egui/src/i18n/nl.tsv
+@@ -3618,3 +3618,4 @@ cameraRaw	Whites	Witten
+ 	Search settings…	Instellingen zoeken…
+ 	No matching settings	Geen overeenkomende instellingen
+ 	PhotoCraft — Screen Color Picker	PhotoCraft — Schermkleurkiezer
++	Chat	Chat
+diff --git a/crates/ui-egui/src/i18n/pl.tsv b/crates/ui-egui/src/i18n/pl.tsv
+index ac086df..cb9aada 100644
+--- a/crates/ui-egui/src/i18n/pl.tsv
++++ b/crates/ui-egui/src/i18n/pl.tsv
+@@ -3459,3 +3459,4 @@ cameraRaw	Roughness	Chropowatość
+ 	Front Image	Obraz na wierzchu
+ 	Search settings…	Szukaj ustawień…
+ 	No matching settings	Brak pasujących ustawień
++	Chat	Czat
+diff --git a/crates/ui-egui/src/i18n/pt-br.tsv b/crates/ui-egui/src/i18n/pt-br.tsv
+index a664352..9c5132f 100644
+--- a/crates/ui-egui/src/i18n/pt-br.tsv
++++ b/crates/ui-egui/src/i18n/pt-br.tsv
+@@ -2866,3 +2866,4 @@ fontWeight	Italic	Itálico
+ 	Front Image	Imagem frontal
+ 	Search settings…	Pesquisar configurações…
+ 	No matching settings	Nenhuma configuração encontrada
++	Chat	Chat
+diff --git a/crates/ui-egui/src/i18n/ru.tsv b/crates/ui-egui/src/i18n/ru.tsv
+index f7d3cee..dfbfdff 100644
+--- a/crates/ui-egui/src/i18n/ru.tsv
++++ b/crates/ui-egui/src/i18n/ru.tsv
+@@ -2725,3 +2725,4 @@ fontWeight	Italic	Курсив
+ 	Rasterize Layer Style	Растрировать стиль слоя
+ 	Search settings…	Поиск настроек…
+ 	No matching settings	Нет подходящих настроек
++	Chat	Чат
+diff --git a/crates/ui-egui/src/i18n/uk.tsv b/crates/ui-egui/src/i18n/uk.tsv
+index 1f9a076..2b3888b 100644
+--- a/crates/ui-egui/src/i18n/uk.tsv
++++ b/crates/ui-egui/src/i18n/uk.tsv
+@@ -3546,3 +3546,4 @@ cameraRaw	Masking	Маскування
+ 	Search settings…	Пошук налаштувань…
+ 	No matching settings	Немає відповідних налаштувань
+ 	PhotoCraft — Screen Color Picker	PhotoCraft — Піпетка кольору екрана
++	Chat	Чат
+diff --git a/crates/ui-egui/src/i18n/zh-hans.tsv b/crates/ui-egui/src/i18n/zh-hans.tsv
+index de1d2dc..b9bad3d 100644
+--- a/crates/ui-egui/src/i18n/zh-hans.tsv
++++ b/crates/ui-egui/src/i18n/zh-hans.tsv
+@@ -2448,3 +2448,4 @@ fontWeight	Italic	斜体
+ 	Front Image	前面的图像
+ 	Search settings…	搜索设置…
+ 	No matching settings	没有匹配的设置
++	Chat	聊天
+diff --git a/crates/ui-egui/src/i18n/zh-hant.tsv b/crates/ui-egui/src/i18n/zh-hant.tsv
+index 697e531..9ae156f 100644
+--- a/crates/ui-egui/src/i18n/zh-hant.tsv
++++ b/crates/ui-egui/src/i18n/zh-hant.tsv
+@@ -2418,3 +2418,4 @@ fontWeight	Italic	斜體
+ 	Front Image	前面的影像
+ 	Search settings…	搜尋設定…
+ 	No matching settings	沒有符合的設定
++	Chat	聊天
+diff --git a/crates/ui-egui/src/input_tests.rs b/crates/ui-egui/src/input_tests.rs
+index 35794f1..b8c79ac 100644
+--- a/crates/ui-egui/src/input_tests.rs
++++ b/crates/ui-egui/src/input_tests.rs
+@@ -397,16 +397,16 @@ fn alt_scroll_zooms_in_steps_around_the_pointer() {
+     h.hover_at(p);
+     h.run_steps(2);
+     let (z0, d0) = (zoom(&h), doc_at(&h, p));
+-    // One notch with ⌥ held: ×1.1 (Photoshop), the point under the pointer stays put. The modifiers are
+-    // released right after the event, while egui still smooths the notch over later frames, which
+-    // must neither ease the zoom nor turn into a pan (#1490).
++    // One notch with ⌥ held: ×1.1 (Photoshop), the point under the pointer stays put. The step
++    // glides in over a few frames. The modifiers are released right after the event, while egui
++    // still smooths the notch over later frames, which must not turn into a pan (#1490).
+     wheel(&h, 1.0, Modifiers::ALT);
+-    h.run_steps(2);
+-    let at_once = zoom(&h);
++    h.run_steps(1);
++    let gliding = zoom(&h);
+     h.run_steps(40);
+     let (z1, d1) = (zoom(&h), doc_at(&h, p));
+     assert!((z1 / z0 - 1.1).abs() < 1e-3, "one ⌥ notch is ×1.1: {z0} -> {z1}");
+-    assert_eq!(at_once, z1, "the notch is applied the frame it arrives, with no easing");
++    assert!(gliding > z0 && gliding < z1, "the notch glides in: {z0} -> {gliding} -> {z1}");
+     assert!((d1[0] - d0[0]).abs() < 0.05 && (d1[1] - d0[1]).abs() < 0.05, "centred on the pointer: {d0:?} -> {d1:?}");
+     // Three notches back out.
+     wheel(&h, -3.0, Modifiers::ALT);
+diff --git a/crates/ui-egui/src/lib.rs b/crates/ui-egui/src/lib.rs
+index 0adf31b..2ab1fab 100644
+--- a/crates/ui-egui/src/lib.rs
++++ b/crates/ui-egui/src/lib.rs
+@@ -15,6 +15,7 @@ macro_rules! tl {
+ }
+ 
+ pub mod actions;
++pub mod chat_panel;
+ pub mod adjust_dialog;
+ pub mod adjust_editors;
+ pub mod adjust_preview;
+@@ -389,6 +390,8 @@ pub struct Services {
+     /// while AppKit's run loop is still going crashes or hangs Touch Bar Macs (#1575, #1458).
+     /// Without one, eframe closes the window and the app ends with it.
+     pub quit: Option<QuitFn>,
++    /// The Chat panel's model runner and canvas renderer (desktop only; see `chat_panel`).
++    pub chat: Option<chat_panel::ChatServices>,
+ }
+ 
+ /// A document histogram being computed off the UI thread: (document, revision, receiver of
+@@ -402,6 +405,8 @@ pub struct PhotocraftApp {
+     pub session: Session,
+     pub ui: UiState,
+     pub services: Services,
++    /// Window › Chat: its transcript, composer and runner.
++    pub chat: chat_panel::ChatUi,
+     /// Canvas caches per (document, display): CPU textures hold monitor values; the GPU
+     /// canvas state is shared (`canvas::GPU_OUTPUT`).
+     canvases: HashMap<(DocId, u32), canvas::CanvasCache>,
+@@ -620,6 +625,7 @@ impl PhotocraftApp {
+             session,
+             ui: UiState::default(),
+             services,
++            chat: Default::default(),
+             canvases: HashMap::new(),
+             navigator_textures: HashMap::new(),
+             monitors: Default::default(),
+@@ -1476,6 +1482,9 @@ impl eframe::App for PhotocraftApp {
+         if chrome && self.ui.panels.dock {
+             panels::right_dock(self, ui);
+         }
++        if chrome && self.ui.panels.chat {
++            chat_panel::show(self, ui);
++        }
+         let t = theme::Tokens::get(&ctx);
+         let backdrop = if chrome { prefs_ui::pasteboard_color(self).unwrap_or(t.canvas) } else { egui::Color32::BLACK };
+         egui::CentralPanel::default().frame(egui::Frame::NONE.fill(backdrop)).show(ui, |ui| {
+diff --git a/crates/ui-egui/src/menus.rs b/crates/ui-egui/src/menus.rs
+index 9e2aa0f..f200d37 100644
+--- a/crates/ui-egui/src/menus.rs
++++ b/crates/ui-egui/src/menus.rs
+@@ -54,6 +54,7 @@ pub const UI_COMMANDS: &[(&str, &str, &[&str], Option<&str>)] = &[
+     ("window.newWindowForDocument", "New Window for Document", &["Window", "Arrange"], None),
+     ("window.toggle.layers", "Layers", &["Window"], Some("F7")),
+     ("window.toggle.history", "History", &["Window"], None),
++    ("window.toggle.chat", "Chat", &["Window"], None),
+     ("window.toggle.properties", "Properties", &["Window"], None),
+     ("window.toggle.color", "Color", &["Window"], Some("F6")),
+     ("window.toggle.brushSettings", "Brush Settings", &["Window"], Some("F5")),
+@@ -543,6 +544,7 @@ pub(crate) fn invoke_unguarded(app: &mut PhotocraftApp, ctx: &egui::Context, id:
+             let slot = match &t["window.toggle.".len()..] {
+                 "layers" => &mut p.layers,
+                 "history" => &mut p.history,
++                "chat" => &mut p.chat,
+                 "properties" => &mut p.properties,
+                 "color" => &mut p.color,
+                 "navigator" => &mut p.navigator,
+@@ -731,6 +733,7 @@ fn checked(app: &PhotocraftApp, id: &str) -> Option<bool> {
+     Some(match id {
+         "window.toggle.layers" => p.layers,
+         "window.toggle.history" => p.history,
++        "window.toggle.chat" => p.chat,
+         "window.toggle.properties" => p.properties,
+         "window.toggle.color" => p.color,
+         "window.toggle.navigator" => p.navigator,
+diff --git a/crates/ui-egui/src/state.rs b/crates/ui-egui/src/state.rs
+index aaa417e..10a7198 100644
+--- a/crates/ui-egui/src/state.rs
++++ b/crates/ui-egui/src/state.rs
+@@ -328,6 +328,9 @@ impl Tool {
+ 
+ #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+ pub struct Panels {
++    /// Window › Chat: the model chat column beside the dock (this fork).
++    #[serde(default)]
++    pub chat: bool,
+     pub layers: bool,
+     pub history: bool,
+     pub properties: bool,
+@@ -368,6 +371,7 @@ pub struct Panels {
+ impl Default for Panels {
+     fn default() -> Self {
+         Self {
++            chat: false,
+             layers: true,
+             history: false,
+             properties: true,
+diff --git a/crates/ui-egui/src/wheel_nav.rs b/crates/ui-egui/src/wheel_nav.rs
+index 1d94b53..3d52fdb 100644
+--- a/crates/ui-egui/src/wheel_nav.rs
++++ b/crates/ui-egui/src/wheel_nav.rs
+@@ -13,17 +13,34 @@
+ //! before egui sees them, so Ctrl + a notched mouse wheel scrolls sideways and the pinch still
+ //! zooms.
+ //!
+-//! The target behaviour is exact ×1.1 steps, one per notch, with no easing in between
+-//! (measured frame by frame on a screen recording). egui smooths a wheel notch over several
+-//! frames, so zooming reads the wheel events themselves and ignores that smoothed tail; panning
+-//! keeps the smoothed delta. The Alt state is taken from the wheel events and kept until the next
+-//! wheel event: releasing Alt while the tail is still settling must not turn it into a pan.
++//! Each notch is an exact ×1.1 step. egui smooths a wheel notch over several frames, so zooming
++//! reads the wheel events themselves and ignores that smoothed tail; panning keeps the smoothed
++//! delta. The Alt state is taken from the wheel events and kept until the next wheel event:
++//! releasing Alt while the tail is still settling must not turn it into a pan.
++//!
++//! On the canvas ([`read_gliding`]) a notch's step glides in over about a tenth of a second
++//! instead of landing in one frame, and notches that arrive while it glides add to it, so a quick
++//! run of notches is one continuous zoom rather than a row of jumps. A pinch is already continuous
++//! and is applied as it comes.
++//!
++//! In a browser a mouse wheel notch arrives in pixels, not lines: Chromium on Linux sends 120 px
++//! a notch (Electron 44, measured with xdotool on Xvfb, 2026-10-10), three times egui's
++//! `line_scroll_speed`, which made every notch a ×1.33 jump. The web build counts
++//! [`BROWSER_NOTCH`] pixels as one notch.
+ 
+ use egui::{Context, Event, Id, Modifiers, MouseWheelUnit, RawInput, Vec2};
+ 
+ /// Zoom factor of one wheel notch: every step is exactly ×1.1.
+ pub const NOTCH: f32 = 1.1;
+ 
++/// Pixels of a browser wheel event that make one notch (Chromium sends 120 a notch).
++#[cfg(target_arch = "wasm32")]
++pub const BROWSER_NOTCH: f32 = 120.0;
++
++/// Seconds for a gliding wheel zoom to cover about 63% of what is left; it settles in about
++/// three times this.
++const GLIDE_TAU: f32 = 0.035;
++
+ /// A Ctrl + wheel event this soon (seconds) after a pinch step still belongs to the pinch, even
+ /// when it happens to be a whole notch.
+ const PINCH_GAP: f64 = 0.25;
+@@ -135,6 +152,49 @@ fn alt_id() -> Id {
+ /// Read this frame's wheel input. Call it every frame (hovered or not) so the Alt state of the
+ /// gesture follows the latest wheel event.
+ pub fn read(ctx: &Context, zoom_with_wheel: bool) -> Option<Wheel> {
++    classify(input(ctx, zoom_with_wheel))
++}
++
++/// [`read`], with wheel zoom notches gliding in rather than landing in one frame. `id` keeps the
++/// zoom still owed between frames, one per view. Call it every frame so a glide runs to its end.
++pub fn read_gliding(ctx: &Context, id: Id, zoom_with_wheel: bool) -> Option<Wheel> {
++    let i = input(ctx, zoom_with_wheel);
++    let pinch = i.zoom_delta.is_finite() && i.zoom_delta > 0.0 && i.zoom_delta != 1.0;
++    let id = id.with("pc-wheel-glide");
++    let mut owed = ctx.data(|d| d.get_temp::<f32>(id)).unwrap_or(0.0);
++    let now = match classify(i) {
++        Some(Wheel::Pan(d)) => return Some(Wheel::Pan(d)),
++        Some(Wheel::Zoom(f)) if pinch => f.ln(),
++        Some(Wheel::Zoom(f)) => {
++            // A notch the other way drops what the last ones still owed: turning the wheel back
++            // turns the zoom at once, and a glide stopped at the zoom limit leaves nothing behind.
++            let step = f.ln();
++            owed = if owed * step < 0.0 { step } else { owed + step };
++            0.0
++        }
++        None => 0.0,
++    };
++    let dt = ctx.input(|i| i.stable_dt).clamp(0.0, 0.1);
++    let (owed, take) = glide(owed, dt);
++    ctx.data_mut(|d| d.insert_temp(id, owed));
++    if owed != 0.0 {
++        ctx.request_repaint();
++    }
++    let f = (now + take).exp();
++    (f.is_finite() && f > 0.0 && f != 1.0).then_some(Wheel::Zoom(f))
++}
++
++/// Split the zoom still owed (log of the factor) into this frame's share and the rest, easing
++/// out over [`GLIDE_TAU`]; the last sliver is taken whole so the glide ends on the exact step.
++fn glide(owed: f32, dt: f32) -> (f32, f32) {
++    if !owed.is_finite() {
++        return (0.0, 0.0);
++    }
++    let take = owed * (1.0 - (-dt / GLIDE_TAU).exp());
++    if (owed - take).abs() < 1e-4 { (0.0, owed) } else { (owed - take, take) }
++}
++
++fn input(ctx: &Context, zoom_with_wheel: bool) -> Input {
+     let notch = ctx.options(|o| o.input_options.line_scroll_speed);
+     let (scroll, zoom_delta, latest, wheel, page) = ctx.input(|i| {
+         let latest = i.events.iter().rev().find_map(|e| match e {
+@@ -165,13 +225,16 @@ pub fn read(ctx: &Context, zoom_with_wheel: bool) -> Option<Wheel> {
+         |sum, (unit, delta, _)| {
+             sum + *delta
+                 * match unit {
++                    #[cfg(target_arch = "wasm32")]
++                    MouseWheelUnit::Point => notch / BROWSER_NOTCH,
++                    #[cfg(not(target_arch = "wasm32"))]
+                     MouseWheelUnit::Point => 1.0,
+                     MouseWheelUnit::Line => notch,
+                     MouseWheelUnit::Page => page,
+                 }
+         },
+     );
+-    classify(Input { scroll, raw, zoom_delta, alt, zoom_with_wheel, notch })
++    Input { scroll, raw, zoom_delta, alt, zoom_with_wheel, notch }
+ }
+ 
+ #[cfg(test)]
+@@ -248,6 +311,22 @@ mod tests {
+         assert_eq!(classify(pan), Some(Wheel::Pan(Vec2::new(0.0, 12.0))));
+     }
+ 
++    #[test]
++    fn a_glide_eases_out_and_ends_on_the_exact_step() {
++        let step = 1.1f32.ln();
++        let (mut owed, mut total, mut frames) = (step, 0.0, 0);
++        let (_, first) = glide(owed, 1.0 / 60.0);
++        assert!(first > 0.0 && first < step / 2.0, "the first frame takes part of the step: {first}");
++        while owed != 0.0 {
++            let (rest, take) = glide(owed, 1.0 / 60.0);
++            (owed, total, frames) = (rest, total + take, frames + 1);
++            assert!(frames < 60, "settles within a second");
++        }
++        assert!((total - step).abs() < 1e-6 && frames > 3, "{total} over {frames} frames");
++        assert_eq!(glide(f32::NAN, 0.1), (0.0, 0.0));
++        assert_eq!(glide(step, 0.0), (step, 0.0), "no time, no zoom");
++    }
++
+     #[test]
+     fn pinch_zooms() {
+         let i = Input { zoom_delta: 1.2, ..input(Vec2::ZERO, false) };
+diff --git a/docs/control-protocol.md b/docs/control-protocol.md
+index e5a13b5..78f3fe0 100644
+--- a/docs/control-protocol.md
++++ b/docs/control-protocol.md
+@@ -72,7 +72,7 @@ The transport is `apps/photocraft/src/control_server.rs`, and the handlers are i
+   base64 PNG data; a path is relative to the automation write root. Raises the window first
+   (default) because occluded macOS windows stop rendering
+ - `ui.focus`: bring the main window to the front
+-- `app.open {path}` / `app.save {path?}`: relative file I/O through the configured automation roots (`app.open` reads under the read root, `app.save` writes under the write root; absolute paths, `..` and paths escaping the root are refused, and both fail closed when no root was granted). Both reply with `warnings` (import/export notes such as "adjustment layer flattened"; `[]` when none), also shown to the user in the status bar and as a notice (`notices` in `ui.inspect`); `app.open` also returns the `path` and document `name`, `app.save` the `path` written. `app.save` without `path` writes back only to the document's own PSD, PSB or `.pcraft` file, like File › Save. Automation opens and saves never fire script events. Use these two rather than `file.open`, `file.save`, `file.saveAs` or `file.saveACopy`, which the control channel refuses (see [Engine commands](#engine-commands))
++- `app.open {path}` / `app.save {path?}`: relative file I/O through the configured automation roots (`app.open` reads under the read root, `app.save` writes under the write root; absolute paths, `..` and paths escaping the root are refused, and both fail closed when no root was granted). Both reply with `warnings` (import/export notes such as "adjustment layer flattened"; `[]` when none), also shown to the user in the status bar and as a notice (`notices` in `ui.inspect`); `app.open` also returns the `path` and document `name`, `app.save` the `path` written. `app.save` without `path` writes back only to the document's own PSD, PSB or `.pcraft` file, like File › Save. Automation opens and saves never fire script events. `app.place {path}` is File › Place Embedded without its file picker: it reads the image through the read root, as `app.open` does, and adds it as a new layer of the active document; it replies with the `path` and what was placed. Use these two rather than `file.open`, `file.save`, `file.saveAs` or `file.saveACopy`, which the control channel refuses (see [Engine commands](#engine-commands))
+ - `app.quit`
+ 
+ ## Engine commands
+diff --git a/docs/development.md b/docs/development.md
+index e75aad7..09c49c6 100644
+--- a/docs/development.md
++++ b/docs/development.md
+@@ -371,7 +371,7 @@ How the web shell (`apps/photocraft-web/src/web.rs`) differs from desktop:
+ - **Save / Save As / Export** trigger a browser download of the encoded bytes. The shell does this with a Blob, an object URL and a temporary `<a download>`, all created from Rust. There is no save dialog, so the suggested name becomes the download name.
+ - **Drag-and-drop:** `WebShell` takes the frame's `dropped_files` before the app sees them. It reads each file with `DroppedFile::bytes_async` and pushes the bytes into the inbox.
+ - **Startup failures:** `index.html` shows "Loading PhotoCraft…" until the app removes it, or replaces it with the error when the web runner fails to start. If the `.wasm` never downloads or doesn't match the page's `.js` (a stale cached `index.html` after a deploy), no Rust runs at all, so the page itself (CSS only, no script) adds a hint with a Reload link after 20 seconds.
+-- **No control server:** browsers can't listen on TCP. To automate the web build, drive headless Chrome with `--remote-debugging-port`. `Page.setInterceptFileChooserDialog` plus `DOM.setFileInputFiles` covers Open, `Input.dispatchDragEvent` with `files` covers drops, and `Browser.setDownloadBehavior` captures downloads.
++- **Control without TCP:** browsers can't listen on a socket, so there is no control server. With `?control` in the URL, the page gets `window.photocraft` instead (`apps/photocraft-web/src/control_bridge.rs`): `call(method, paramsJson)` answers every [control method](control-protocol.md) through the same queue as the desktop channel, and `put` / `take` / `files` are an in-memory file store standing in for the disk behind `app.open` and `app.save`. A host page that embeds the web build uses it. Without the flag nothing is installed. To automate the public build instead, drive headless Chrome with `--remote-debugging-port`. `Page.setInterceptFileChooserDialog` plus `DOM.setFileInputFiles` covers Open, `Input.dispatchDragEvent` with `files` covers drops, and `Browser.setDownloadBehavior` captures downloads.
+ - Headless Chrome on macOS (`--headless=new --enable-unsafe-webgpu`) gets a real WebGPU adapter.
+ 
+ 
+diff --git a/xtask/src/layers.rs b/xtask/src/layers.rs
+index 7d567d4..89d9b4f 100644
+--- a/xtask/src/layers.rs
++++ b/xtask/src/layers.rs
+@@ -46,6 +46,8 @@ pub const TABLE: &[(&str, Class)] = &[
+     ("adobe-assets", Class::Standalone),
+     // Pen tablet input (the one isolated `unsafe` helper: AppKit interop on macOS).
+     ("tablet", Class::Standalone),
++    // The Chat panel's model runner (spawns the provider CLIs); no workspace dependencies.
++    ("assistant", Class::Standalone),
+     ("doc", Class::Layer(1)),
+     ("ops", Class::Layer(2)),
+     ("paint", Class::Layer(2)),
