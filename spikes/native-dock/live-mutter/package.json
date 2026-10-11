@@ -1,0 +1,7 @@
+{
+  "name": "native-dock-live-mutter",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Live mutter check of the native-dock spike (uses ../node_modules)",
+  "main": "main.js"
+}

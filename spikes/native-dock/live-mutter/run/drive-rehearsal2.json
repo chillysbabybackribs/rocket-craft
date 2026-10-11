@@ -1,0 +1,656 @@
+{
+ "label": "rehearsal2",
+ "display": ":93",
+ "steps": [
+  {
+   "step": "start",
+   "active": 16777220,
+   "electron": 16777220,
+   "top": 6291520,
+   "focus": 16777220,
+   "atMs": 144
+  },
+  {
+   "step": "activated",
+   "active": 16777220,
+   "ok": true,
+   "atMs": 153
+  },
+  {
+   "step": "open grid early=none",
+   "open": {
+    "windowMappedMs": 3027,
+    "dockedMs": 3733,
+    "fittedMs": 3753
+   },
+   "dock": {
+    "managedBefore": true,
+    "parentNow": 16777220,
+    "calls": [
+     "XUnmapWindow(app)",
+     "XSendEvent(root, synthetic UnmapNotify) [ICCCM withdraw]",
+     "poll XQueryTree until parent == root and WM_STATE Withdrawn (666 ms)",
+     "XChangeWindowAttributes(app, override_redirect=True)",
+     "XReparentWindow(app, electron, x, y)",
+     "XMoveResizeWindow(app, x, y, w, h)",
+     "XMapWindow(app)"
+    ]
+   },
+   "mutter": {
+    "created": {
+     "ev": "create",
+     "wid": 35651588,
+     "pid": 294723,
+     "w": 1440,
+     "h": 900,
+     "or": 0,
+     "mode": "none",
+     "t": 1791693231016.1
+    },
+    "framed": true,
+    "inClientList": true,
+    "clientListAddAtMs": 2402,
+    "frameMapAtMs": 2466,
+    "activeChanges": [
+     {
+      "atMs": 2534,
+      "wid": 35651588
+     },
+     {
+      "atMs": 3389,
+      "wid": 16777220
+     }
+    ],
+    "clientListRemoveAtMs": 3393,
+    "frameGoneAtMs": 3493,
+    "frameVisibleMs": 1027,
+    "clientListMs": 991,
+    "events": [
+     {
+      "ev": "create",
+      "wid": 35651585,
+      "pid": 294723,
+      "w": 1,
+      "h": 1,
+      "or": 0,
+      "mode": "none",
+      "atMs": -62
+     },
+     {
+      "ev": "destroy",
+      "wid": 35651585,
+      "atMs": -49
+     },
+     {
+      "ev": "create",
+      "wid": 35651586,
+      "pid": 294723,
+      "w": 1,
+      "h": 1,
+      "or": 0,
+      "mode": "none",
+      "atMs": -41
+     },
+     {
+      "ev": "create",
+      "wid": 35651588,
+      "pid": 294723,
+      "w": 1440,
+      "h": 900,
+      "or": 0,
+      "mode": "none",
+      "atMs": 0
+     },
+     {
+      "ev": "create",
+      "wid": 39845888,
+      "pid": 294723,
+      "w": 1,
+      "h": 1,
+      "or": 0,
+      "mode": "none",
+      "atMs": 1536
+     },
+     {
+      "ev": "clientlist",
+      "apps": [
+       35651588
+      ],
+      "n": 2,
+      "atMs": 2402
+     },
+     {
+      "ev": "reparent",
+      "wid": 35651588,
+      "parent": 6291525,
+      "atMs": 2413
+     },
+     {
+      "ev": "frame-map",
+      "wid": 6291525,
+      "atMs": 2466
+     },
+     {
+      "ev": "active",
+      "wid": 35651588,
+      "atMs": 2534
+     },
+     {
+      "ev": "unmap",
+      "wid": 35651588,
+      "atMs": 2802
+     },
+     {
+      "ev": "active",
+      "wid": 16777220,
+      "atMs": 3389
+     },
+     {
+      "ev": "clientlist",
+      "apps": [],
+      "n": 1,
+      "atMs": 3393
+     },
+     {
+      "ev": "reparent",
+      "wid": 35651588,
+      "parent": 935,
+      "atMs": 3466
+     },
+     {
+      "ev": "reparent",
+      "wid": 35651588,
+      "parent": 16777220,
+      "atMs": 3471
+     },
+     {
+      "ev": "frame-unmap",
+      "wid": 6291525,
+      "atMs": 3493
+     },
+     {
+      "ev": "frame-unmap",
+      "wid": 6291525,
+      "atMs": 3499
+     },
+     {
+      "ev": "frame-destroy",
+      "wid": 6291525,
+      "atMs": 3510
+     }
+    ]
+   },
+   "atMs": 4525
+  },
+  {
+   "step": "shot",
+   "shot": "shots/rehearsal2/01-grid-docked-baseline.png",
+   "ms": 566,
+   "atMs": 5093
+  },
+  {
+   "step": "open photo early=early",
+   "open": {
+    "windowMappedMs": 3109,
+    "dockedMs": 3124,
+    "fittedMs": 3153
+   },
+   "dock": {
+    "managedBefore": false,
+    "parentNow": 16777220,
+    "calls": [
+     "XChangeWindowAttributes(app, override_redirect=True)",
+     "XReparentWindow(app, electron, x, y)",
+     "XMoveResizeWindow(app, x, y, w, h)",
+     "XMapWindow(app)"
+    ]
+   },
+   "mutter": {
+    "created": {
+     "ev": "create",
+     "wid": 44040196,
+     "pid": 294819,
+     "w": 1440,
+     "h": 900,
+     "or": 0,
+     "mode": "early",
+     "mapStateAtCatch": 0,
+     "caughtMs": 1,
+     "action": "override_redirect + XReparentWindow(electron, -5000, 0) under XGrabServer",
+     "t": 1791693235958.6
+    },
+    "framed": false,
+    "inClientList": false,
+    "events": [
+     {
+      "ev": "create",
+      "wid": 44040193,
+      "pid": 294819,
+      "w": 1,
+      "h": 1,
+      "or": 0,
+      "mode": "early",
+      "atMs": -55
+     },
+     {
+      "ev": "destroy",
+      "wid": 44040193,
+      "atMs": -50
+     },
+     {
+      "ev": "create",
+      "wid": 44040194,
+      "pid": 294819,
+      "w": 1,
+      "h": 1,
+      "or": 0,
+      "mode": "early",
+      "atMs": -49
+     },
+     {
+      "ev": "create",
+      "wid": 44040196,
+      "pid": 294819,
+      "w": 1440,
+      "h": 900,
+      "or": 0,
+      "mode": "early",
+      "mapStateAtCatch": 0,
+      "caughtMs": 1,
+      "action": "override_redirect + XReparentWindow(electron, -5000, 0) under XGrabServer",
+      "atMs": 0
+     },
+     {
+      "ev": "reparent",
+      "wid": 44040196,
+      "parent": 16777220,
+      "atMs": 2
+     },
+     {
+      "ev": "create",
+      "wid": 48234496,
+      "pid": 294819,
+      "w": 1,
+      "h": 1,
+      "or": 0,
+      "mode": "early",
+      "atMs": 1407
+     }
+    ]
+   },
+   "atMs": 8863
+  },
+  {
+   "step": "shot",
+   "shot": "shots/rehearsal2/02-photo-docked-early.png",
+   "ms": 478,
+   "atMs": 9344
+  },
+  {
+   "step": "open grid early=early",
+   "open": {
+    "windowMappedMs": 2286,
+    "dockedMs": 2309,
+    "fittedMs": 2339
+   },
+   "dock": {
+    "managedBefore": false,
+    "parentNow": 16777220,
+    "calls": [
+     "XChangeWindowAttributes(app, override_redirect=True)",
+     "XReparentWindow(app, electron, x, y)",
+     "XMoveResizeWindow(app, x, y, w, h)",
+     "XMapWindow(app)"
+    ]
+   },
+   "mutter": {
+    "created": {
+     "ev": "create",
+     "wid": 35651588,
+     "pid": 294921,
+     "w": 1440,
+     "h": 900,
+     "or": 0,
+     "mode": "early",
+     "mapStateAtCatch": 0,
+     "caughtMs": 1.8,
+     "action": "override_redirect + XReparentWindow(electron, -5000, 0) under XGrabServer",
+     "t": 1791693241284.3
+    },
+    "framed": false,
+    "inClientList": false,
+    "events": [
+     {
+      "ev": "create",
+      "wid": 35651585,
+      "pid": 294921,
+      "w": 1,
+      "h": 1,
+      "or": 0,
+      "mode": "early",
+      "atMs": -32
+     },
+     {
+      "ev": "destroy",
+      "wid": 35651585,
+      "atMs": -27
+     },
+     {
+      "ev": "create",
+      "wid": 35651586,
+      "pid": 294921,
+      "w": 1,
+      "h": 1,
+      "or": 0,
+      "mode": "early",
+      "atMs": -25
+     },
+     {
+      "ev": "create",
+      "wid": 35651588,
+      "pid": 294921,
+      "w": 1440,
+      "h": 900,
+      "or": 0,
+      "mode": "early",
+      "mapStateAtCatch": 0,
+      "caughtMs": 1.8,
+      "action": "override_redirect + XReparentWindow(electron, -5000, 0) under XGrabServer",
+      "atMs": 0
+     },
+     {
+      "ev": "reparent",
+      "wid": 35651588,
+      "parent": 16777220,
+      "atMs": 1
+     },
+     {
+      "ev": "create",
+      "wid": 39845888,
+      "pid": 294921,
+      "w": 1,
+      "h": 1,
+      "or": 0,
+      "mode": "early",
+      "atMs": 1469
+     }
+    ]
+   },
+   "atMs": 13414
+  },
+  {
+   "step": "shot",
+   "shot": "shots/rehearsal2/03-grid-docked-early.png",
+   "ms": 573,
+   "atMs": 14794
+  },
+  {
+   "step": "client list after docking",
+   "clients": [
+    16777220
+   ],
+   "active": 16777220,
+   "gridWm": {
+    "parent": 16777220,
+    "wmState": null,
+    "netWmState": [],
+    "override": true
+   },
+   "photoWm": {
+    "parent": 16777220,
+    "wmState": null,
+    "netWmState": [],
+    "override": true
+   },
+   "atMs": 14825
+  },
+  {
+   "step": "focus guard (grid)",
+   "focusAfterAppClick": "0x2200004",
+   "appWid": "0x2200004",
+   "focusAfterChatClick": "0x1000004",
+   "electron": "0x1000004",
+   "cellA": "G7",
+   "cellAValue": "to-a",
+   "cellB": "G11",
+   "cellBValue": "again",
+   "chat": "to-chat-wheel",
+   "chatExpected": "to-chat-wheel",
+   "scroll": [
+    [
+     0.0,
+     0.0
+    ],
+    [
+     0.0,
+     468.0
+    ]
+   ],
+   "activeEnd": 16777220,
+   "guardLog": [
+    {
+     "ev": "key-forwarded",
+     "keycode": 43
+    },
+    {
+     "ev": "key-forwarded",
+     "keycode": 38
+    },
+    {
+     "ev": "key-forwarded",
+     "keycode": 28
+    },
+    {
+     "ev": "press",
+     "app": 35651588,
+     "button": 1
+    },
+    {
+     "ev": "focusin-electron",
+     "detail": 2,
+     "redirected": 35651588
+    },
+    {
+     "ev": "want-electron"
+    },
+    {
+     "ev": "key-forwarded",
+     "keycode": 20
+    },
+    {
+     "ev": "key-forwarded",
+     "keycode": 25
+    },
+    {
+     "ev": "key-forwarded",
+     "keycode": 43
+    },
+    {
+     "ev": "key-forwarded",
+     "keycode": 26
+    },
+    {
+     "ev": "key-forwarded",
+     "keycode": 26
+    },
+    {
+     "ev": "key-forwarded",
+     "keycode": 46
+    }
+   ],
+   "atMs": 24473
+  },
+  {
+   "step": "shot",
+   "shot": "shots/rehearsal2/04-grid-after-focus-test.png",
+   "ms": 483,
+   "atMs": 24958
+  },
+  {
+   "step": "drag (grid)",
+   "selection": "D3:G11",
+   "atMs": 26111
+  },
+  {
+   "step": "clipboard (grid)",
+   "appCell": "D3",
+   "clipboardAfterAppCopy": "copied-from-app\n",
+   "chatAfterPaste": "copied-from-app\n",
+   "clipboardAfterChatCopy": "pasted-into-app",
+   "appCellB": "E3",
+   "appCellBValue": "pasted-into-app",
+   "atMs": 30071
+  },
+  {
+   "step": "shot",
+   "shot": "shots/rehearsal2/05-grid-after-clipboard.png",
+   "ms": 534,
+   "atMs": 30607
+  },
+  {
+   "step": "photo input",
+   "before": "Brush",
+   "focusAfterCanvasClick": "0x2a00004",
+   "appWid": "0x2a00004",
+   "toolAfterE": "Eraser",
+   "toolAfterB": "Brush",
+   "historyAfterDrag": [
+    "Open",
+    "Brush Tool",
+    "Brush Tool"
+   ],
+   "chatAfterM": "m",
+   "toolAfterMTypedToChat": "Brush",
+   "gpuInfo": {
+    "adapter": "NVIDIA GeForce GTX 1050",
+    "backend": "vulkan",
+    "canvas": "gpu",
+    "deviceType": "discreteGpu",
+    "driver": "NVIDIA 580.178.04",
+    "fallback": null,
+    "lost": null,
+    "preference": "auto",
+    "selected": "auto"
+   },
+   "atMs": 41932
+  },
+  {
+   "step": "shot",
+   "shot": "shots/rehearsal2/06-photo-after-brush.png",
+   "ms": 611,
+   "atMs": 42545
+  },
+  {
+   "step": "alt-tab proxy",
+   "clientList": {
+    "clients": [
+     16777220
+    ],
+    "active": 16777220
+   },
+   "appWids": [
+    35651588,
+    44040196
+   ],
+   "appsEverInClientList": [
+    35651588
+   ],
+   "activeValuesSeen": [
+    16777220,
+    35651588
+   ],
+   "activeChanges": 2,
+   "focusWindowsSeen": [
+    "0x1",
+    "0x1000004",
+    "0x2200004",
+    "0x2a00004"
+   ],
+   "atMs": 42573
+  },
+  {
+   "step": "gpu: photo shown, grid parked",
+   "processTable": {
+    "photo": "| 0 N/A N/A 294819 C+G ...0-linux-x86_64/bin/photocraft 204MiB |",
+    "grid": "| 0 N/A N/A 294921 C+G ....0-linux-x86_64/bin/gridcraft 203MiB |"
+   },
+   "computeApps": "294819, 204 MiB\n294921, 203 MiB",
+   "atMs": 43142
+  },
+  {
+   "step": "grid parked",
+   "screenshots": [
+    {
+     "ms": 1524,
+     "ok": true,
+     "timeout": false,
+     "text": "{\n  \"height\": 804,\n  \"path\": \"/home/dp/Desktop/rocket-craft/spikes/native-dock/live-mutter/shots/rehearsal2/grid-own-capture-while-parked.png\",\n  \"width\": 1020\n",
+     "file": "shots/rehearsal2/grid-own-capture-while-parked.png"
+    },
+    {
+     "ms": 1614,
+     "ok": true,
+     "timeout": false,
+     "text": "{\n  \"height\": 804,\n  \"path\": \"/home/dp/Desktop/rocket-craft/spikes/native-dock/live-mutter/shots/rehearsal2/grid-own-capture-while-parked.png\",\n  \"width\": 1020\n",
+     "file": "shots/rehearsal2/grid-own-capture-while-parked.png"
+    }
+   ],
+   "idleCpuUsecPer8s": 3263471,
+   "atMs": 54295
+  },
+  {
+   "step": "gpu: grid shown, photo parked",
+   "processTable": {
+    "photo": "| 0 N/A N/A 294819 C+G ...0-linux-x86_64/bin/photocraft 204MiB |",
+    "grid": "| 0 N/A N/A 294921 C+G ....0-linux-x86_64/bin/gridcraft 203MiB |"
+   },
+   "computeApps": "294819, 204 MiB\n294921, 203 MiB",
+   "atMs": 55538
+  },
+  {
+   "step": "photo parked",
+   "screenshots": [
+    {
+     "ms": 1440,
+     "ok": true,
+     "timeout": false,
+     "text": "screenshot of the live app window",
+     "file": "shots/rehearsal2/photo-own-capture-while-parked.png"
+    },
+    {
+     "ms": 1645,
+     "ok": true,
+     "timeout": false,
+     "text": "screenshot of the live app window",
+     "file": "shots/rehearsal2/photo-own-capture-while-parked.png"
+    }
+   ],
+   "idleCpuUsecPer8s": 243488,
+   "atMs": 66632
+  },
+  {
+   "step": "shot",
+   "shot": "shots/rehearsal2/07-grid-shown-photo-parked.png",
+   "ms": 873,
+   "atMs": 67510
+  }
+ ],
+ "electron": {
+  "xid": 16777220,
+  "top": 6291520,
+  "contentOrigin": [
+   100,
+   69
+  ],
+  "stage": {
+   "x": 380,
+   "y": 32,
+   "w": 1020,
+   "h": 804
+  }
+ },
+ "activeAtStart": 16777220,
+ "spikeGotFocusOnMap": true,
+ "result": "completed",
+ "driveMs": 67513
+}
