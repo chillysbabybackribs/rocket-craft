@@ -90,6 +90,8 @@ export type AppState = {
   side: Side
   /** The app last shown, which the side returns to when the browser or library is toggled off. */
   lastApp: string | null
+  /** Installed apps the user opened and pinned in the section nav, in tab order. */
+  openApps: string[]
   /** The Craft apps: the catalog, each app's install and run state, and the dock's order. */
   craft: CraftStore
   /** The library's shelf of every file the chats touched (docs/library-plan.md). */
@@ -171,6 +173,7 @@ type Prefs = {
   selections?: Record<string, Selection>
   side?: Side
   lastApp?: string | null
+  openApps?: string[]
   dockOrder?: string[]
   readingSpeed?: number
   libraryView?: 'grid' | 'list'
@@ -251,6 +254,7 @@ let state: AppState = {
   readingSpeed: clampSpeed(prefs.readingSpeed ?? 1),
   side: savedSide(prefs.side),
   lastApp: typeof prefs.lastApp === 'string' ? prefs.lastApp : null,
+  openApps: savedOpenApps(prefs),
   craft: { apps: [], loaded: false, error: null, states: {}, order: Array.isArray(prefs.dockOrder) ? prefs.dockOrder.filter((id) => typeof id === 'string') : [] },
   library: { entries: [], loaded: false, error: null, filters: {}, view: prefs.libraryView === 'list' ? 'list' : 'grid', selected: null, previews: {} },
   sideWidth: prefs.sideWidth ?? 400,
@@ -703,10 +707,25 @@ export function sideShown(current: AppState): Side | null {
 /** Show something on the right side; it closes an artifact over it. */
 export function showSide(side: Side): void {
   linkRequest++
+  const openApps = side.kind === 'app' && !state.openApps.includes(side.id) ? [...state.openApps, side.id] : state.openApps
   const lastApp = side.kind === 'app' ? side.id : state.lastApp
-  setState({ side, lastApp, artifact: null })
-  writePrefs({ side, lastApp })
+  setState({ side, lastApp, openApps, artifact: null })
+  writePrefs({ side, lastApp, openApps })
   if (side.kind === 'library' && !state.library.loaded) void loadLibrary()
+}
+
+/** Drop an app from the section nav; if it is shown, switch to another open app or the shelf. */
+export function closeOpenApp(id: string): void {
+  const index = state.openApps.indexOf(id)
+  if (index < 0) return
+  const openApps = state.openApps.filter((each) => each !== id)
+  const lastApp = state.lastApp === id ? (openApps.at(-1) ?? null) : state.lastApp
+  setState({ openApps, lastApp })
+  writePrefs({ openApps, lastApp })
+  if (state.side.kind === 'app' && state.side.id === id) {
+    const next = openApps[index] ?? openApps[index - 1]
+    showSide(next ? { kind: 'app', id: next } : { kind: 'shelf' })
+  }
 }
 
 /** Where the side goes when the browser or library is toggled off: the last app, else the shelf. */
@@ -1225,6 +1244,13 @@ function savedSide(saved: unknown): Side {
   return { kind: 'shelf' }
 }
 
+function savedOpenApps(prefs: Prefs): string[] {
+  const ids = Array.isArray(prefs.openApps) ? prefs.openApps.filter((id): id is string => typeof id === 'string') : []
+  const side = savedSide(prefs.side)
+  if (side.kind === 'app' && !ids.includes(side.id)) return [...ids, side.id]
+  return ids
+}
+
 type HasCraft = Pick<AppState, 'craft'>
 
 /** The states of apps main has not reported on, kept so a component reading one gets the same object each time. */
@@ -1274,10 +1300,15 @@ function putCraftState(next: CraftState): void {
 /** The shown side must name an installed app; one that is gone puts the shelf there. */
 function checkShownApp(): void {
   if (!state.craft.loaded) return
+  const openApps = state.openApps.filter((id) => isInstalled(state, id))
+  if (openApps.length !== state.openApps.length) {
+    setState({ openApps })
+    writePrefs({ openApps })
+  }
   if (state.side.kind === 'app' && !isInstalled(state, state.side.id)) showSide({ kind: 'shelf' })
   if (state.lastApp && !isInstalled(state, state.lastApp)) {
-    setState({ lastApp: null })
-    writePrefs({ lastApp: null })
+    setState({ lastApp: openApps.at(-1) ?? null })
+    writePrefs({ lastApp: openApps.at(-1) ?? null })
   }
 }
 
@@ -1338,7 +1369,8 @@ export async function installApp(id: string): Promise<void> {
 
 /** Remove an installed app from the shelf; the side leaves it first if it is shown. */
 export async function removeApp(id: string): Promise<void> {
-  if (state.side.kind === 'app' && state.side.id === id) showSide({ kind: 'shelf' })
+  if (state.openApps.includes(id)) closeOpenApp(id)
+  else if (state.side.kind === 'app' && state.side.id === id) showSide({ kind: 'shelf' })
   try {
     await craft().remove(id)
     putCraftState({ id, installState: 'none', run: 'stopped' })

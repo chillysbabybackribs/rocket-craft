@@ -1,5 +1,5 @@
-/* Craft Studio's right side (App.tsx, docs/mockups/craft-studio.html): Apps, Browser and Library
-   at the top, then one of an installed app, the shelf, the browser or the library. */
+/* Craft Studio's right side (App.tsx, docs/mockups/craft-studio.html): Apps, open-app tabs,
+   Browser and Library at the top, then one of an installed app, the shelf, the browser or the library. */
 
 /* The chat column keeps about the mockup's 420px at a 1360px window and grows slowly with it. A
    run's worker board needs the orchestrator column and one board column (340 + 10 + 300px,
@@ -46,6 +46,56 @@
 }
 .side-nav-item:hover { background: var(--hover); color: var(--text-2); }
 .side-nav-item.is-on { background: rgba(255, 255, 255, 0.1); color: var(--text); }
+
+.side-nav-apps {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+  max-width: min(420px, 42vw);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.side-nav-apps::-webkit-scrollbar { display: none; }
+.side-nav-app {
+  display: inline-flex;
+  align-items: stretch;
+  flex: none;
+  max-width: 148px;
+  height: 28px;
+  border-radius: 8px;
+  color: var(--text-3);
+  background: transparent;
+}
+.side-nav-app:hover { background: var(--hover); color: var(--text-2); }
+.side-nav-app.is-on { background: rgba(255, 255, 255, 0.1); color: var(--text); }
+.side-nav-app-main {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  padding: 0 4px 0 5px;
+  border-radius: 8px 0 0 8px;
+  font-size: 12.5px;
+  font-weight: 510;
+  white-space: nowrap;
+}
+.side-nav-app.is-on .side-nav-app-main { padding-right: 2px; }
+.side-nav-app-name { overflow: hidden; text-overflow: ellipsis; }
+.side-nav-app-close {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 22px;
+  margin-right: 2px;
+  border-radius: 0 6px 6px 0;
+  color: var(--text-4);
+  opacity: 0;
+}
+.side-nav-app:hover .side-nav-app-close,
+.side-nav-app.is-on .side-nav-app-close,
+.side-nav-app-close:focus-visible { opacity: 1; }
+.side-nav-app-close:hover { background: rgba(255, 255, 255, 0.08); color: var(--text-2); }
 
 /* An app's icon (craft-icons.tsx, docs/mockups/craft-icons.html option B): a white glyph on a
    squircle of the app's colour, lit from the top left. The coloured shadow is the card's. */

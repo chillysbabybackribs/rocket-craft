@@ -26,7 +26,7 @@ test('the where line names whether the asking chat is the column, and the side p
   assert.equal(whereForChat(where(), 'zzz').yourPane, null)
   assert.ok(describeWhere(whereForChat(where(), 'zzz')).includes('pane 0: first chat, running'))
   assert.ok(describeWhere(whereForChat(where(), null)).includes('this chat is not on screen'))
-  const craft: UiWhere['craft'] = { shown: 'photocraft', apps: [
+  const craft: UiWhere['craft'] = { shown: 'photocraft', open: ['photocraft'], apps: [
     { id: 'photocraft', name: 'PhotoCraft', likeName: 'Photoshop', installState: 'installed', run: 'shown' },
     { id: 'gridcraft', name: 'GridCraft', likeName: 'Excel', installState: 'none', run: 'stopped' }
   ] }

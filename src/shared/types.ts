@@ -506,6 +506,8 @@ export type UiWhere = {
    */
   craft?: {
     shown: string | null
+    /** App ids pinned in the section nav, in tab order. */
+    open: string[]
     apps: Array<{ id: string; name: string; likeName: string; installState: 'none' | 'installing' | 'installed' | 'failed'; run: 'stopped' | 'starting' | 'shown' | 'working' | 'resting' }>
   }
   /** The progress view: its run, the section in view, the plan, and what is waiting; null while it is not shown. */

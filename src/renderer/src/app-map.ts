@@ -24,6 +24,7 @@ function placeOf(state: AppState): PlaceName {
 function craftWhere(state: AppState): NonNullable<UiWhere['craft']> {
   return {
     shown: !state.artifact && state.side.kind === 'app' ? state.side.id : null,
+    open: state.openApps,
     apps: state.craft.apps.map((app) => {
       const { installState, run } = craftStateOf(state, app.id)
       return { id: app.id, name: app.name, likeName: app.likeName, installState, run }
