@@ -120,6 +120,10 @@ function startHost(): UtilityProcess {
               : `window.rocketMap.act(${JSON.stringify(message.op.action)}, ${JSON.stringify(message.op.params)})`
           return window.webContents.executeJavaScript(`(async () => { try { return await ${expression} } catch (error) { return { ok: false, error: String(error && error.message || error), where: window.rocketMap.where() } } })()`)
         }
+        if (message.op.op === 'craft') {
+          if (!craft) throw new Error('The Craft apps are not available in this session. Restart Craft Studio.')
+          return craft.agentOp(message.op)
+        }
         if (!browserAgent) throw new Error('The browser is not open')
         return browserAgent.handle(message.op)
       })

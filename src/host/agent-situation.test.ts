@@ -39,3 +39,13 @@ test('worker first-turn context never reads user tabs or shell, and only leaders
   assert.match((await roleContext('leader', inputs))!, /self-check[\s\S]*checkpoint needs/)
   assert.doesNotMatch((await roleContext('ordinary', inputs))!, /<self-check>/)
 })
+
+test('every role gets the Craft apps line, and a failing one never holds the message', async () => {
+  const { roleContext } = await import('./agent-situation.ts')
+  const inputs = { workspace: async () => null, teamwork: async () => null, browser: async () => null, where: async () => 'Where you are: shell', nudge: () => null }
+  const craft = async () => '<craft-apps>Installed: GridCraft (gridcraft: shown, Book1).</craft-apps>'
+  for (const role of ['worker', 'leader', 'ordinary'] as const) assert.match((await roleContext(role, { ...inputs, craft }))!, /<craft-apps>Installed: GridCraft/, role)
+  assert.doesNotMatch((await roleContext('ordinary', { ...inputs, craft: async () => { throw new Error('main is gone') } }))!, /craft-apps/)
+  assert.ok(agentSituationContext('Where you are: shell').includes('craft_run'))
+})
+

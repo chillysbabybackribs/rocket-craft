@@ -20,7 +20,8 @@
     "bench:transcript": "node --experimental-transform-types --disable-warning=ExperimentalWarning src/host/transcript-bench.ts",
     "demo:video": "electron-vite build --outDir .artifacts/demo/app/out && xvfb-run -a --server-args='-screen 0 3200x1800x24' node scripts/demo-video.mjs .artifacts/demo/run && python3 scripts/demo-edit.py .artifacts/demo/run",
     "craft:manifest": "node scripts/craft-manifest.mjs",
-    "craft:e2e": "node scripts/craft-e2e.mjs"
+    "craft:e2e": "node scripts/craft-e2e.mjs",
+    "craft:tools-e2e": "node scripts/craft-tools-e2e.mjs"
   },
   "dependencies": {
     "@anthropic-ai/claude-agent-sdk": "^0.3.293",

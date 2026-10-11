@@ -11,8 +11,9 @@ a dock of installed apps. Read `docs/craft-studio-own-apps-plan.md` (direction, 
 `docs/craft-studio-performance-plan.md` (resource states, install on demand) before building any
 of it; `docs/mockups/craft-studio.html` is the agreed UI. The shelf, the dock, installs and
 native docking are built (`src/shared/craft-apps.ts`, `src/main/craft-*.ts`,
-`src/renderer/src/components/{Dock,Shelf,CraftAppPanel}.tsx`); **the model tools for driving the
-apps are not built yet.** The ArtCraft name and logo are trademarks and must not
+`src/renderer/src/components/{Dock,Shelf,CraftAppPanel}.tsx`), and so are the model tools that drive
+them (`src/host/tools/craft.ts`, one fixed `craft_*` set for every app; per-app differences only in
+`craft-adapters.ts`). The ArtCraft name and logo are trademarks and must not
 appear anywhere in the app.
 
 Craft Studio runs beside the user's Rocket apps and must never share anything with them: its
@@ -58,6 +59,8 @@ so real chats are never touched, and `CRAFT_CAPTURE` (see the README) for a pict
   the CLI behaviour it depends on, with the version and date it was verified.
 - `src/host/journal.ts`: the journal of errors, slow turns and model notes (`journal.jsonl`); see Self-check.
 - `src/host/tools/`: the app's tool registry, served to all providers through role-selected profiles by one loopback MCP server.
+  `craft.ts` holds the Craft apps' tools, `craft-client.ts` the connections to the apps' control
+  channels (queue, sign-in, reconnect), `craft-adapters.ts` the table of what differs per app.
 - `src/shared/app-map.ts`: the hand-written map of the shell's places and actions;
   `src/renderer/src/app-map.ts` is the one dispatcher behind both the UI's buttons and the
   `studio_ui_where` / `go` / `act` tools. A new panel or button that a model may need goes in the

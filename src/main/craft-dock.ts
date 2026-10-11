@@ -176,6 +176,11 @@ export class CraftDock {
     return this.runs.get(id)?.started.control ?? null
   }
 
+  /** The running app's launch number, which changes when it is started again; null when it is not running. */
+  launchOf(id: string): number | null {
+    return this.runs.get(id)?.launch ?? null
+  }
+
   /** Shows the app, starting it first if needed, and parks whatever was shown. */
   async show(id: string, bounds: CraftBounds, folder?: string | null): Promise<void> {
     const app = this.deps.app(id)
@@ -201,12 +206,13 @@ export class CraftDock {
 
   /**
    * A model is about to call into the app: start it parked if it is not running, lift its limits
-   * and make sure it draws, all before the call. Returns how to reach it.
+   * and make sure it draws, all before the call. Returns how to reach it. `folder` is the calling
+   * chat's folder, which an app started by this call is confined to; a running app keeps its own.
    */
-  async touch(id: string): Promise<ControlInfo> {
+  async touch(id: string, folder?: string | null): Promise<ControlInfo> {
     const app = this.deps.app(id)
     if (!app) throw new Error(`Craft Studio has no app called “${id}”.`)
-    const run = await this.ensure(app)
+    const run = await this.ensure(app, folder || undefined)
     await this.captured(run)
     run.lastUseAt = this.now()
     await this.enqueue(async () => {
@@ -286,23 +292,23 @@ export class CraftDock {
     return undefined
   }
 
-  private ensure(app: CraftAppManifest): Promise<Run> {
+  private ensure(app: CraftAppManifest, folder?: string): Promise<Run> {
     const existing = this.runs.get(app.id)
     if (existing) return Promise.resolve(existing)
     const pending = this.starting.get(app.id)
     if (pending) return pending
     if (this.closed) return Promise.reject(new Error('Craft Studio is quitting.'))
-    const job = this.launch(app).finally(() => this.starting.delete(app.id))
+    const job = this.launch(app, folder ?? this.folder).finally(() => this.starting.delete(app.id))
     this.starting.set(app.id, job)
     return job
   }
 
-  private async launch(app: CraftAppManifest): Promise<Run> {
+  private async launch(app: CraftAppManifest, folder: string | null): Promise<Run> {
     const launch = this.nextLaunch++
     this.deps.onRun(app.id, 'starting')
     let started: Started
     try {
-      started = await this.deps.start(app, launch, this.folder)
+      started = await this.deps.start(app, launch, folder)
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error)
       this.deps.onRun(app.id, 'stopped', message)

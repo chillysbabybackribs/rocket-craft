@@ -26,6 +26,7 @@ import { answerMessage, askTools } from './tools/ask.ts'
 import { imageTools } from './tools/image.ts'
 import { roleContext } from './agent-situation.ts'
 import { browserContext, browserTools } from './tools/browser.ts'
+import { CraftAgent, craftSituation, craftTools } from './tools/craft.ts'
 import { ToolChannel } from './tools/channel.ts'
 import { libraryTools } from './tools/library.ts'
 import { ToolRegistry } from './tools/registry.ts'
@@ -159,8 +160,12 @@ try {
     return { model: turn?.model ?? null, turnId: turn?.id ?? null }
   })
 } catch (error) { journal.add('host', 'warn', 'ledger-unavailable', messageOf(error)) }
+// The Craft apps' tools reach main (which owns the apps) for touch and state, and the apps
+// themselves over their control channels from here.
+const craftAgent = new CraftAgent(askBrowser, (chatId) => (chatId ? store.chat(chatId)?.cwd ?? null : null))
 const toolRegistry = new ToolRegistry((name, message, { provider, chatId }) => journal.add(`tool:${name}`, 'warn', 'tool-error', redactText(message).slice(0, 500), { provider, chatId }), ledger, chatId => orchestration?.roleOf(chatId) ?? 'ordinary')
   .add(...browserTools({ request: askBrowser }, join(dataDir, 'browser-results'), (chatId) => (chatId ? store.chat(chatId)?.cwd ?? null : null), (chatId, url) => hub.noteOpened(chatId, url)))
+  .add(...craftTools(craftAgent))
   .add(...uiSnapshotTools(async () => await askBrowser({ op: 'uiSnapshot' }) as UiSnapshot))
   .add(...uiMapTools(askBrowser))
   .add(...uiRuns.tools())
@@ -240,6 +245,7 @@ const hub: Hub = new Hub(
       teamwork: () => teamwork.context(chatId, provider, fresh),
       browser: () => browserTabs(chatId, provider, fresh),
       where: async () => describeWhere(await askWhere(askBrowser, chatId)),
+      craft: () => craftSituation(craftAgent),
       nudge: () => selfCheck ? journal.nudge(chatId) : null
     })
   },

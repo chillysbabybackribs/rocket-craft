@@ -37,9 +37,9 @@ function harness(options: { autoCapture?: boolean } = {}): Harness {
       if (request.op === 'expect' && options.autoCapture !== false) queueMicrotask(() => capture(id!))
       return {}
     },
-    start: async (app, launch) => {
+    start: async (app, launch, folder) => {
       launches.set(app.id, launch)
-      log.push(`start:${app.id}`)
+      log.push(`start:${app.id}${folder ? `:${folder}` : ''}`)
       const exited = new Promise<{ code: number | null; signal: string | null }>((done) => exits.set(app.id, done))
       return { pid: 1000 + launch, unit: `craft-studio-${app.id}-${launch}`, exited, control: { port: 4000 + launch, tokenFile: null, controlFile: null, configHome: '/c', cli: '/cli', folder: null } } satisfies Started
     },
@@ -64,7 +64,7 @@ const flush = async (): Promise<void> => { for (let i = 0; i < 20; i++) await ne
 test('first show starts the app, catches its window, lifts its limits and then shows it', async () => {
   const h = harness()
   await h.dock.show('gridcraft', B, '/work')
-  assert.deepEqual(h.log, ['start:gridcraft', 'x:expect:gridcraft', 'limits:gridcraft:infinity/100', 'x:show:gridcraft:400,40,800x600'])
+  assert.deepEqual(h.log, ['start:gridcraft:/work', 'x:expect:gridcraft', 'limits:gridcraft:infinity/100', 'x:show:gridcraft:400,40,800x600'])
   assert.deepEqual(h.runs.map((r) => r.run), ['starting', 'shown'])
   assert.equal(h.dock.runOf('gridcraft'), 'shown')
   assert.equal(h.dock.controlOf('gridcraft')?.port, 4001)
@@ -146,6 +146,16 @@ test('a model call to an app that is not running starts it parked and never show
   assert.equal(h.dock.runOf('gridcraft'), 'working')
   assert.equal(h.dock.shown(), 'photocraft')
   assert.ok(!h.log.some((line) => line.startsWith('x:show:gridcraft')))
+})
+
+test('a model call that starts an app confines it to the calling chat\'s folder; a running app keeps its own', async () => {
+  const h = harness()
+  await h.dock.show('photocraft', B, '/shown')
+  await h.dock.touch('gridcraft', '/chat')
+  await h.dock.touch('photocraft', '/chat')
+  assert.deepEqual(h.log.filter((line) => line.startsWith('start:')), ['start:photocraft:/shown', 'start:gridcraft:/chat'])
+  assert.equal(h.dock.launchOf('gridcraft'), 2)
+  assert.equal(h.dock.launchOf('vectorcraft'), null)
 })
 
 test('bounds changes refit the shown app only when they change', async () => {

@@ -487,7 +487,7 @@ export type BrowserAgentOp =
   /** The chat is gone: its own tab is closed. */
   | { op: 'forget'; chat: string }
 /** The host-to-main channel also carries app UI captures, live automation connections and the app map. */
-export type MainAgentOp = BrowserAgentOp | { op: 'uiSnapshot' } | { op: 'uiConnection' } | { op: 'uiResize'; width: number; height: number } | UiMapOp
+export type MainAgentOp = BrowserAgentOp | { op: 'uiSnapshot' } | { op: 'uiConnection' } | { op: 'uiResize'; width: number; height: number } | UiMapOp | CraftAgentOp
 /** Main runs these in the renderer's dispatcher (`window.rocketMap`); see `src/shared/app-map.ts`. */
 export type UiMapOp =
   | { op: 'uiMap'; call: 'where' }
@@ -726,4 +726,43 @@ export type CraftBridge = {
   /** Parks the shown app, when the shelf, the browser or the library takes the region. */
   hide: () => Promise<void>
   onState: (listener: (state: CraftState) => void) => () => void
+}
+
+/**
+ * What the host's craft_* tools ask of main, which owns the apps. `apps` lists every app's install
+ * and run state. `touch` gets an installed app ready for a model's call (started parked if it is
+ * not running, its limits lifted, drawing) and says how to reach its control channel; the host
+ * then talks to the app itself. `folder` is the calling chat's folder, used only if this call
+ * starts the app. `control` reads the same without touching. Nothing here installs or removes an app.
+ */
+export type CraftAgentOp =
+  | { op: 'craft'; call: 'apps' }
+  | { op: 'craft'; call: 'touch'; app: string; folder: string | null }
+  /** How to reach a running app without touching it (null when it is not running): for quick reads that must not wake it. */
+  | { op: 'craft'; call: 'control'; app: string }
+
+export type CraftAgentApp = {
+  id: string
+  name: string
+  likeName: string
+  installState: CraftInstallState
+  run: CraftRunState
+  /** On the right side now. */
+  shown: boolean
+}
+
+/** How the host reaches a running app's control channel. Paths are 0600 files only this user reads. */
+export type CraftAgentControl = {
+  app: string
+  /** Changes when the app is started again, so the host drops connections to the old process. */
+  launch: number
+  /** Null for an app that picks its own port and writes it to `controlFile` (PdfCraft). */
+  port: number | null
+  tokenFile: string | null
+  controlFile: string | null
+  /** The app's XDG_CONFIG_HOME, where WordCraft writes its key. */
+  configHome: string
+  /** The folder the app was started with, where it confines file access (PhotoCraft, VectorCraft). */
+  folder: string | null
+  run: CraftRunState
 }
