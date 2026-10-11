@@ -4,17 +4,25 @@ Desktop workspace with a chat on the left and creative tools on the right: insta
 
 ## Screenshots
 
-**Apps shelf** — browse and install apps you need.
+**Apps** — install only the creative apps you need; open one beside the chat.
 
 ![Apps shelf](docs/images/apps-shelf.png)
 
-**Craft app** — a native app window docked beside the chat.
+**Models** — pick a provider and model per message; the thread stays shared.
 
-![PhotoCraft beside chat](docs/images/craft-app.png)
+![Model picker](docs/images/model-picker.png)
 
-**Browser** — built-in tabs for reference pages and downloads.
+**PhotoCraft** — a native app window docked into the right panel.
+
+![PhotoCraft beside chat](docs/images/photocraft.png)
+
+**Browser** — tabs and an address bar for reference pages and downloads.
 
 ![Built-in browser](docs/images/browser.png)
+
+**Library** — attachments, downloads, plans, and files opened from chat.
+
+![Library](docs/images/library.png)
 
 ## Requirements
 
