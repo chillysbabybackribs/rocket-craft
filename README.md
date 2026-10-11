@@ -28,6 +28,10 @@ Desktop workspace with a chat on the left and creative tools on the right: insta
 
 ![WordCraft beside chat](docs/images/wordcraft.png)
 
+**CADCraft** — 2D drafting and CAD beside the chat.
+
+![CADCraft beside chat](docs/images/cadcraft.png)
+
 **Browser** — Google and the sites you use, in a tab beside the chat.
 
 ![Built-in browser on Google](docs/images/browser.png)
