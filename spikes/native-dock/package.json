@@ -1,0 +1,13 @@
+{
+  "name": "native-dock-spike",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Scratch spike: dock native Craft app windows into an Electron window on X11",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "devDependencies": {
+    "electron": "^44.7.0"
+  }
+}

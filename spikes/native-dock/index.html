@@ -1,0 +1,69 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>native-dock spike</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: #1d1f24; color: #ddd; font: 13px sans-serif; overflow: hidden; }
+  #strip { height: 32px; display: flex; align-items: center; padding: 0 12px; background: #15161a; border-bottom: 1px solid #333; }
+  #strip .notch { margin-left: auto; width: 120px; height: 18px; border-radius: 9px; background: #2a2d35; }
+  #main { display: flex; height: calc(100% - 32px); }
+  #chat { width: 380px; padding: 12px; border-right: 1px solid #333; display: flex; flex-direction: column; gap: 8px; }
+  #chat textarea { flex: 0 0 120px; background: #111; color: #eee; border: 1px solid #444; font: 14px monospace; }
+  #log { flex: 1; overflow: auto; font: 11px monospace; color: #9a9; white-space: pre-wrap; }
+  #right { flex: 1; display: flex; flex-direction: column; position: relative; }
+  #stage { flex: 1; background: repeating-linear-gradient(45deg, #2b2e36 0 12px, #262930 12px 24px); position: relative; }
+  #stage .hint { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: #777; font-size: 18px; }
+  #dock { height: 64px; display: flex; gap: 10px; align-items: center; padding: 0 14px; background: #15161a; border-top: 1px solid #333; }
+  #dock button { width: 64px; height: 48px; background: #2a2d35; color: #ddd; border: 1px solid #444; border-radius: 8px; }
+  #dock button.on { border-color: #4c8dff; box-shadow: inset 0 3px 0 #4c8dff; }
+  #pop { display: none; position: absolute; left: 340px; top: 60px; width: 260px; height: 120px; background: #e33; color: #fff;
+         font-size: 16px; padding: 10px; border-radius: 8px; z-index: 10; }
+</style>
+</head>
+<body>
+<div id="strip">native-dock spike <span class="notch"></span></div>
+<div id="main">
+  <div id="chat">
+    <div>Chat (placeholder)</div>
+    <textarea id="chatInput" placeholder="type here"></textarea>
+    <div id="log"></div>
+  </div>
+  <div id="right">
+    <div id="stage"><div class="hint">no app shown</div></div>
+    <div id="dock">
+      <button id="b-photo" data-app="photo">Photo</button>
+      <button id="b-grid" data-app="grid">Grid</button>
+    </div>
+  </div>
+</div>
+<!-- A DOM popover that reaches over the docked region, to see what covers what. -->
+<div id="pop">DOM popover over the dock region</div>
+<script>
+  const { ipcRenderer } = require('electron')
+  const stage = document.getElementById('stage')
+  const logEl = document.getElementById('log')
+  const log = (s) => { logEl.textContent += s + '\n'; logEl.scrollTop = 1e9 }
+  function report() {
+    const r = stage.getBoundingClientRect()
+    ipcRenderer.send('stage', { x: Math.round(r.left), y: Math.round(r.top), w: Math.round(r.width), h: Math.round(r.height) })
+  }
+  new ResizeObserver(report).observe(stage)
+  window.addEventListener('resize', report)
+  report()
+  for (const b of document.querySelectorAll('#dock button')) {
+    b.onclick = async () => {
+      const t0 = performance.now()
+      const res = await ipcRenderer.invoke('open', b.dataset.app)
+      log(`${b.dataset.app}: ${Math.round(performance.now() - t0)} ms ${JSON.stringify({ cold: res.cold, windowMappedMs: res.windowMappedMs, dockedMs: res.dockedMs })}`)
+    }
+  }
+  ipcRenderer.on('shown', (_e, n) => {
+    for (const b of document.querySelectorAll('#dock button')) b.classList.toggle('on', b.dataset.app === n)
+  })
+  window.spikeLog = log
+  window.addEventListener('pointerdown', () => ipcRenderer.send('dom-pointerdown'), true)
+</script>
+</body>
+</html>
