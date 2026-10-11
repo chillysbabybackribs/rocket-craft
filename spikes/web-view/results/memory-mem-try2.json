@@ -1,0 +1,387 @@
+{
+  "scenario": "memory",
+  "label": "mem-try2",
+  "userData": "/home/dp/Desktop/rocket-craft/spikes/web-view/results/userdata-T",
+  "cache": "immutable",
+  "webgpuFlags": false,
+  "display": ":92",
+  "electron": "41.5.0",
+  "chrome": "146.0.7680.216",
+  "startedAt": "2026-10-11T03:50:23.525Z",
+  "log": [
+    "renderer 225450 in craft-webview-gridcraft-225341.scope",
+    "idle {\"pid\":225450,\"rssMB\":188,\"anonMB\":95.1,\"fileMB\":91.2,\"shmemMB\":1.7,\"swapMB\":0} gpu 218.8 total 856 {\"cpu\":{\"renderer\":4.6,\"gpu\":1.6}}",
+    "document {\"pid\":225450,\"rssMB\":208.6,\"anonMB\":114,\"fileMB\":92.6,\"shmemMB\":1.9,\"swapMB\":0} gpu 230.8 total 830 {\"openMs\":520,\"cpu\":{\"renderer\":8.4,\"gpu\":2.9}}",
+    "hidden 30 s, throttling off {\"pid\":225450,\"rssMB\":175.1,\"anonMB\":79.6,\"fileMB\":93.5,\"shmemMB\":2.1,\"swapMB\":0} gpu 219.4 total 778 {\"ping\":{\"ms\":5,\"result\":\"ok visible\"},\"cpu\":{\"renderer\":8.1,\"gpu\":2.8}}",
+    "hidden 30 s more, throttling on {\"pid\":225450,\"rssMB\":176.5,\"anonMB\":79.5,\"fileMB\":94.9,\"shmemMB\":2.1,\"swapMB\":0} gpu 219.4 total 779 {\"ping\":{\"ms\":1,\"result\":\"ok visible\"},\"cpu\":{\"renderer\":9,\"gpu\":3}}",
+    "after pressure signal + GC {\"pid\":225450,\"rssMB\":173,\"anonMB\":76,\"fileMB\":94.9,\"shmemMB\":2.1,\"swapMB\":0} gpu 219.5 total 776 {}",
+    "squeezed MemoryHigh=64M, 15 s {\"pid\":225450,\"rssMB\":173,\"anonMB\":76.1,\"fileMB\":94.8,\"shmemMB\":2.1,\"swapMB\":0.8} gpu 219.6 total 776 {\"pings\":[{\"ms\":3,\"result\":\"ok visible\"},{\"ms\":3,\"result\":\"ok visible\"},{\"ms\":2,\"result\":\"ok visible\"}],\"cgroup\":\"0::/user.slice/user-1000.slice/user@1000.service/app.slice/craft-webview-gridcraft-225341.scope\"}",
+    "shown again {\"pid\":225450,\"rssMB\":174.4,\"anonMB\":76.9,\"fileMB\":94.8,\"shmemMB\":2.7,\"swapMB\":0.7} gpu 228 total 790 {\"showToFrameMs\":45,\"ping\":{\"ms\":2,\"result\":\"ok visible\"}}",
+    "discard {\"totalBeforeMB\":790,\"totalAfterMB\":575,\"freedMB\":215}",
+    "reopened (document gone) {\"pid\":233899,\"rssMB\":186.2,\"anonMB\":94.8,\"fileMB\":89.7,\"shmemMB\":1.7,\"swapMB\":0} gpu 215.5 total 833 {}"
+  ],
+  "cgroup": "0::/user.slice/user-1000.slice/user@1000.service/app.slice/app-electron-225341.scope",
+  "gpu": {
+    "auxAttributes": {
+      "amdSwitchable": false,
+      "canSupportThreadedTextureMailbox": false,
+      "glImplementationParts": "(gl=none,angle=none)",
+      "glResetNotificationStrategy": 0,
+      "hardwareSupportsVulkan": false,
+      "inProcessGpu": true,
+      "initializationTime": 0,
+      "isAsan": false,
+      "isClangCoverage": false,
+      "jpegDecodeAcceleratorSupported": false,
+      "optimus": false,
+      "passthroughCmdDecoder": false,
+      "sandboxed": false,
+      "skiaBackendType": "None",
+      "subpixelFontRendering": true,
+      "targetCpuBits": 64,
+      "visibilityCallbackCallCount": 0
+    },
+    "gpuDevice": [
+      {
+        "active": true,
+        "deviceId": 5592,
+        "gpuPreference": 0,
+        "vendorId": 4098
+      },
+      {
+        "active": false,
+        "deviceId": 7313,
+        "gpuPreference": 0,
+        "vendorId": 4318
+      }
+    ]
+  },
+  "stages": [
+    {
+      "stage": "idle",
+      "t": 1791690634341,
+      "renderer": {
+        "pid": 225450,
+        "rssMB": 188,
+        "anonMB": 95.1,
+        "fileMB": 91.2,
+        "shmemMB": 1.7,
+        "swapMB": 0
+      },
+      "gpu": {
+        "type": "GPU",
+        "pid": 225375,
+        "rssMB": 218.8,
+        "anonMB": 113.3,
+        "fileMB": 103.9,
+        "shmemMB": 1.6,
+        "swapMB": 0
+      },
+      "browser": {
+        "type": "Browser",
+        "pid": 225341,
+        "rssMB": 278,
+        "anonMB": 109.3,
+        "fileMB": 168,
+        "shmemMB": 0.8,
+        "swapMB": 0
+      },
+      "totalRssMB": 856,
+      "cpu": {
+        "renderer": 4.6,
+        "gpu": 1.6
+      }
+    },
+    {
+      "stage": "document",
+      "t": 1791690653145,
+      "renderer": {
+        "pid": 225450,
+        "rssMB": 208.6,
+        "anonMB": 114,
+        "fileMB": 92.6,
+        "shmemMB": 1.9,
+        "swapMB": 0
+      },
+      "gpu": {
+        "type": "GPU",
+        "pid": 225375,
+        "rssMB": 230.8,
+        "anonMB": 124.7,
+        "fileMB": 104.3,
+        "shmemMB": 1.8,
+        "swapMB": 0
+      },
+      "browser": {
+        "type": "Browser",
+        "pid": 225341,
+        "rssMB": 219.4,
+        "anonMB": 46,
+        "fileMB": 168.9,
+        "shmemMB": 4.5,
+        "swapMB": 0
+      },
+      "totalRssMB": 830,
+      "openMs": 520,
+      "cpu": {
+        "renderer": 8.4,
+        "gpu": 2.9
+      }
+    },
+    {
+      "stage": "hidden 30 s, throttling off",
+      "t": 1791690693183,
+      "renderer": {
+        "pid": 225450,
+        "rssMB": 175.1,
+        "anonMB": 79.6,
+        "fileMB": 93.5,
+        "shmemMB": 2.1,
+        "swapMB": 0
+      },
+      "gpu": {
+        "type": "GPU",
+        "pid": 225375,
+        "rssMB": 219.4,
+        "anonMB": 113,
+        "fileMB": 104.3,
+        "shmemMB": 2.1,
+        "swapMB": 0
+      },
+      "browser": {
+        "type": "Browser",
+        "pid": 225341,
+        "rssMB": 212.2,
+        "anonMB": 42.7,
+        "fileMB": 168.7,
+        "shmemMB": 0.8,
+        "swapMB": 0
+      },
+      "totalRssMB": 778,
+      "ping": {
+        "ms": 5,
+        "result": "ok visible"
+      },
+      "cpu": {
+        "renderer": 8.1,
+        "gpu": 2.8
+      }
+    },
+    {
+      "stage": "hidden 30 s more, throttling on",
+      "t": 1791690733229,
+      "renderer": {
+        "pid": 225450,
+        "rssMB": 176.5,
+        "anonMB": 79.5,
+        "fileMB": 94.9,
+        "shmemMB": 2.1,
+        "swapMB": 0
+      },
+      "gpu": {
+        "type": "GPU",
+        "pid": 225375,
+        "rssMB": 219.4,
+        "anonMB": 113,
+        "fileMB": 104.3,
+        "shmemMB": 2.1,
+        "swapMB": 0
+      },
+      "browser": {
+        "type": "Browser",
+        "pid": 225341,
+        "rssMB": 212.2,
+        "anonMB": 42.8,
+        "fileMB": 168.7,
+        "shmemMB": 0.8,
+        "swapMB": 0
+      },
+      "totalRssMB": 779,
+      "ping": {
+        "ms": 1,
+        "result": "ok visible"
+      },
+      "cpu": {
+        "renderer": 9,
+        "gpu": 3
+      }
+    },
+    {
+      "stage": "after pressure signal + GC",
+      "t": 1791690738258,
+      "renderer": {
+        "pid": 225450,
+        "rssMB": 173,
+        "anonMB": 76,
+        "fileMB": 94.9,
+        "shmemMB": 2.1,
+        "swapMB": 0
+      },
+      "gpu": {
+        "type": "GPU",
+        "pid": 225375,
+        "rssMB": 219.5,
+        "anonMB": 113,
+        "fileMB": 104.5,
+        "shmemMB": 2.1,
+        "swapMB": 0
+      },
+      "browser": {
+        "type": "Browser",
+        "pid": 225341,
+        "rssMB": 212.3,
+        "anonMB": 42.8,
+        "fileMB": 168.7,
+        "shmemMB": 0.8,
+        "swapMB": 0
+      },
+      "totalRssMB": 776
+    },
+    {
+      "stage": "squeezed MemoryHigh=64M, 15 s",
+      "t": 1791690756362,
+      "renderer": {
+        "pid": 225450,
+        "rssMB": 173,
+        "anonMB": 76.1,
+        "fileMB": 94.8,
+        "shmemMB": 2.1,
+        "swapMB": 0.8
+      },
+      "gpu": {
+        "type": "GPU",
+        "pid": 225375,
+        "rssMB": 219.6,
+        "anonMB": 113,
+        "fileMB": 104.6,
+        "shmemMB": 2.1,
+        "swapMB": 0
+      },
+      "browser": {
+        "type": "Browser",
+        "pid": 225341,
+        "rssMB": 212.5,
+        "anonMB": 43,
+        "fileMB": 168.7,
+        "shmemMB": 0.8,
+        "swapMB": 0
+      },
+      "totalRssMB": 776,
+      "pings": [
+        {
+          "ms": 3,
+          "result": "ok visible"
+        },
+        {
+          "ms": 3,
+          "result": "ok visible"
+        },
+        {
+          "ms": 2,
+          "result": "ok visible"
+        }
+      ],
+      "cgroup": "0::/user.slice/user-1000.slice/user@1000.service/app.slice/craft-webview-gridcraft-225341.scope"
+    },
+    {
+      "stage": "shown again",
+      "t": 1791690762240,
+      "renderer": {
+        "pid": 225450,
+        "rssMB": 174.4,
+        "anonMB": 76.9,
+        "fileMB": 94.8,
+        "shmemMB": 2.7,
+        "swapMB": 0.7
+      },
+      "gpu": {
+        "type": "GPU",
+        "pid": 225375,
+        "rssMB": 228,
+        "anonMB": 120.7,
+        "fileMB": 104.6,
+        "shmemMB": 2.7,
+        "swapMB": 0
+      },
+      "browser": {
+        "type": "Browser",
+        "pid": 225341,
+        "rssMB": 216.7,
+        "anonMB": 43.5,
+        "fileMB": 168.7,
+        "shmemMB": 4.5,
+        "swapMB": 0
+      },
+      "totalRssMB": 790,
+      "showToFrameMs": 45,
+      "ping": {
+        "ms": 2,
+        "result": "ok visible"
+      }
+    },
+    {
+      "stage": "reopened (document gone)",
+      "t": 1791690770385,
+      "renderer": {
+        "pid": 233899,
+        "rssMB": 186.2,
+        "anonMB": 94.8,
+        "fileMB": 89.7,
+        "shmemMB": 1.7,
+        "swapMB": 0
+      },
+      "gpu": {
+        "type": "GPU",
+        "pid": 225375,
+        "rssMB": 215.5,
+        "anonMB": 108.9,
+        "fileMB": 104.9,
+        "shmemMB": 1.6,
+        "swapMB": 0
+      },
+      "browser": {
+        "type": "Browser",
+        "pid": 225341,
+        "rssMB": 260.1,
+        "anonMB": 90.5,
+        "fileMB": 168.8,
+        "shmemMB": 0.8,
+        "swapMB": 0
+      },
+      "totalRssMB": 833
+    }
+  ],
+  "timing": {
+    "app": "gridcraft",
+    "domLoadedMs": 183,
+    "wasmFetchedMs": null,
+    "readyMs": 602,
+    "firstFrameMs": 748,
+    "pid": 225450
+  },
+  "discard": {
+    "totalBeforeMB": 790,
+    "totalAfterMB": 575,
+    "freedMB": 215
+  },
+  "reopen": {
+    "app": "gridcraft",
+    "domLoadedMs": 438,
+    "wasmFetchedMs": null,
+    "readyMs": 1447,
+    "firstFrameMs": 2096,
+    "pid": 233899
+  },
+  "consoles": {
+    "gridcraft": [
+      "warning: The `integrity` attribute is currently ignored for preload destinations that do not support subresource integrity. See https://crbug.com/981419 for more information",
+      "warning: %cElectron Security Warning (Insecure Content-Security-Policy) font-weight: bold; This renderer process has either no Content Security\n  Policy set or a policy with \"unsafe-eval\" enabled. This exposes users of\n  this app to unnecessary security risks.\n\nFor more information and help, consult\nhttps://",
+      "warning: No available adapters.",
+      "warning: [egui_wgpu] egui-wgpu-0.36.2/src/lib.rs:461: Software rasterizer detected - loss of performance expected. backend: Gl, device_type: Cpu, name: \"ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)\", driver_info: \"WebGL 2.0 (OpenGL ES 3.0 Chromium)\", subgroup_s",
+      "info: [eframe::web::web_runner] eframe-0.36.2/src/web/web_runner.rs:94: event handlers installed.",
+      "warning: [eframe::web::app_runner] eframe-0.36.2/src/web/app_runner.rs:337: Unhandled egui viewport command: SetTheme(Light) - not implemented in web backend",
+      "warning: [eframe::web::app_runner] eframe-0.36.2/src/web/app_runner.rs:337: Unhandled egui viewport command: Title(\"Book1\") - not implemented in web backend"
+    ]
+  },
+  "downloads": []
+}

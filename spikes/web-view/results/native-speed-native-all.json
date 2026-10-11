@@ -1,0 +1,61 @@
+{
+  "label": "native-all",
+  "cpus": "all",
+  "port": 7915,
+  "startToControlMs": 9618,
+  "idleRssMB": 343,
+  "import": {
+    "id": 2,
+    "ok": true,
+    "result": {
+      "errors": [],
+      "items": [
+        48
+      ]
+    }
+  },
+  "seq": {
+    "id": 3,
+    "ok": true,
+    "result": {
+      "sequence": 55
+    }
+  },
+  "documentRssMB": 597,
+  "started": {
+    "id": 4,
+    "ok": true,
+    "result": {
+      "job": 1,
+      "path": "/home/dp/Desktop/rocket-craft/spikes/web-view/results/native-exports/native-all.mp4"
+    }
+  },
+  "exportMs": 92484,
+  "cpuMs": 83550,
+  "loadavg": "50.51 41.34 33.02",
+  "jobs": {
+    "id": 138,
+    "ok": true,
+    "result": [
+      {
+        "done": 300,
+        "etaSeconds": null,
+        "finished": true,
+        "id": 1,
+        "label": "Export native-all.mp4",
+        "progress": 1,
+        "result": {
+          "bytes": 4730389,
+          "frames": 300,
+          "path": "/home/dp/Desktop/rocket-craft/spikes/web-view/results/native-exports/native-all.mp4",
+          "render_fps": 3.24782187428048,
+          "seconds": 92.369597722
+        },
+        "status": "Done in 92.4s",
+        "total": 300
+      }
+    ]
+  },
+  "peakRssMB": 1080,
+  "fileBytes": 4730389
+}

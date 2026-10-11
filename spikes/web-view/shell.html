@@ -1,0 +1,19 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Craft web-view spike</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #1e1e1e; color: #ccc; font: 13px system-ui, sans-serif; overflow: hidden; }
+  #title { position: absolute; left: 0; right: 0; top: 0; height: 32px; background: #151515; display: flex; align-items: center; padding: 0 12px; color: #888; }
+  #chat { position: absolute; left: 0; top: 32px; width: 480px; bottom: 0; border-right: 1px solid #333; padding: 16px; box-sizing: border-box; }
+  #dock { position: absolute; left: 480px; right: 0; bottom: 0; height: 68px; background: #181818; border-top: 1px solid #333; display: flex; align-items: center; gap: 10px; padding: 0 16px; }
+  #dock span { padding: 6px 10px; background: #2a2a2a; border-radius: 6px; }
+</style>
+</head>
+<body>
+  <div id="title">Craft web-view spike: upstream web builds in WebContentsViews</div>
+  <div id="chat">Chat stands here. The right side is one WebContentsView per app, laid over this window.</div>
+  <div id="dock"><span>Photo</span><span>Grid</span><span>Film</span><span>+ Add</span><span>Browser</span><span>Library</span></div>
+</body>
+</html>

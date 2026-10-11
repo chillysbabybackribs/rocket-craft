@@ -1,0 +1,84 @@
+{
+  "scenario": "httpcache",
+  "label": "http-1",
+  "userData": "/home/dp/Desktop/rocket-craft/spikes/web-view/results/userdata-H",
+  "cache": {
+    "codeCache": 34196971,
+    "partitions": [
+      {
+        "name": "craft-photocraft",
+        "codeCacheJs": 292,
+        "codeCacheWasm": 1396883
+      }
+    ]
+  },
+  "webgpuFlags": false,
+  "display": ":92",
+  "electron": "41.5.0",
+  "chrome": "146.0.7680.216",
+  "startedAt": "2026-10-11T04:14:49.853Z",
+  "log": [
+    "http timing {\"app\":\"photocraft\",\"domLoadedMs\":1109,\"wasmFetchedMs\":2383,\"readyMs\":4933,\"firstFrameMs\":5536,\"pid\":276055,\"rendererCpuMsToReady\":2190,\"loadavg\":\"32.15 28.49 22.84\"}",
+    "{\"codeCache\":34196971,\"partitions\":[{\"name\":\"craft-photocraft\",\"codeCacheJs\":292,\"codeCacheWasm\":1396883}]}"
+  ],
+  "cgroup": "0::/user.slice/user-1000.slice/user@1000.service/app.slice/app-electron-275935.scope",
+  "gpu": {
+    "auxAttributes": {
+      "amdSwitchable": false,
+      "canSupportThreadedTextureMailbox": false,
+      "glImplementationParts": "(gl=none,angle=none)",
+      "glResetNotificationStrategy": 0,
+      "hardwareSupportsVulkan": false,
+      "inProcessGpu": true,
+      "initializationTime": 0,
+      "isAsan": false,
+      "isClangCoverage": false,
+      "jpegDecodeAcceleratorSupported": false,
+      "optimus": false,
+      "passthroughCmdDecoder": false,
+      "sandboxed": false,
+      "skiaBackendType": "None",
+      "subpixelFontRendering": true,
+      "targetCpuBits": 64,
+      "visibilityCallbackCallCount": 0
+    },
+    "gpuDevice": [
+      {
+        "active": true,
+        "deviceId": 5592,
+        "gpuPreference": 0,
+        "vendorId": 4098
+      },
+      {
+        "active": false,
+        "deviceId": 7313,
+        "gpuPreference": 0,
+        "vendorId": 4318
+      }
+    ]
+  },
+  "timing": {
+    "app": "photocraft",
+    "domLoadedMs": 1109,
+    "wasmFetchedMs": 2383,
+    "readyMs": 4933,
+    "firstFrameMs": 5536,
+    "pid": 276055,
+    "rendererCpuMsToReady": 2190,
+    "loadavg": "32.15 28.49 22.84"
+  },
+  "consoles": {
+    "photocraft": [
+      "warning: The `integrity` attribute is currently ignored for preload destinations that do not support subresource integrity. See https://crbug.com/981419 for more information",
+      "warning: %cElectron Security Warning (Insecure Content-Security-Policy) font-weight: bold; This renderer process has either no Content Security\n  Policy set or a policy with \"unsafe-eval\" enabled. This exposes users of\n  this app to unnecessary security risks.\n\nFor more information and help, consult\nhttps://",
+      "warning: No available adapters.",
+      "warning: [egui_wgpu] egui-wgpu-0.36.2/src/lib.rs:461: Software rasterizer detected - loss of performance expected. backend: Gl, device_type: Cpu, name: \"ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)\", driver_info: \"WebGL 2.0 (OpenGL ES 3.0 Chromium)\", subgroup_s",
+      "info: [photocraft_web::web] photocraft-web/src/web.rs:95: photocraft-web: wgpu backend Gl",
+      "info: [photocraft_ui_egui::gpu_canvas] ui-egui/src/gpu_canvas.rs:142: gpu canvas: target Rgba8Unorm, max texture 8192, tile 8192, 16F canvas Budget",
+      "info: [eframe::web::web_runner] eframe-0.36.2/src/web/web_runner.rs:94: event handlers installed.",
+      "warning: [eframe::web::app_runner] eframe-0.36.2/src/web/app_runner.rs:337: Unhandled egui viewport command: SetTheme(SystemDefault) - not implemented in web backend",
+      "warning: [eframe::web::app_runner] eframe-0.36.2/src/web/app_runner.rs:337: Unhandled egui viewport command: Title(\"PhotoCraft\") - not implemented in web backend"
+    ]
+  },
+  "downloads": []
+}

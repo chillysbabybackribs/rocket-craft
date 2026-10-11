@@ -1,0 +1,221 @@
+{
+  "scenario": "load",
+  "label": "try1",
+  "userData": "/home/dp/Desktop/rocket-craft/spikes/web-view/results/userdata-T",
+  "cache": {
+    "codeCache": 7544043,
+    "partitions": [
+      {
+        "name": "craft-gridcraft",
+        "codeCacheJs": 327,
+        "codeCacheWasm": 72
+      }
+    ]
+  },
+  "webgpuFlags": false,
+  "display": ":92",
+  "electron": "41.5.0",
+  "chrome": "146.0.7680.216",
+  "startedAt": "2026-10-11T03:41:47.907Z",
+  "log": [
+    "gridcraft timing {\"app\":\"gridcraft\",\"domLoadedMs\":1150,\"wasmFetchedMs\":null,\"readyMs\":3062,\"firstFrameMs\":3561,\"pid\":205189}",
+    "gridcraft idle {\"pid\":205189,\"error\":\"Error: EACCES: permission denied, open '/proc/205189/smaps_rollup'\"} {\"isolated\":false,\"secure\":true,\"webgpu\":true,\"sab\":\"undefined\",\"title\":\"GridCraft\",\"heapMB\":3}"
+  ],
+  "cgroup": "0::/user.slice/user-1000.slice/user@1000.service/app.slice/app-electron-204795.scope",
+  "gpu": {
+    "auxAttributes": {
+      "amdSwitchable": false,
+      "canSupportThreadedTextureMailbox": false,
+      "glImplementationParts": "(gl=none,angle=none)",
+      "glResetNotificationStrategy": 0,
+      "hardwareSupportsVulkan": false,
+      "inProcessGpu": true,
+      "initializationTime": 0,
+      "isAsan": false,
+      "isClangCoverage": false,
+      "jpegDecodeAcceleratorSupported": false,
+      "optimus": false,
+      "passthroughCmdDecoder": false,
+      "sandboxed": false,
+      "skiaBackendType": "None",
+      "subpixelFontRendering": true,
+      "targetCpuBits": 64,
+      "visibilityCallbackCallCount": 0
+    },
+    "gpuDevice": [
+      {
+        "active": true,
+        "deviceId": 5592,
+        "gpuPreference": 0,
+        "vendorId": 4098
+      },
+      {
+        "active": false,
+        "deviceId": 7313,
+        "gpuPreference": 0,
+        "vendorId": 4318
+      }
+    ]
+  },
+  "apps": {
+    "gridcraft": {
+      "timing": {
+        "app": "gridcraft",
+        "domLoadedMs": 1150,
+        "wasmFetchedMs": null,
+        "readyMs": 3062,
+        "firstFrameMs": 3561,
+        "pid": 205189
+      },
+      "idle": {
+        "pid": 205189,
+        "error": "Error: EACCES: permission denied, open '/proc/205189/smaps_rollup'"
+      },
+      "globals": [
+        "Object",
+        "Function",
+        "Array",
+        "Number",
+        "parseFloat",
+        "parseInt",
+        "Infinity",
+        "NaN",
+        "undefined",
+        "Boolean",
+        "String",
+        "Symbol",
+        "Date",
+        "Promise",
+        "RegExp",
+        "Error",
+        "AggregateError",
+        "EvalError",
+        "RangeError",
+        "ReferenceError",
+        "SyntaxError",
+        "TypeError",
+        "URIError",
+        "globalThis",
+        "JSON",
+        "Math",
+        "Intl",
+        "ArrayBuffer",
+        "Atomics",
+        "Uint8Array",
+        "Int8Array",
+        "Uint16Array",
+        "Int16Array",
+        "Uint32Array",
+        "Int32Array",
+        "BigUint64Array",
+        "BigInt64Array",
+        "Uint8ClampedArray",
+        "Float32Array",
+        "Float64Array",
+        "DataView",
+        "Map",
+        "BigInt",
+        "Set",
+        "Iterator",
+        "WeakMap",
+        "WeakSet",
+        "Proxy",
+        "Reflect",
+        "FinalizationRegistry",
+        "WeakRef",
+        "decodeURI",
+        "decodeURIComponent",
+        "encodeURI",
+        "encodeURIComponent",
+        "escape",
+        "unescape",
+        "eval",
+        "isFinite",
+        "isNaN",
+        "console",
+        "Option",
+        "Image",
+        "Audio",
+        "WebKitMutationObserver",
+        "WebKitCSSMatrix",
+        "XPathResult",
+        "XPathExpression",
+        "XPathEvaluator",
+        "XMLSerializer",
+        "XMLHttpRequestUpload",
+        "XMLHttpRequestEventTarget",
+        "XMLHttpRequest",
+        "XMLDocument",
+        "WritableStreamDefaultWriter",
+        "WritableStreamDefaultController",
+        "WritableStream",
+        "Worker",
+        "Window",
+        "WheelEvent"
+      ],
+      "page": {
+        "isolated": false,
+        "secure": true,
+        "webgpu": true,
+        "sab": "undefined",
+        "title": "GridCraft",
+        "heapMB": 3
+      },
+      "shot": {
+        "path": "/home/dp/Desktop/rocket-craft/spikes/web-view/shots/try1-gridcraft.png",
+        "width": 1120,
+        "height": 860,
+        "empty": false
+      }
+    }
+  },
+  "all": [
+    {
+      "type": "Browser",
+      "pid": 204795,
+      "rssMB": 228.4,
+      "pssMB": 110.5,
+      "anonMB": 47.6,
+      "swapMB": 0
+    },
+    {
+      "type": "GPU",
+      "pid": 205003,
+      "rssMB": 232.4,
+      "pssMB": 155.1,
+      "anonMB": 128.3,
+      "swapMB": 0
+    },
+    {
+      "type": "Utility",
+      "name": "Network Service",
+      "pid": 205019,
+      "rssMB": 80.5,
+      "pssMB": 27.9,
+      "anonMB": 12,
+      "swapMB": 0
+    },
+    {
+      "type": "Tab",
+      "pid": 205056,
+      "error": "Error: EACCES: permission denied, open '/proc/205056/smaps_rollup'"
+    },
+    {
+      "type": "Tab",
+      "pid": 205189,
+      "error": "Error: EACCES: permission denied, open '/proc/205189/smaps_rollup'"
+    }
+  ],
+  "consoles": {
+    "gridcraft": [
+      "warning: The `integrity` attribute is currently ignored for preload destinations that do not support subresource integrity. See https://crbug.com/981419 for more information",
+      "warning: %cElectron Security Warning (Insecure Content-Security-Policy) font-weight: bold; This renderer process has either no Content Security\n  Policy set or a policy with \"unsafe-eval\" enabled. This exposes users of\n  this app to unnecessary security risks.\n\nFor more information and help, consult\nhttps://",
+      "warning: No available adapters.",
+      "warning: [egui_wgpu] egui-wgpu-0.36.2/src/lib.rs:461: Software rasterizer detected - loss of performance expected. backend: Gl, device_type: Cpu, name: \"ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)\", driver_info: \"WebGL 2.0 (OpenGL ES 3.0 Chromium)\", subgroup_s",
+      "info: [eframe::web::web_runner] eframe-0.36.2/src/web/web_runner.rs:94: event handlers installed.",
+      "warning: [eframe::web::app_runner] eframe-0.36.2/src/web/app_runner.rs:337: Unhandled egui viewport command: SetTheme(Light) - not implemented in web backend",
+      "warning: [eframe::web::app_runner] eframe-0.36.2/src/web/app_runner.rs:337: Unhandled egui viewport command: Title(\"Book1\") - not implemented in web backend"
+    ]
+  },
+  "downloads": []
+}

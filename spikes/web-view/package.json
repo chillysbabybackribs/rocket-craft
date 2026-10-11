@@ -1,0 +1,11 @@
+{
+  "name": "craft-web-view-spike",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "main": "main.mjs",
+  "description": "Spike: host upstream Craft web builds in Electron WebContentsViews and measure them.",
+  "devDependencies": {
+    "electron": "41.5.0"
+  }
+}

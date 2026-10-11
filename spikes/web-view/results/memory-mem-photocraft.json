@@ -1,0 +1,425 @@
+{
+  "scenario": "memory",
+  "label": "mem-photocraft",
+  "userData": "/home/dp/Desktop/rocket-craft/spikes/web-view/results/userdata-M",
+  "cache": "immutable",
+  "webgpuFlags": false,
+  "display": ":92",
+  "electron": "41.5.0",
+  "chrome": "146.0.7680.216",
+  "startedAt": "2026-10-11T03:56:13.405Z",
+  "log": [
+    "renderer 244756 in craft-webview-photocraft-244438.scope",
+    "idle {\"pid\":244756,\"rssMB\":226.6,\"anonMB\":131.4,\"fileMB\":93.7,\"shmemMB\":1.5,\"swapMB\":0} {\"currentMB\":121.4,\"swapMB\":0} gpu 212.5 total 828 {\"cpu\":{\"renderer\":8.2,\"gpu\":2.4}}",
+    "document {\"pid\":244756,\"rssMB\":189.8,\"anonMB\":122.3,\"fileMB\":51,\"shmemMB\":16.5,\"swapMB\":86.4} {\"currentMB\":138.5,\"swapMB\":79} gpu 384.6 total 805 {\"openMs\":5982,\"cpu\":{\"renderer\":8,\"gpu\":6.2}}",
+    "setVisible(false) 30 s, throttling off {\"pid\":244756,\"rssMB\":181.5,\"anonMB\":113.5,\"fileMB\":53.1,\"shmemMB\":15,\"swapMB\":95.8} {\"currentMB\":136.2,\"swapMB\":90.2} gpu 351.8 total 764 {\"ping\":{\"ms\":46,\"result\":\"ok visible\"},\"cpu\":{\"renderer\":7.3,\"gpu\":2.4}}",
+    "removed from window 30 s, throttling on {\"pid\":244756,\"rssMB\":174.7,\"anonMB\":110.9,\"fileMB\":53.3,\"shmemMB\":10.5,\"swapMB\":96.7} {\"currentMB\":133.7,\"swapMB\":91.2} gpu 348.3 total 755 {\"ping\":{\"ms\":2,\"result\":\"ok visible\"},\"ping30\":{\"ms\":12,\"result\":\"ok visible\"},\"cpu\":{\"renderer\":0,\"gpu\":0.1}}",
+    "after pressure signal + GC {\"pid\":244756,\"rssMB\":173.7,\"anonMB\":109.3,\"fileMB\":53.9,\"shmemMB\":10.5,\"swapMB\":96.2} {\"currentMB\":132.6,\"swapMB\":91.2} gpu 348.8 total 757 {}",
+    "squeezed MemoryHigh=32M, 15 s {\"pid\":244756,\"rssMB\":81.7,\"anonMB\":25,\"fileMB\":46.4,\"shmemMB\":10.3,\"swapMB\":180.5} {\"currentMB\":31.4,\"swapMB\":174.5} gpu 342.4 total 654 {\"pings\":[{\"ms\":27,\"result\":\"ok visible\"},{\"ms\":13,\"result\":\"ok visible\"},{\"ms\":11,\"result\":\"ok visible\"}],\"cgroup\":\"0::/user.slice/user-1000.slice/user@1000.service/app.slice/craft-webview-photocraft-244438.scope\"}",
+    "shown again {\"pid\":244756,\"rssMB\":91.5,\"anonMB\":27.2,\"fileMB\":53.8,\"shmemMB\":10.4,\"swapMB\":178.2} {\"currentMB\":42.8,\"swapMB\":174.2} gpu 344.8 total 674 {\"showToFrameMs\":546,\"ping\":{\"ms\":15,\"result\":\"ok visible\"}}",
+    "discard {\"totalBeforeMB\":674,\"totalAfterMB\":401,\"freedMB\":273}",
+    "reopened (document gone) {\"pid\":251680,\"rssMB\":217.9,\"anonMB\":125.4,\"fileMB\":90.9,\"shmemMB\":1.5,\"swapMB\":5.4} {\"currentMB\":null,\"swapMB\":null} gpu 185.3 total 752 {}"
+  ],
+  "cgroup": "0::/user.slice/user-1000.slice/user@1000.service/app.slice/app-electron-244438.scope",
+  "gpu": {
+    "auxAttributes": {
+      "amdSwitchable": false,
+      "canSupportThreadedTextureMailbox": false,
+      "glImplementationParts": "(gl=none,angle=none)",
+      "glResetNotificationStrategy": 0,
+      "hardwareSupportsVulkan": false,
+      "inProcessGpu": true,
+      "initializationTime": 0,
+      "isAsan": false,
+      "isClangCoverage": false,
+      "jpegDecodeAcceleratorSupported": false,
+      "optimus": false,
+      "passthroughCmdDecoder": false,
+      "sandboxed": false,
+      "skiaBackendType": "None",
+      "subpixelFontRendering": true,
+      "targetCpuBits": 64,
+      "visibilityCallbackCallCount": 0
+    },
+    "gpuDevice": [
+      {
+        "active": true,
+        "deviceId": 5592,
+        "gpuPreference": 0,
+        "vendorId": 4098
+      },
+      {
+        "active": false,
+        "deviceId": 7313,
+        "gpuPreference": 0,
+        "vendorId": 4318
+      }
+    ]
+  },
+  "stages": [
+    {
+      "stage": "idle",
+      "t": 1791690986830,
+      "renderer": {
+        "pid": 244756,
+        "rssMB": 226.6,
+        "anonMB": 131.4,
+        "fileMB": 93.7,
+        "shmemMB": 1.5,
+        "swapMB": 0
+      },
+      "scope": {
+        "currentMB": 121.4,
+        "swapMB": 0
+      },
+      "gpu": {
+        "type": "GPU",
+        "pid": 244595,
+        "rssMB": 212.5,
+        "anonMB": 108.1,
+        "fileMB": 102.7,
+        "shmemMB": 1.7,
+        "swapMB": 0
+      },
+      "browser": {
+        "type": "Browser",
+        "pid": 244438,
+        "rssMB": 216.1,
+        "anonMB": 50.2,
+        "fileMB": 165.1,
+        "shmemMB": 0.8,
+        "swapMB": 0
+      },
+      "totalRssMB": 828,
+      "cpu": {
+        "renderer": 8.2,
+        "gpu": 2.4
+      }
+    },
+    {
+      "stage": "document",
+      "t": 1791691028757,
+      "renderer": {
+        "pid": 244756,
+        "rssMB": 189.8,
+        "anonMB": 122.3,
+        "fileMB": 51,
+        "shmemMB": 16.5,
+        "swapMB": 86.4
+      },
+      "scope": {
+        "currentMB": 138.5,
+        "swapMB": 79
+      },
+      "gpu": {
+        "type": "GPU",
+        "pid": 244595,
+        "rssMB": 384.6,
+        "anonMB": 286.1,
+        "fileMB": 81.8,
+        "shmemMB": 16.7,
+        "swapMB": 60.4
+      },
+      "browser": {
+        "type": "Browser",
+        "pid": 244438,
+        "rssMB": 147.6,
+        "anonMB": 28.7,
+        "fileMB": 114.4,
+        "shmemMB": 4.5,
+        "swapMB": 17.5
+      },
+      "totalRssMB": 805,
+      "openMs": 5982,
+      "cpu": {
+        "renderer": 8,
+        "gpu": 6.2
+      }
+    },
+    {
+      "stage": "setVisible(false) 30 s, throttling off",
+      "t": 1791691068902,
+      "renderer": {
+        "pid": 244756,
+        "rssMB": 181.5,
+        "anonMB": 113.5,
+        "fileMB": 53.1,
+        "shmemMB": 15,
+        "swapMB": 95.8
+      },
+      "scope": {
+        "currentMB": 136.2,
+        "swapMB": 90.2
+      },
+      "gpu": {
+        "type": "GPU",
+        "pid": 244595,
+        "rssMB": 351.8,
+        "anonMB": 262.5,
+        "fileMB": 74,
+        "shmemMB": 15.3,
+        "swapMB": 38.3
+      },
+      "browser": {
+        "type": "Browser",
+        "pid": 244438,
+        "rssMB": 147.1,
+        "anonMB": 27.4,
+        "fileMB": 115.5,
+        "shmemMB": 4.1,
+        "swapMB": 16.8
+      },
+      "totalRssMB": 764,
+      "ping": {
+        "ms": 46,
+        "result": "ok visible"
+      },
+      "cpu": {
+        "renderer": 7.3,
+        "gpu": 2.4
+      }
+    },
+    {
+      "stage": "removed from window 30 s, throttling on",
+      "t": 1791691108999,
+      "renderer": {
+        "pid": 244756,
+        "rssMB": 174.7,
+        "anonMB": 110.9,
+        "fileMB": 53.3,
+        "shmemMB": 10.5,
+        "swapMB": 96.7
+      },
+      "scope": {
+        "currentMB": 133.7,
+        "swapMB": 91.2
+      },
+      "gpu": {
+        "type": "GPU",
+        "pid": 244595,
+        "rssMB": 348.3,
+        "anonMB": 259.3,
+        "fileMB": 78.2,
+        "shmemMB": 10.8,
+        "swapMB": 40.1
+      },
+      "browser": {
+        "type": "Browser",
+        "pid": 244438,
+        "rssMB": 149,
+        "anonMB": 27.7,
+        "fileMB": 117.2,
+        "shmemMB": 4.1,
+        "swapMB": 16.7
+      },
+      "totalRssMB": 755,
+      "ping": {
+        "ms": 2,
+        "result": "ok visible"
+      },
+      "ping30": {
+        "ms": 12,
+        "result": "ok visible"
+      },
+      "cpu": {
+        "renderer": 0,
+        "gpu": 0.1
+      }
+    },
+    {
+      "stage": "after pressure signal + GC",
+      "t": 1791691114271,
+      "renderer": {
+        "pid": 244756,
+        "rssMB": 173.7,
+        "anonMB": 109.3,
+        "fileMB": 53.9,
+        "shmemMB": 10.5,
+        "swapMB": 96.2
+      },
+      "scope": {
+        "currentMB": 132.6,
+        "swapMB": 91.2
+      },
+      "gpu": {
+        "type": "GPU",
+        "pid": 244595,
+        "rssMB": 348.8,
+        "anonMB": 259.5,
+        "fileMB": 78.5,
+        "shmemMB": 10.8,
+        "swapMB": 39.8
+      },
+      "browser": {
+        "type": "Browser",
+        "pid": 244438,
+        "rssMB": 150,
+        "anonMB": 27.9,
+        "fileMB": 118,
+        "shmemMB": 4.1,
+        "swapMB": 16.6
+      },
+      "totalRssMB": 757
+    },
+    {
+      "stage": "squeezed MemoryHigh=32M, 15 s",
+      "t": 1791691132769,
+      "renderer": {
+        "pid": 244756,
+        "rssMB": 81.7,
+        "anonMB": 25,
+        "fileMB": 46.4,
+        "shmemMB": 10.3,
+        "swapMB": 180.5
+      },
+      "scope": {
+        "currentMB": 31.4,
+        "swapMB": 174.5
+      },
+      "gpu": {
+        "type": "GPU",
+        "pid": 244595,
+        "rssMB": 342.4,
+        "anonMB": 254.1,
+        "fileMB": 77.7,
+        "shmemMB": 10.6,
+        "swapMB": 45.2
+      },
+      "browser": {
+        "type": "Browser",
+        "pid": 244438,
+        "rssMB": 149.4,
+        "anonMB": 28,
+        "fileMB": 117.3,
+        "shmemMB": 4.1,
+        "swapMB": 16.6
+      },
+      "totalRssMB": 654,
+      "pings": [
+        {
+          "ms": 27,
+          "result": "ok visible"
+        },
+        {
+          "ms": 13,
+          "result": "ok visible"
+        },
+        {
+          "ms": 11,
+          "result": "ok visible"
+        }
+      ],
+      "cgroup": "0::/user.slice/user-1000.slice/user@1000.service/app.slice/craft-webview-photocraft-244438.scope"
+    },
+    {
+      "stage": "shown again",
+      "t": 1791691139989,
+      "renderer": {
+        "pid": 244756,
+        "rssMB": 91.5,
+        "anonMB": 27.2,
+        "fileMB": 53.8,
+        "shmemMB": 10.4,
+        "swapMB": 178.2
+      },
+      "scope": {
+        "currentMB": 42.8,
+        "swapMB": 174.2
+      },
+      "gpu": {
+        "type": "GPU",
+        "pid": 244595,
+        "rssMB": 344.8,
+        "anonMB": 255.2,
+        "fileMB": 78.8,
+        "shmemMB": 10.7,
+        "swapMB": 42.4
+      },
+      "browser": {
+        "type": "Browser",
+        "pid": 244438,
+        "rssMB": 155.5,
+        "anonMB": 28.5,
+        "fileMB": 119.1,
+        "shmemMB": 7.8,
+        "swapMB": 16.5
+      },
+      "totalRssMB": 674,
+      "showToFrameMs": 546,
+      "ping": {
+        "ms": 15,
+        "result": "ok visible"
+      }
+    },
+    {
+      "stage": "reopened (document gone)",
+      "t": 1791691153343,
+      "renderer": {
+        "pid": 251680,
+        "rssMB": 217.9,
+        "anonMB": 125.4,
+        "fileMB": 90.9,
+        "shmemMB": 1.5,
+        "swapMB": 5.4
+      },
+      "scope": {
+        "currentMB": null,
+        "swapMB": null
+      },
+      "gpu": {
+        "type": "GPU",
+        "pid": 244595,
+        "rssMB": 185.3,
+        "anonMB": 94.1,
+        "fileMB": 89.6,
+        "shmemMB": 1.6,
+        "swapMB": 17
+      },
+      "browser": {
+        "type": "Browser",
+        "pid": 244438,
+        "rssMB": 261.5,
+        "anonMB": 126.2,
+        "fileMB": 134.7,
+        "shmemMB": 0.7,
+        "swapMB": 13.7
+      },
+      "totalRssMB": 752
+    }
+  ],
+  "timing": {
+    "app": "photocraft",
+    "domLoadedMs": 914,
+    "wasmFetchedMs": null,
+    "readyMs": 2920,
+    "firstFrameMs": 3194,
+    "pid": 244756
+  },
+  "discard": {
+    "totalBeforeMB": 674,
+    "totalAfterMB": 401,
+    "freedMB": 273
+  },
+  "reopen": {
+    "app": "photocraft",
+    "domLoadedMs": 1877,
+    "wasmFetchedMs": null,
+    "readyMs": 6695,
+    "firstFrameMs": 7133,
+    "pid": 251680
+  },
+  "consoles": {
+    "photocraft": [
+      "warning: The `integrity` attribute is currently ignored for preload destinations that do not support subresource integrity. See https://crbug.com/981419 for more information",
+      "warning: %cElectron Security Warning (Insecure Content-Security-Policy) font-weight: bold; This renderer process has either no Content Security\n  Policy set or a policy with \"unsafe-eval\" enabled. This exposes users of\n  this app to unnecessary security risks.\n\nFor more information and help, consult\nhttps://",
+      "warning: No available adapters.",
+      "warning: [egui_wgpu] egui-wgpu-0.36.2/src/lib.rs:461: Software rasterizer detected - loss of performance expected. backend: Gl, device_type: Cpu, name: \"ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)\", driver_info: \"WebGL 2.0 (OpenGL ES 3.0 Chromium)\", subgroup_s",
+      "info: [photocraft_web::web] photocraft-web/src/web.rs:95: photocraft-web: wgpu backend Gl",
+      "info: [photocraft_ui_egui::gpu_canvas] ui-egui/src/gpu_canvas.rs:142: gpu canvas: target Rgba8Unorm, max texture 8192, tile 8192, 16F canvas Budget",
+      "info: [eframe::web::web_runner] eframe-0.36.2/src/web/web_runner.rs:94: event handlers installed.",
+      "warning: [eframe::web::app_runner] eframe-0.36.2/src/web/app_runner.rs:337: Unhandled egui viewport command: SetTheme(SystemDefault) - not implemented in web backend",
+      "warning: [eframe::web::app_runner] eframe-0.36.2/src/web/app_runner.rs:337: Unhandled egui viewport command: Title(\"PhotoCraft\") - not implemented in web backend"
+    ]
+  },
+  "downloads": []
+}

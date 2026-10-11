@@ -1,0 +1,93 @@
+{
+  "scenario": "hiddenwork",
+  "label": "hidden1",
+  "userData": "/home/dp/Desktop/rocket-craft/spikes/web-view/results/userdata-S",
+  "cache": "immutable",
+  "webgpuFlags": false,
+  "display": ":92",
+  "electron": "41.5.0",
+  "chrome": "146.0.7680.216",
+  "startedAt": "2026-10-11T04:32:46.075Z",
+  "log": [
+    "{\"mode\":\"shown\",\"framesAtStart\":1,\"framesAfter30s\":64,\"advanced\":63}",
+    "{\"mode\":\"parked\",\"framesAtStart\":66,\"framesAfter30s\":118,\"advanced\":52}",
+    "{\"mode\":\"hidden\",\"framesAtStart\":119,\"framesAfter30s\":175,\"advanced\":56}",
+    "{\"mode\":\"removed\",\"framesAtStart\":176,\"framesAfter30s\":178,\"advanced\":2}"
+  ],
+  "cgroup": "0::/user.slice/user-1000.slice/user@1000.service/app.slice/app-electron-293841.scope",
+  "gpu": {
+    "auxAttributes": {
+      "amdSwitchable": false,
+      "canSupportThreadedTextureMailbox": false,
+      "glImplementationParts": "(gl=none,angle=none)",
+      "glResetNotificationStrategy": 0,
+      "hardwareSupportsVulkan": false,
+      "inProcessGpu": true,
+      "initializationTime": 0,
+      "isAsan": false,
+      "isClangCoverage": false,
+      "jpegDecodeAcceleratorSupported": false,
+      "optimus": false,
+      "passthroughCmdDecoder": false,
+      "sandboxed": false,
+      "skiaBackendType": "None",
+      "subpixelFontRendering": true,
+      "targetCpuBits": 64,
+      "visibilityCallbackCallCount": 0
+    },
+    "gpuDevice": [
+      {
+        "active": true,
+        "deviceId": 5592,
+        "gpuPreference": 0,
+        "vendorId": 4098
+      },
+      {
+        "active": false,
+        "deviceId": 7313,
+        "gpuPreference": 0,
+        "vendorId": 4318
+      }
+    ]
+  },
+  "hiddenwork": [
+    {
+      "mode": "shown",
+      "framesAtStart": 1,
+      "framesAfter30s": 64,
+      "advanced": 63
+    },
+    {
+      "mode": "parked",
+      "framesAtStart": 66,
+      "framesAfter30s": 118,
+      "advanced": 52
+    },
+    {
+      "mode": "hidden",
+      "framesAtStart": 119,
+      "framesAfter30s": 175,
+      "advanced": 56
+    },
+    {
+      "mode": "removed",
+      "framesAtStart": 176,
+      "framesAfter30s": 178,
+      "advanced": 2
+    }
+  ],
+  "consoles": {
+    "filmcraft": [
+      "warning: %cElectron Security Warning (Insecure Content-Security-Policy) font-weight: bold; This renderer process has either no Content Security\n  Policy set or a policy with \"unsafe-eval\" enabled. This exposes users of\n  this app to unnecessary security risks.\n\nFor more information and help, consult\nhttps://",
+      "warning: No available adapters.",
+      "warning: [egui_wgpu] egui-wgpu-0.36.2/src/lib.rs:461: Software rasterizer detected - loss of performance expected. backend: Gl, device_type: Cpu, name: \"ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)\", driver_info: \"WebGL 2.0 (OpenGL ES 3.0 Chromium)\", subgroup_s",
+      "info: [eframe::web::web_runner] eframe-0.36.2/src/web/web_runner.rs:94: event handlers installed.",
+      "warning: [eframe::web::app_runner] eframe-0.36.2/src/web/app_runner.rs:337: Unhandled egui viewport command: SetTheme(Dark) - not implemented in web backend",
+      "info: [filmcraft_web::webcodecs] filmcraft-web/src/webcodecs.rs:230: clip.mp4: video decoded with WebCodecs (avc1.64001f)",
+      "warning: WebGL: CONTEXT_LOST_WEBGL: loseContext: context lost",
+      "warning: [filmcraft_web::webcodecs] filmcraft-web/src/webcodecs.rs:377: WebCodecs decoder error: JsValue(EncodingError: Decoding error.\nundefined)",
+      "warning: [filmcraft_web::webcodecs] filmcraft-web/src/webcodecs.rs:609: clip.mp4: WebCodecs failed, using FilmCraft's decoder"
+    ]
+  },
+  "downloads": []
+}
