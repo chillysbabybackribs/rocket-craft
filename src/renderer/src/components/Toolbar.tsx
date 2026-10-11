@@ -3,7 +3,7 @@ import { MessagesSquare } from 'lucide-react'
 import { HistoryMenu } from './History.tsx'
 
 // Chats opens the list of every chat from an icon just above the composer's top-right corner
-// (docs/mockups/craft-studio.html). Browser and Library are toggles at the dock's right end (Dock.tsx).
+// (docs/mockups/craft-studio.html). Browser and Library are toggles in the right side's header (SideNav.tsx).
 //
 // A docked app window and the browser's page are native views that paint over anything drawn
 // across the right side, so the menu is pulled left until it ends inside the chat card.

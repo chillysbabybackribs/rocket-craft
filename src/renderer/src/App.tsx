@@ -9,7 +9,7 @@ import { ArtifactPanel } from './components/ArtifactPanel.tsx'
 import { AttachmentNotice, copyTo } from './components/AttachmentMenu.tsx'
 import { BrowserPanel } from './components/BrowserPanel.tsx'
 import { CraftAppPanel } from './components/CraftAppPanel.tsx'
-import { Dock } from './components/Dock.tsx'
+import { SideNav } from './components/SideNav.tsx'
 import { Shelf } from './components/Shelf.tsx'
 import './craft.css'
 import { LibraryPanel } from './components/LibraryPanel.tsx'
@@ -120,8 +120,8 @@ function ChatCard() {
 }
 
 /**
- * The right side: one of an installed app, the shelf, the browser or the library, with the dock
- * under it. A file a link opened (or a run's progress view) shows over it until closed.
+ * The right side: Apps, Browser and Library at the top, then one of an installed app, the shelf,
+ * the browser or the library. A file a link opened (or a run's progress view) shows over it until closed.
  */
 function RightSide() {
   const artifact = useApp((state) => state.artifact !== null)
@@ -134,8 +134,8 @@ function RightSide() {
   else shown = <Shelf />
   return (
     <div className="craft-right">
+      {!artifact && <SideNav />}
       <div className="craft-region">{shown}</div>
-      <Dock />
     </div>
   )
 }

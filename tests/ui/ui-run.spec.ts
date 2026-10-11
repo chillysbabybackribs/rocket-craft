@@ -20,7 +20,7 @@ test('UI scripts reuse isolated sessions, return failure captures and clean up o
   await rocket.page.getByRole('textbox', { name: 'Message', exact: true }).fill(shellDraft)
   try {
     const first = await call({ code: `
-      await page.getByRole('navigation', {name:'Apps dock'}).getByRole('button', {name:'Browser',exact:true}).click()
+      await page.getByRole('navigation', { name: 'Right side' }).getByRole('button', { name: 'Browser', exact: true }).click()
       const browser = await ui.surface('browser')
       await browser.getByRole('textbox', {name:'Test input',exact:true}).fill('Private browser draft')
       await page.getByRole('textbox', {name:'Message',exact:true}).fill('Persistent isolated draft')

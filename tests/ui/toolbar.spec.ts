@@ -1,19 +1,20 @@
 import { test, expect, section } from './app'
 
-// Chats opens from an icon above the composer; Browser and Library are toggles at the dock's right
-// end (docs/mockups/craft-studio.html). Rocket's Sections drawer, Customize and the Tools panel
+// Chats opens from an icon above the composer; Browser and Library are toggles in the right side
+// header (docs/mockups/craft-studio.html). Rocket's Sections drawer, Customize and the Tools panel
 // are gone, and preferences saved for them load harmlessly.
-test('Chats sits on the composer, and Browser and Library toggle from the dock', async ({ rocket }) => {
+test('Chats sits on the composer, and Browser and Library toggle from the right header', async ({ rocket }) => {
   const { page } = rocket
-  const dock = page.getByRole('navigation', { name: 'Apps dock' })
+  const nav = page.getByRole('navigation', { name: 'Right side' })
 
-  await test.step('Chats is on the composer, not the title strip; the dock has Browser and Library', async () => {
+  await test.step('Chats is on the composer; the right header has Apps, Browser and Library', async () => {
     await expect(page.locator('.titlebar [data-section="chats"]')).toHaveCount(0)
     await expect(page.locator('.composer-shell [data-section="chats"]')).toHaveCount(1)
     await expect(page.getByRole('button', { name: 'Sections', exact: true })).toHaveCount(0)
     await expect(page.getByRole('button', { name: 'Tools', exact: true })).toHaveCount(0)
-    await expect(dock.getByRole('button', { name: 'Browser', exact: true })).toBeVisible()
-    await expect(dock.getByRole('button', { name: 'Library', exact: true })).toBeVisible()
+    await expect(nav.getByRole('button', { name: 'Apps', exact: true })).toBeVisible()
+    await expect(nav.getByRole('button', { name: 'Browser', exact: true })).toBeVisible()
+    await expect(nav.getByRole('button', { name: 'Library', exact: true })).toBeVisible()
   })
 
   await test.step('The Chats menu opens from the composer icon and stays inside the chat card', async () => {
@@ -31,8 +32,8 @@ test('Chats sits on the composer, and Browser and Library toggle from the dock',
   })
 
   await test.step('Browser and Library take the side in turn; toggling one off returns to the shelf', async () => {
-    const browser = dock.getByRole('button', { name: 'Browser', exact: true })
-    const library = dock.getByRole('button', { name: 'Library', exact: true })
+    const browser = nav.getByRole('button', { name: 'Browser', exact: true })
+    const library = nav.getByRole('button', { name: 'Library', exact: true })
     await expect(browser).toHaveAttribute('aria-pressed', 'true')
     await library.click()
     await expect(page.getByRole('complementary', { name: 'Library', exact: true })).toBeVisible()
@@ -40,7 +41,7 @@ test('Chats sits on the composer, and Browser and Library toggle from the dock',
     await expect(browser).toHaveAttribute('aria-pressed', 'false')
     await library.click()
     await expect(page.getByRole('region', { name: 'Apps shelf' })).toBeVisible()
-    await expect(dock.getByRole('button', { name: 'Add apps' })).toHaveAttribute('aria-pressed', 'true')
+    await expect(nav.getByRole('button', { name: 'Apps', exact: true })).toHaveAttribute('aria-pressed', 'true')
   })
 
   await test.step('Preferences saved for the old toolbar and side panels load, and the side is remembered', async () => {

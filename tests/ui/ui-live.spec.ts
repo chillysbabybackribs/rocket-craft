@@ -35,7 +35,7 @@ test('default UI scripts operate on the attached live window and leave it open',
   await expect(rocket.page.locator('.pane').getByRole('textbox', { name: 'Message', exact: true })).toHaveValue('Existing live draft')
   await info.attach('Live UI: one orchestrator pane', { path: first.data.captures[0].images[0].path, contentType: 'image/png' })
   const second = await call({ code: `
-    await page.getByRole('navigation',{name:'Apps dock'}).getByRole('button',{name:'Browser',exact:true}).click()
+    await page.getByRole('navigation', { name: 'Right side' }).getByRole('button', { name: 'Browser', exact: true }).click()
     const browser = await ui.surface('browser')
     await browser.getByRole('textbox',{name:'Test input',exact:true}).fill('Live browser draft')
     return await ui.pane(0).getByRole('textbox',{name:'Message',exact:true}).inputValue()

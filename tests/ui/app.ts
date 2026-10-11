@@ -219,11 +219,16 @@ export { expect }
 
 export type SectionName = 'Chats' | 'Library' | 'Browser'
 
+/** The Apps / Browser / Library switcher at the top of the right side. */
+export function sideNav(page: Page): Locator {
+  return page.getByRole('navigation', { name: 'Right side' })
+}
+
 /**
  * Where a section is opened: Chats is the icon above the composer; Browser and Library are toggles
- * at the right end of the apps dock under the right side (docs/mockups/craft-studio.html).
+ * in the right side header (docs/mockups/craft-studio.html).
  */
 export async function section(page: Page, name: SectionName): Promise<Locator> {
   if (name === 'Chats') return page.locator('[data-section="chats"]')
-  return page.getByRole('navigation', { name: 'Apps dock' }).getByRole('button', { name, exact: true })
+  return sideNav(page).getByRole('button', { name, exact: true })
 }

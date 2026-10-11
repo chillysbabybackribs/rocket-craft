@@ -1,5 +1,5 @@
-/* Craft Studio's right side (App.tsx, docs/mockups/craft-studio.html): one of an installed app,
-   the shelf, the browser or the library, over the dock. Built from styles.css's tokens. */
+/* Craft Studio's right side (App.tsx, docs/mockups/craft-studio.html): Apps, Browser and Library
+   at the top, then one of an installed app, the shelf, the browser or the library. */
 
 /* The chat column keeps about the mockup's 420px at a 1360px window and grows slowly with it. A
    run's worker board needs the orchestrator column and one board column (340 + 10 + 300px,
@@ -21,82 +21,34 @@
 .craft-region { flex: 1; display: flex; min-width: 0; min-height: 0; }
 .craft-region > * { flex: 1; margin-left: 0; margin-bottom: 0; }
 
-/* ── Dock ──────────────────────────────────────────────────────────── */
+/* ── Right-side section nav ────────────────────────────────────────── */
 
-/* Labels sit under the icons rather than in tooltips, which would open over the docked window. */
-.dock {
+.side-nav {
   flex: none;
-  height: 60px;
   display: flex;
-  align-items: stretch;
-  gap: 2px;
-  padding: 6px 4px 4px;
-}
-.dock-item {
-  position: relative;
-  width: 56px;
-  display: flex;
-  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 3px;
-  border-radius: 9px;
-  color: var(--text-3);
-  font-size: 10.5px;
-  line-height: 1.1;
+  gap: 4px;
+  padding: 8px 10px 4px;
+  -webkit-app-region: drag;
 }
-.dock-item:hover { background: var(--hover); color: var(--text-2); }
-.dock-item.is-on { background: var(--hover); color: var(--text); }
-.dock-item.is-on::before {
-  content: '';
-  position: absolute;
-  top: -5px;
-  left: 15px;
-  right: 15px;
-  height: 3px;
-  border-radius: 2px;
-  background: var(--text);
-}
-.dock-label { max-width: 52px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.dock-icon { position: relative; display: grid; }
-.dock-item.is-running .dock-icon::after {
-  content: '';
-  position: absolute;
-  right: -3px;
-  top: -3px;
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--ok);
-  box-shadow: 0 0 0 2px var(--canvas);
-}
-.dock-item.is-installing .craft-icon { opacity: 0.45; }
-.dock-progress {
-  position: absolute;
-  left: 3px;
-  right: 3px;
-  bottom: 3px;
-  height: 3px;
-  border-radius: 2px;
-  background: linear-gradient(90deg, #fff var(--progress), rgba(255, 255, 255, 0.25) var(--progress));
-}
-.dock-tool {
-  width: 30px;
-  height: 30px;
+.side-nav button { -webkit-app-region: no-drag; }
+.side-nav-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 10px;
   border-radius: 8px;
-  display: grid;
-  place-items: center;
-  background: rgba(255, 255, 255, 0.055);
-  box-shadow: inset 0 0.5px 0 rgba(255, 255, 255, 0.16), inset 0 0 0 0.5px rgba(255, 255, 255, 0.08), 0 1px 3px rgba(0, 0, 0, 0.35);
+  color: var(--text-3);
+  font-size: 12.5px;
+  font-weight: 510;
+  white-space: nowrap;
 }
-.dock-item.is-on .dock-tool { background: rgba(255, 255, 255, 0.14); }
-.dock-add .dock-tool { background: none; box-shadow: none; border: 1px dashed rgba(255, 255, 255, 0.25); }
-.dock-fill { flex: 1; }
-.dock-sep { width: 1px; margin: 12px 6px; background: var(--line); }
+.side-nav-item:hover { background: var(--hover); color: var(--text-2); }
+.side-nav-item.is-on { background: rgba(255, 255, 255, 0.1); color: var(--text); }
 
 /* An app's icon (craft-icons.tsx, docs/mockups/craft-icons.html option B): a white glyph on a
-   squircle of the app's colour, lit from the top left. The coloured shadow is the card's; the
-   dock's icons get a tighter one so they stay crisp at 30px. */
+   squircle of the app's colour, lit from the top left. The coloured shadow is the card's. */
 .craft-icon {
   display: grid;
   place-items: center;
@@ -231,7 +183,7 @@
   fill: currentColor;
 }
 .shelf-more:hover, .shelf-more.is-open { color: var(--text); background: rgba(255, 255, 255, 0.08); }
-/* Opens upward over the card's own description, so it never reaches the dock or another card. */
+/* Opens upward over the card's own description, so it never reaches another card. */
 .shelf-menu {
   position: absolute;
   right: 0;

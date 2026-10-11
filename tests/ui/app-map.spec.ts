@@ -25,8 +25,8 @@ test('every place in the app map is reachable by name and reports itself', async
       expect(result.ok, `${place}: ${result.ok ? '' : result.error}`).toBe(true)
       expect(result.where.place).toBe(place)
       expect(result.where.side).toBe(place)
-      // The dock's control for the place shows as on.
-      await expect(page.locator(`.dock [data-nav="${place}"]`)).toHaveAttribute('aria-pressed', 'true')
+      // The header control for the place shows as on.
+      await expect(page.locator(`.side-nav [data-nav="${place}"]`)).toHaveAttribute('aria-pressed', 'true')
     }
     // An app is reached by id, and only an installed one; with none installed the choices say so.
     const noApp = await go('app')

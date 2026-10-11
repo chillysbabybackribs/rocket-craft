@@ -55,7 +55,7 @@ export const ACTIONS = {
   'chat.open': { description: 'Show a chat in the orchestrator column.', params: { chatId: 'chat id (required)', pane: 'only 0, the default: the column is the one pane' } },
   'chat.new': { description: 'Show the new-chat screen in the orchestrator column.', params: { pane: 'only 0, the default' } },
   'app.show': { description: 'Show an installed Craft app on the right side, as its dock icon does; it starts on its first show.', params: { id: 'app id, an installed one from craft.apps (required)' } },
-  'shelf.open': { description: 'Show the app shelf on the right side, as the dock\'s + Add does. Nothing is installed by showing it.' },
+  'shelf.open': { description: 'Show the app shelf on the right side, as the Apps control does. Nothing is installed by showing it.' },
   'library.clear': { description: 'Clear the library\'s filters and search.', place: 'library' },
   'library.open': { description: 'Open a library file in the side panel (text, Markdown, PDF pages or a picture); closing it returns to the library.', params: { id: 'file id from library_list (required)' }, place: 'library' },
   'plan.edit': {

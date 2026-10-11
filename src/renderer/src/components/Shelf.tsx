@@ -6,12 +6,12 @@ import { craftStateOf, installApp, isInstalled, removeApp, useApp } from '../sto
 
 // The shelf (docs/mockups/craft-shelf.html): every Craft app as a card in one grid, creative apps
 // first, centred in the right side. It is what the right side shows on first run, when nothing is
-// installed, and what the dock's + Add opens. Installing and removing are the user's alone: these
+// installed, and what the Apps control opens. Installing and removing are the user's alone: these
 // buttons call the store directly and the app map has no action for either, so a model can only
 // suggest one.
 //
 // The card's ⋯ menu opens upward inside the card. The shelf is only shown when no app is docked,
-// so no native window is over it, and opening upward keeps it clear of the dock below.
+// so no native window is over it.
 
 function MoreMenu({ app, onRemove }: { app: CraftAppInfo; onRemove: () => void }) {
   const [open, setOpen] = useState(false)
@@ -170,7 +170,7 @@ export function Shelf() {
         {!craft.loaded && <p className="shelf-empty">Reading the app catalog…</p>}
         {craft.loaded && filter === 'installed' && !installed.length && (
           <div className="shelf-empty">
-            <p>Nothing is installed yet. Install an app from All and it will be listed here and in the dock.</p>
+            <p>Nothing is installed yet. Install an app from All and it will be listed here.</p>
             <button type="button" className="shelf-btn" onClick={() => choose('all')}>Show all apps</button>
           </div>
         )}

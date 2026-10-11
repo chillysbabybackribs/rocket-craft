@@ -5,8 +5,8 @@ import { join } from 'node:path'
 import { promisify } from 'node:util'
 import { test, expect } from './app'
 
-// The real app manager behind the dock: install PhotoCraft from its GitHub release through the
-// shelf, show it from the dock, and check that its native window is docked exactly over the app
+// The real app manager: install PhotoCraft from its GitHub release through the shelf, open it
+// from there, and check that its native window is docked exactly over the app
 // region. It downloads about 80 MB into a scratch apps folder, so it runs only when asked:
 //
 //   CRAFT_UI_REAL_APPS=1 CRAFT_NO_SANDBOX=1 npm run check:ui -- tests/ui/craft-real.spec.ts
@@ -35,19 +35,18 @@ test('a real PhotoCraft installs from the shelf and docks exactly over the app r
   test.setTimeout(300_000)
   const { app, page } = rocket
   const shelf = page.getByRole('region', { name: 'Apps shelf' })
-  const dock = page.getByRole('navigation', { name: 'Apps dock' })
+  const nav = page.getByRole('navigation', { name: 'Right side' })
 
-  await test.step('Install PhotoCraft from the shelf; the dock gets its icon', async () => {
+  await test.step('Install PhotoCraft from the shelf', async () => {
     await expect(shelf.getByRole('article', { name: 'PhotoCraft' })).toBeVisible()
     await shelf.getByRole('button', { name: 'Install PhotoCraft' }).click()
     await expect(shelf.getByRole('progressbar', { name: 'Installing PhotoCraft' })).toBeVisible({ timeout: 30_000 })
     await rocket.capture('real-installing')
-    await expect(dock.getByRole('button', { name: 'PhotoCraft', exact: true })).toBeVisible({ timeout: 240_000 })
-    await expect(shelf.getByRole('button', { name: 'Open PhotoCraft' })).toBeVisible()
+    await expect(shelf.getByRole('button', { name: 'Open PhotoCraft' })).toBeVisible({ timeout: 240_000 })
   })
 
-  await test.step('Show it from the dock: the region replaces the shelf and the app window covers it', async () => {
-    await dock.getByRole('button', { name: 'PhotoCraft', exact: true }).click()
+  await test.step('Open it from the shelf: the region replaces the shelf and the app window covers it', async () => {
+    await shelf.getByRole('button', { name: 'Open PhotoCraft' }).click()
     await expect(shelf).toHaveCount(0)
     const region = page.getByTestId('craft-app-region')
     await expect(region).toBeVisible()
@@ -68,15 +67,15 @@ test('a real PhotoCraft installs from the shelf and docks exactly over the app r
   })
 
   await test.step('The browser takes the side and the app is parked; Remove stops and deletes it', async () => {
-    await dock.getByRole('button', { name: 'Browser', exact: true }).click()
+    await nav.getByRole('button', { name: 'Browser', exact: true }).click()
     await expect(page.getByRole('region', { name: 'Browser', exact: true })).toBeVisible()
     await page.waitForTimeout(1_000)
     await rocket.capture('real-browser-over-parked-app')
-    await dock.getByRole('button', { name: 'Add apps' }).click()
+    await nav.getByRole('button', { name: 'Apps', exact: true }).click()
     await shelf.getByRole('button', { name: 'More for PhotoCraft' }).click()
     await shelf.getByRole('menu', { name: 'PhotoCraft actions' }).getByRole('menuitem', { name: 'Remove' }).click()
     // It is still running, parked, so the shelf asks first.
     await shelf.getByRole('button', { name: 'Remove PhotoCraft now' }).click()
-    await expect(dock.locator('[data-app="photocraft"]')).toHaveCount(0, { timeout: 30_000 })
+    await expect(shelf.getByRole('button', { name: 'Install PhotoCraft' })).toBeVisible({ timeout: 30_000 })
   })
 })
