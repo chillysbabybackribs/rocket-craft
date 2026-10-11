@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Craft Studio — app shelf, larger cards (mockup)</title>
+<!-- Mockup for the shelf redesign the user asked for on 2026-10-11: cleaner, higher-grade cards,
+     larger, centred in the right side. Drawn at the user's window size (1912 × 1068) with Craft
+     Studio's tokens from src/renderer/src/styles.css. Static; app names, sizes and descriptions
+     are the manifest's (src/shared/craft-apps.ts). States shown: two installed (PhotoCraft,
+     WordCraft), one installing (DeckCraft), one hovered (FilmCraft). One 4 × 3 grid, centred
+     both ways in the right side. -->
+<style>
+:root {
+  color-scheme: dark;
+  --font: 'Inter Variable', Inter, -apple-system, 'Segoe UI', sans-serif;
+  --canvas: #08090a; --panel: #0f1011; --raised: #141517; --bubble: #1c1d20;
+  --composer: #151617; --composer-line: #2f3031;
+  --line: rgba(255,255,255,.07); --line-strong: rgba(255,255,255,.11);
+  --text: #f7f8f8; --text-2: #b4b8c0; --text-3: #8a8f98; --text-4: #62666d;
+  --hover: rgba(255,255,255,.045); --accent: #7170ff; --ok: #4cb782; --warn: #f2c94c;
+  --glass: rgba(255,255,255,.055);
+  --glass-edge: inset 0 .5px 0 rgba(255,255,255,.16), inset 0 0 0 .5px rgba(255,255,255,.08), 0 1px 3px rgba(0,0,0,.35);
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: #000; }
+body { font: 13px/1.5 var(--font); color: var(--text); -webkit-font-smoothing: antialiased; letter-spacing: -.006em; }
+
+.window { width: 1912px; height: 1068px; background: var(--canvas); display: grid; grid-template-rows: 46px 1fr; overflow: hidden; }
+.strip { display: flex; align-items: center; gap: 10px; padding: 0 12px; position: relative; }
+.lights { display: flex; gap: 8px; }
+.lights i { width: 12px; height: 12px; border-radius: 50%; }
+.lights i:nth-child(1) { background: #ff5f57 } .lights i:nth-child(2) { background: #febc2e } .lights i:nth-child(3) { background: #28c840 }
+.chats { height: 30px; padding: 0 12px; display: flex; align-items: center; gap: 6px; border-radius: 8px; background: var(--glass); box-shadow: var(--glass-edge); color: var(--text-2); }
+.notch { position: absolute; left: 50%; top: 0; transform: translateX(-50%); height: 40px; padding: 0 14px; display: flex; gap: 18px; align-items: center; background: #151618; border-radius: 0 0 16px 16px; color: var(--text-3); font-size: 11px; }
+.notch span::before { content: ''; display: inline-block; width: 20px; height: 20px; border-radius: 50%; border: 2.5px solid rgba(255,255,255,.09); border-top-color: var(--ok); vertical-align: middle; margin-right: 6px; }
+
+.body { display: grid; grid-template-columns: 590px 1fr; gap: 8px; padding: 0 8px 0 0; min-height: 0; }
+.chat { background: var(--panel); border: 1px solid var(--line); border-left: 0; border-radius: 0 12px 0 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px; padding: 0 28px 120px; }
+.chat h1 { margin: 0; font-size: 30px; font-weight: 600; }
+.composer { width: 100%; background: var(--composer); border: 1px solid var(--composer-line); border-radius: 12px; padding: 14px 14px 10px; color: var(--text-4); }
+.composer .row { margin-top: 22px; display: flex; justify-content: flex-end; color: var(--text-2); font-size: 12px; }
+
+.right { display: flex; flex-direction: column; min-height: 0; }
+.region { flex: 1; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; overflow: auto; display: flex; justify-content: center; align-items: center; }
+
+/* ── The shelf ─────────────────────────────────────────────────────── */
+.shelf { width: 100%; max-width: 1140px; padding: 40px 40px 48px; display: flex; flex-direction: column; gap: 28px; }
+.shelf-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; }
+.shelf-head h2 { margin: 0 0 6px; font-size: 26px; font-weight: 600; letter-spacing: -.02em; }
+.shelf-head p { margin: 0; color: var(--text-3); font-size: 14px; }
+.shelf-meta { display: flex; align-items: center; gap: 14px; }
+.seg { display: flex; padding: 3px; border-radius: 9px; background: rgba(255,255,255,.04); border: 1px solid var(--line); }
+.seg b { padding: 5px 12px; border-radius: 7px; font-weight: 500; font-size: 12.5px; color: var(--text-3); }
+.seg b.on { background: rgba(255,255,255,.08); color: var(--text); box-shadow: inset 0 .5px 0 rgba(255,255,255,.1); }
+.seg em { font-style: normal; color: var(--text-4); margin-left: 6px; }
+.disk { color: var(--text-4); font-size: 12.5px; }
+
+.group { display: flex; flex-direction: column; gap: 14px; }
+.group h3 { margin: 0; font-size: 12px; font-weight: 600; color: var(--text-3); text-transform: uppercase; letter-spacing: .08em; }
+.grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+
+.card { position: relative; height: 236px; padding: 22px; border-radius: 16px; background: linear-gradient(180deg, rgba(255,255,255,.035), rgba(255,255,255,.015)); border: 1px solid var(--line); display: flex; flex-direction: column; overflow: hidden; transition: transform .15s, border-color .15s; }
+.card::before { content: ''; position: absolute; inset: 0; background: radial-gradient(120% 70% at 0% 0%, color-mix(in srgb, var(--a) 14%, transparent), transparent 60%); opacity: .55; pointer-events: none; }
+.card.hover { border-color: var(--line-strong); transform: translateY(-2px); box-shadow: 0 12px 32px rgba(0,0,0,.35); }
+.card.hover::before { opacity: 1; }
+.top { position: relative; display: flex; align-items: flex-start; justify-content: space-between; }
+.icon { width: 52px; height: 52px; border-radius: 14px; display: grid; place-items: center; font-weight: 700; font-size: 18px; letter-spacing: -.02em; color: #fff;
+  background: linear-gradient(145deg, color-mix(in srgb, var(--a) 70%, white) 0%, var(--a) 55%, color-mix(in srgb, var(--a) 75%, black) 100%);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.35), 0 6px 16px color-mix(in srgb, var(--a) 30%, transparent); }
+.chip { font-size: 11.5px; color: var(--text-4); padding: 3px 8px; border-radius: 999px; border: 1px solid var(--line); }
+.chip.ok { color: var(--ok); border-color: rgba(76,183,130,.28); background: rgba(76,183,130,.08); }
+.chip.ok::before { content: ''; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--ok); margin-right: 6px; vertical-align: 1px; }
+.name { position: relative; margin-top: 16px; font-size: 16px; font-weight: 600; letter-spacing: -.01em; }
+.like { position: relative; color: var(--text-4); font-size: 12.5px; }
+.desc { position: relative; margin-top: 10px; min-height: 38px; color: var(--text-2); font-size: 13px; line-height: 1.45; }
+.foot { position: relative; margin-top: auto; display: flex; gap: 8px; align-items: center; }
+.btn { flex: 1; height: 34px; border-radius: 9px; display: grid; place-items: center; font-weight: 500; font-size: 13px; color: var(--text); background: rgba(255,255,255,.07); box-shadow: inset 0 .5px 0 rgba(255,255,255,.12), inset 0 0 0 1px rgba(255,255,255,.05); }
+.card.hover .btn { background: var(--accent); box-shadow: none; }
+.btn.open { background: var(--text); color: #0b0c0d; box-shadow: none; }
+.more { width: 34px; height: 34px; border-radius: 9px; display: grid; place-items: center; color: var(--text-3); background: rgba(255,255,255,.04); border: 1px solid var(--line); font-size: 16px; letter-spacing: 1px; }
+.progress { flex: 1; display: flex; flex-direction: column; gap: 7px; }
+.progress .bar { height: 6px; border-radius: 3px; background: rgba(255,255,255,.08); overflow: hidden; }
+.progress .bar i { display: block; height: 100%; width: 62%; border-radius: 3px; background: linear-gradient(90deg, var(--accent), #9b9aff); }
+.progress small { color: var(--text-3); font-size: 12px; display: flex; justify-content: space-between; }
+
+.dock { height: 60px; display: flex; align-items: stretch; gap: 2px; padding: 6px 4px 4px; }
+.ditem { position: relative; width: 56px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; border-radius: 9px; color: var(--text-3); font-size: 10.5px; }
+.ditem .i { width: 28px; height: 28px; border-radius: 8px; display: grid; place-items: center; color: #fff; font-weight: 650; font-size: 10px; background: var(--a); }
+.ditem.on { background: var(--hover); color: var(--text); }
+.ditem.on::before { content: ''; position: absolute; top: -5px; left: 15px; right: 15px; height: 3px; border-radius: 2px; background: var(--text); }
+.ditem .run { position: absolute; top: 5px; right: 11px; width: 7px; height: 7px; border-radius: 50%; background: var(--ok); box-shadow: 0 0 0 2px var(--canvas); }
+.ditem.ghost .i { opacity: .45; }
+.ditem .add { width: 28px; height: 28px; border-radius: 8px; border: 1px dashed rgba(255,255,255,.25); display: grid; place-items: center; color: var(--text-2); font-size: 16px; }
+.fill { flex: 1; } .sep { width: 1px; background: var(--line); margin: 12px 6px; }
+.tool { width: 28px; height: 28px; border-radius: 8px; background: var(--glass); box-shadow: var(--glass-edge); }
+</style>
+</head>
+<body>
+<div class="window">
+  <div class="strip">
+    <div class="lights"><i></i><i></i><i></i></div>
+    <div class="chats">Chats ▾</div>
+    <div class="notch"><span>4%</span><span>7%</span><span>35%</span><span>0%</span></div>
+  </div>
+  <div class="body">
+    <div class="chat">
+      <h1>Still up?</h1>
+      <div class="composer">How can I help you today?<div class="row">✳ Claude ▾</div></div>
+    </div>
+    <div class="right">
+      <div class="region">
+        <div class="shelf">
+          <div class="shelf-head">
+            <div>
+              <h2>Apps</h2>
+              <p>Install only what you use. Each opens beside the chat, and models can work in it with you.</p>
+            </div>
+            <div class="shelf-meta">
+              <div class="seg"><b class="on">All<em>12</em></b><b>Installed<em>2</em></b></div>
+              <span class="disk">312 MB on disk</span>
+            </div>
+          </div>
+          <div class="grid" id="all"></div>
+        </div>
+      </div>
+      <div class="dock" id="dock"></div>
+    </div>
+  </div>
+</div>
+<script>
+  // id, name, like, description, accent, initials, size MB, state
+  const APPS = {
+    create: [
+      ['PhotoCraft', 'Photoshop', 'Photos, layers, masks and PSD files', '#1f6feb', 'Ph', 72, 'installed'],
+      ['VectorCraft', 'Illustrator', 'Logos, paths and illustration', '#d9822b', 'Ve', 83],
+      ['FilmCraft', 'Premiere Pro', 'Video editing and timelines', '#7c3aed', 'Fi', 68, 'hover'],
+      ['LightCraft', 'Lightroom', 'Photo library and RAW develop', '#0e9fb8', 'Li', 98],
+      ['EffectCraft', 'After Effects', 'Motion graphics and compositing', '#a855f7', 'Ef', 61],
+      ['DesignCraft', 'InDesign', 'Page layout, magazines and books', '#e0457b', 'De', 70],
+      ['SoundCraft', 'Pro Tools', 'Multitrack audio and mixing', '#16a34a', 'So', 15],
+    ],
+    work: [
+      ['WordCraft', 'Word', 'Documents and letters', '#2563eb', 'Wo', 85, 'installed'],
+      ['GridCraft', 'Excel', 'Spreadsheets and charts', '#15803d', 'Gr', 17],
+      ['DeckCraft', 'PowerPoint', 'Slides and presentations', '#ea580c', 'Dk', 75, 'installing'],
+      ['PdfCraft', 'Acrobat', 'Read, sign and combine PDFs', '#d93f3f', 'Pd', 82],
+      ['CADCraft', 'AutoCAD', '2D drafting and plans', '#0284c7', 'Ca', 23],
+    ],
+  }
+  const card = ([name, like, desc, a, ini, mb, st]) => {
+    const chip = st === 'installed' ? '<span class="chip ok">Installed</span>' : `<span class="chip">${mb} MB</span>`
+    const foot = st === 'installed' ? '<div class="btn open">Open</div><div class="more">⋯</div>'
+      : st === 'installing' ? '<div class="progress"><div class="bar"><i></i></div><small><span>Installing…</span><span>62%</span></small></div>'
+      : '<div class="btn">Install</div>'
+    return `<div class="card ${st === 'hover' ? 'hover' : ''}" style="--a:${a}">
+      <div class="top"><div class="icon">${ini}</div>${chip}</div>
+      <div class="name">${name}</div><div class="like">Like ${like}</div>
+      <div class="desc">${desc}</div><div class="foot">${foot}</div></div>`
+  }
+  // One grid, creative apps first and work apps after, so all 12 fit in a 4 × 3 block.
+  document.getElementById('all').innerHTML = [...APPS.create, ...APPS.work].map(card).join('')
+  document.getElementById('dock').innerHTML =
+    `<div class="ditem" style="--a:#1f6feb"><span class="i">Ph</span><span class="run"></span>Photo</div>
+     <div class="ditem" style="--a:#2563eb"><span class="i">Wo</span><span class="run"></span>Word</div>
+     <div class="ditem ghost" style="--a:#ea580c"><span class="i">Dk</span>Deck</div>
+     <div class="ditem on"><span class="add">+</span>Add</div>
+     <div class="fill"></div><div class="sep"></div>
+     <div class="ditem"><span class="tool"></span>Browser</div><div class="ditem"><span class="tool"></span>Library</div>`
+</script>
+</body>
+</html>
