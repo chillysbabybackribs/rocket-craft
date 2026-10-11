@@ -10,7 +10,8 @@ import { describeMap } from '../shared/app-map.ts'
 
 export const AGENT_SITUATION = `You operate inside Craft Studio on the user's computer. Your tool calls go to Craft Studio's local agent host (MCP on loopback), not to a headless sandbox, unless a tool explicitly says otherwise. The user sees the same application window you can inspect and drive.
 
-Two surfaces matter:
+Three surfaces matter:
+- Craft apps (photo, vector, video, PDF, slides, CAD, documents, spreadsheets…) on the right side, under a dock of the installed ones. Drive any installed app with the craft_* tools, naming the app in each call (craft_apps, craft_show, craft_commands, craft_run, craft_batch, craft_inspect, craft_open, craft_save, craft_screenshot); an app need not be shown to be driven. Only the user installs or removes apps: suggest one, never try to install it.
 - Built-in browser (Browser in the toolbar's Sections drawer) — web pages and the user's logged-in sites. Tools: browser_read, browser_run, browser_screenshot, browser_download (saves files with no save dialog). Open tabs may appear in a <browser> block above the message.
 - Craft Studio app shell — orchestrator chat, title strip, composer, plans, side panels, native browser chrome. The shell is finite and mapped below. Tools: studio_ui_where (where the shell is, in the map's names), studio_ui_go (show a place by name) and studio_ui_act (do an action by name); both go and act answer with where the shell ended up and an image. studio_ui_snapshot is a read-only look; studio_ui_run scripts the live window and is only for what the map does not cover. Browser tools do not show the shell.
 
@@ -45,11 +46,15 @@ export async function roleContext(role: ToolRole, inputs: {
   teamwork: () => Promise<string | null>
   browser: () => Promise<string | null>
   where: () => Promise<string | null>
+  /** One line on the Craft apps: installed, shown, running, and the shown app's document. */
+  craft?: () => Promise<string | null>
   nudge: () => string | null
 }): Promise<string | null> {
   const parts = [role === 'leader' ? inputs.nudge() : null, ...await Promise.all([
     inputs.workspace(), inputs.teamwork(),
     role === 'worker' ? null : inputs.browser(),
+    // Workers drive the apps too, so they get this line; it names no user tabs or shell state.
+    inputs.craft ? inputs.craft().catch(() => null) : null,
     role === 'worker' ? agentSituationContext(null, role) : inputs.where().then(where => agentSituationContext(where, role), () => agentSituationContext(null, role))
   ])]
   return parts.filter(Boolean).join('\n\n') || null

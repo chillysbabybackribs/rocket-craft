@@ -10,7 +10,7 @@ export type ToolRole = 'ordinary' | 'leader' | 'worker'
 export function toolAllowed(role: ToolRole, name: string): boolean {
   if (role === 'ordinary') return true
   if (role === 'leader') return name !== 'ask_user'
-  return name.startsWith('browser_') || ['web_read', 'web_search', 'library_list', 'remember', 'studio_ui_run'].includes(name)
+  return name.startsWith('browser_') || name.startsWith('craft_') || ['web_read', 'web_search', 'library_list', 'remember', 'studio_ui_run'].includes(name)
 }
 
 export const WORKER_TOOL_REFUSAL = 'This tool is unavailable to orchestration workers. Put the question or blocker in your report and end your turn; the leader handles answers and live app actions.'

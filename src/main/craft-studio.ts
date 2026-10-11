@@ -2,15 +2,17 @@ import { app, ipcMain, screen, utilityProcess, type BrowserWindow, type UtilityP
 import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { CRAFT_APPS, craftApp } from '../shared/craft-apps.ts'
-import type { CraftAppInfo, CraftBounds, CraftRunState, CraftState } from '../shared/types.ts'
-import { CraftDock, checkBounds, xidOf } from './craft-dock.ts'
+import type { CraftAgentApp, CraftAgentControl, CraftAgentOp, CraftAppInfo, CraftBounds, CraftRunState, CraftState } from '../shared/types.ts'
+import { CraftDock, checkBounds, xidOf, type ControlInfo } from './craft-dock.ts'
 import type { HelperEvent, HelperReply, HelperRequest } from './craft-dock/protocol.ts'
 import { CraftInstaller, craftAppsHome, type InstallEvent, type InstallRecord } from './craft-install.ts'
 import { CraftLauncher, setLimits } from './craft-launch.ts'
 
 // Main's side of the Craft apps: the IPC behind `window.craft`, the installer, the dock and the
-// X11 helper process. Only the window's own page may call these; model tools never install, and
-// the model-tools phase reaches running apps through `CraftStudio.dock` (touch, controlOf).
+// X11 helper process. Only the window's own page may call these; model tools never install. The
+// host's craft_* tools reach running apps through `agentOp`: main readies the app (touch) and says
+// how to reach its control channel, and the host talks to the app itself, so a slow app can never
+// hold up main.
 
 export const CRAFT_STATE_CHANNEL = 'craft:state'
 
@@ -156,6 +158,41 @@ export class CraftStudio {
     ipcMain.handle('craft:states', (event) => { own(event.sender); return [...this.states.values()] })
     ipcMain.on('craft:pointerdown', (event) => {
       if (this.window && event.sender === this.window.webContents) void this.dock.pointerDown()
+    })
+  }
+
+  /** The host's craft_* tools: list the apps, or ready an installed one for a call. Never installs. */
+  async agentOp(op: CraftAgentOp): Promise<CraftAgentApp[] | CraftAgentControl | null> {
+    if (op.call === 'apps') return this.agentApps()
+    const entry = craftApp(String(op.app))
+    if (!entry) throw new Error(`Craft Studio has no app called “${String(op.app)}”. Call craft_apps for the app ids.`)
+    if (op.call === 'control') {
+      const control = this.dock.controlOf(entry.id)
+      return control ? this.agentControl(entry.id, control) : null
+    }
+    if (!(await this.installer.installed(entry.id))) {
+      throw new Error(`${entry.name} is not installed. Ask the user to install it from the app shelf (+ Add in the dock); models cannot install apps.`)
+    }
+    if (this.helper.fatal) throw new Error(this.helper.fatal)
+    const control = await this.dock.touch(entry.id, typeof op.folder === 'string' && op.folder ? op.folder : null)
+    return this.agentControl(entry.id, control)
+  }
+
+  private agentControl(id: string, control: ControlInfo): CraftAgentControl {
+    return {
+      app: id, launch: this.dock.launchOf(id) ?? 0, port: control.port, tokenFile: control.tokenFile,
+      controlFile: control.controlFile, configHome: control.configHome, folder: control.folder, run: this.dock.runOf(id)
+    }
+  }
+
+  private agentApps(): CraftAgentApp[] {
+    const shown = this.dock.shown()
+    return CRAFT_APPS.map((entry) => {
+      const state = this.states.get(entry.id)
+      return {
+        id: entry.id, name: entry.name, likeName: entry.likeName,
+        installState: state?.installState ?? 'none', run: state?.run ?? 'stopped', shown: shown === entry.id
+      }
     })
   }
 

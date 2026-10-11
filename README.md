@@ -87,6 +87,49 @@ back to the page when a docked app had it.
   synchronous click grab replayed to the app, FocusIn redirected back to the app) runs in the same
   process, so a busy main process never freezes the pointer.
 
+### Models drive the apps
+
+One fixed tool set drives all twelve apps, the app named in every call, so a model's prompt costs
+the same with one app installed or twelve (`src/host/tools/craft.ts`): `craft_apps` (all twelve
+with installed, running and shown state and each running app's document), `craft_show`,
+`craft_commands {app, search?, offset?}`, `craft_run {app, command, params?}`,
+`craft_batch {app, steps[], stop_on_error?}`, `craft_inspect {app, what?}`, `craft_open {app, path}`,
+`craft_save {app, path?, format?}` and `craft_screenshot {app, maxWidth?}`. Leaders, ordinary chats
+and workers all get them. Models never install or remove apps: a call to an app that is not
+installed is refused with a sentence telling the model to ask the user, who installs from the shelf.
+
+- **Every call** asks main to `touch` the app (`CraftAgentOp` over the host-to-main channel,
+  `CraftStudio.agentOp`): main refuses an app that is not installed, starts one that is not running
+  parked (confined to the calling chat's folder where the app supports it), lifts a resting app's
+  limits and redirects it so it draws, and answers how to reach its control channel. The host then
+  talks to the app itself over loopback (`craft-client.ts`), so a slow app never holds up main.
+- **Transport:** each app's own control channel, never its CLI's `mcp --bridge/--connect` server
+  (one more process per app, and PdfCraft has none). One connection per running app, kept between
+  calls and replaced when the app is started again; one call at a time per app (a batch is one
+  turn), so two models never interleave in one document. A connection the app dropped while idle
+  (PhotoCraft: 30 s) is replaced before the next call, and a request lost to such a close is sent
+  once more. A just-started app is docked before it listens, so a refused connection is retried for
+  up to 15 s. Timeouts (90 s for a command, 30 s for reads and screenshots, 120 s for files) end in
+  a sentence telling the model to inspect before trying again.
+- **What differs per app** is one table, `craft-adapters.ts`: framing (JSON lines, or JSON-RPC 2.0
+  for PdfCraft), sign-in (PhotoCraft's token, WordCraft's key file, PdfCraft's control file), how a
+  command runs, which method inspects, where the document's name and file are, how files open,
+  save and export, whether paths must stay in the app's folder, how screenshots come back (inline
+  base64 or a file), which control methods `craft_run` may call by name, and what it refuses:
+  quitting, resizing or raising the window, `app.open`/`app.save` (use `craft_open`/`craft_save`),
+  and commands that would open a native file or print dialog. A save without a path is refused
+  where the app would ask with a dialog for a never-saved document. The table's header lists each
+  app's quirks with the version and date read, and which apps were run against it.
+- **Screenshots** are the app's own `ui.screenshot`, which works while it is parked (redirected),
+  scaled in the host to 1024 px wide unless the model asks otherwise (`src/host/png.ts`).
+- **Ahead of each message** (`craftSituation`, all roles) one `<craft-apps>` line says which apps
+  are installed, which is shown, which are running and the shown app's document. It never starts,
+  lifts or waits for an app: a resting app is not asked, and the document is dropped after 1.5 s.
+
+`npm run craft:tools-e2e -- <evidence dir> [--display=:94] [--keep-apps=<dir>]` checks the tools the
+way a provider calls them (`tools/call` on the MCP channel, under a chat made by one UI-test
+message) against real GridCraft and PhotoCraft on a private Xvfb display.
+
 `npm run craft:e2e -- <evidence dir> [--wm=openbox|mutter] [--rest]` builds Craft Studio into a temp
 folder and checks all of this on a private Xvfb display with real downloads, in UI-test mode (no
 real model can receive anything typed there). Never point it at your own display: it clicks and
@@ -99,10 +142,10 @@ types.
   `docs/craft-studio-performance-plan.md`.
 - Per-app notes and licences: `docs/craft-studio-plan.md`. Agreed UI: `docs/mockups/craft-studio.html`.
 
-**Built so far:** Rocket Orchestrator renamed and isolated (Phase 1), and Phase 2: the app
+**Built so far:** Rocket Orchestrator renamed and isolated (Phase 1); Phase 2: the app
 manager behind `window.craft` (main and the preload) and the right side's dock, shelf and app
-region (see "The right side and the dock" below). **Not built yet:** the model tool set for
-driving apps. The rest of this README describes the Rocket base.
+region (see "The right side and the dock" below); Phase 3: the model tool set that drives any
+installed app (see "Models drive the apps" above). The rest of this README describes the Rocket base.
 Other `docs/` files cited below (mockups, plans) were not copied; they are in Rocket
 Orchestrator's repository, `~/Desktop/rocket-orchestrator/docs/`.
 
