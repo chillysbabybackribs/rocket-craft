@@ -614,12 +614,13 @@ button {
   width: fit-content;
   color: transparent;
   background: linear-gradient(90deg, var(--text-4) 0%, var(--text-4) 38%, var(--text) 50%, var(--text-4) 62%, var(--text-4) 100%);
-  background-size: 220% 100%;
+  background-size: 200% 100%;
+  background-position: 100% 0;
   -webkit-background-clip: text;
   background-clip: text;
   animation: shimmer 1.8s linear infinite;
 }
-@keyframes shimmer { from { background-position: 110% 0; } to { background-position: -110% 0; } }
+@keyframes shimmer { to { background-position: -100% 0; } }
 
 /* One line tall and clipped, so the next call rises into the place of the last. */
 .activity-current { height: 22px; overflow: hidden; }
