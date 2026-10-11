@@ -8,6 +8,7 @@ import { usePane, usePaneChatId, usePaneView } from '../pane.ts'
 import { chooseFolder, cwdOf, paneAt, prepare, send, setProvider, stop, useApp } from '../store.ts'
 import { ModelPicker } from './ModelPicker.tsx'
 import { Tabs } from './Tabs.tsx'
+import { ChatsMenu } from './Toolbar.tsx'
 
 const MAX_HEIGHT = 260
 
@@ -87,7 +88,9 @@ export function Composer({ placeholder }: { placeholder: string }) {
   const hint = !busy || (!text.trim() && !attachments.length) ? null : steers ? 'adds to this turn' : `sends when ${waitsFor ?? 'the turn'} finishes`
 
   return (
-    <div className="composer-group">
+    <div className="composer-shell">
+      <ChatsMenu />
+      <div className="composer-group">
       <Tabs />
       <div className="composer">
         <Attachments attachments={attachments} fresh={draft.fresh} onRemove={id => { if (!draft.sending) updateDraft(draftKey, { attachments: attachments.filter(each => each.id !== id) }) }} />
@@ -166,6 +169,7 @@ export function Composer({ placeholder }: { placeholder: string }) {
         {draft.pending > 0 && <div className="composer-hint" role="status">Preparing {draft.pending} image{draft.pending === 1 ? '' : 's'}…</div>}
         {(draft.error || unsupported) && <div className="composer-hint image-error" role="alert">{draft.error || 'Antigravity cannot receive images yet. Choose Claude, Codex or Cursor.'}</div>}
         {hint && <div className="composer-hint"><kbd>Enter</kbd> {hint} · <kbd>Esc</kbd> stops</div>}
+      </div>
       </div>
     </div>
   )

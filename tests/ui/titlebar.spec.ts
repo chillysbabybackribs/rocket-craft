@@ -1,6 +1,6 @@
 import { test, expect, section } from './app'
 
-// There is no rail: the window lights and the Chats button start the title strip, the usage notch hangs
+// There is no rail: the window lights start the title strip, the usage notch hangs
 // at its centre, and the chat card starts at the window's left edge. A ring's flyout opens below
 // the notch and ends inside the chat card, clear of the browser's native page.
 test('usage sits at the centre of the title strip and nothing but the chat uses the left edge', async ({ rocket }) => {
@@ -21,11 +21,6 @@ test('usage sits at the centre of the title strip and nothing but the chat uses 
     expect(Math.abs(box.x + box.width / 2 - width / 2)).toBeLessThanOrEqual(2)
     await expect(notch.locator('.ring')).toHaveCount(4)
     await rocket.capture('titlebar-usage')
-  })
-
-  await test.step('The toolbar and the notch never overlap', async () => {
-    const toolbar = (await page.locator('.toolbar .tb-glass').boundingBox())!
-    expect(toolbar.x + toolbar.width).toBeLessThanOrEqual((await notch.boundingBox())!.x)
   })
 
   await test.step('With the browser open, a ring\'s flyout ends inside the chat card', async () => {

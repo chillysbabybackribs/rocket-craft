@@ -1,11 +1,9 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
-import { ChevronDown } from 'lucide-react'
+import { MessagesSquare } from 'lucide-react'
 import { HistoryMenu } from './History.tsx'
 
-// The strip's one button, Chats, which opens the list of every chat (docs/mockups/craft-studio.html).
-// Rocket's other sections moved: the browser and the library are toggles at the dock's right end
-// (Dock.tsx), and the tool ledger's panel was dropped. It sits in the title strip (TitleStrip.tsx)
-// after the window lights.
+// Chats opens the list of every chat from an icon just above the composer's top-right corner
+// (docs/mockups/craft-studio.html). Browser and Library are toggles at the dock's right end (Dock.tsx).
 //
 // A docked app window and the browser's page are native views that paint over anything drawn
 // across the right side, so the menu is pulled left until it ends inside the chat card.
@@ -27,7 +25,7 @@ function InsideChat({ left, children }: { left: number; children: React.ReactNod
   return <div ref={ref} className="tb-popup" style={{ left }}>{children}</div>
 }
 
-export function Toolbar() {
+export function ChatsMenu() {
   const [open, setOpen] = useState(false)
   const root = useRef<HTMLDivElement>(null)
   const button = useRef<HTMLButtonElement>(null)
@@ -51,27 +49,25 @@ export function Toolbar() {
   }, [open])
 
   const left = (): number => {
-    const toolbar = root.current?.getBoundingClientRect()
+    const anchor = root.current?.getBoundingClientRect()
     const box = button.current?.getBoundingClientRect()
-    return toolbar && box ? box.left - toolbar.left : 0
+    return anchor && box ? box.left - anchor.left : 0
   }
   return (
-    <div className="toolbar" ref={root}>
-      <div className="tb-glass tb-kept">
-        <button
-          ref={button}
-          type="button"
-          className={`tb-item${open ? ' is-on' : ''}`}
-          data-section="chats"
-          aria-label="Chats"
-          aria-haspopup="menu"
-          aria-expanded={open}
-          onClick={() => setOpen(!open)}
-        >
-          <span>Chats</span>
-          <ChevronDown size={12} className="tb-chev" aria-hidden />
-        </button>
-      </div>
+    <div className="composer-chats" ref={root}>
+      <button
+        ref={button}
+        type="button"
+        className={`composer-attach composer-chats-btn${open ? ' is-on' : ''}`}
+        data-section="chats"
+        aria-label="Chats"
+        title="Chats"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        onClick={() => setOpen(!open)}
+      >
+        <MessagesSquare size={16} aria-hidden />
+      </button>
       {open && (
         <InsideChat left={left()}>
           <HistoryMenu onPick={() => setOpen(false)} />

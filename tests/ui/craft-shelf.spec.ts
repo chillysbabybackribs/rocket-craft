@@ -51,10 +51,10 @@ test('the shelf matches the agreed mockup and its filter and menu work', async (
     const card = (await shelf.getByRole('article', { name: 'VectorCraft' }).boundingBox())!
     expect(card.height).toBeGreaterThanOrEqual(234)
     expect(card.height).toBeLessThanOrEqual(240)
-    // Every card shows its icon, its size or that it is installed, its "Like" name and one button.
+    // Every card shows its icon, its download size when not installed, its "Like" name and one button.
     const photo = shelf.getByRole('article', { name: 'PhotoCraft' })
     await expect(photo.locator('.craft-icon[data-glyph="photocraft"] svg')).toHaveCount(1)
-    await expect(photo.locator('.shelf-chip')).toHaveText('Installed')
+    await expect(photo.locator('.shelf-chip')).toHaveCount(0)
     await expect(photo).toContainText('Like Photoshop')
     await expect(shelf.getByRole('article', { name: 'VectorCraft' }).locator('.shelf-chip')).toHaveText('79 MB')
     await expect(shelf).toContainText('157 MB on disk')

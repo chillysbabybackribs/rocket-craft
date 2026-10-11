@@ -3,7 +3,7 @@ import type { Chat } from '../../../shared/types.ts'
 import { act } from '../app-map.ts'
 import { currentChatId, deleteChat, useApp } from '../store.ts'
 
-// Every chat, newest first, in a menu that opens from the toolbar's Chats section. Picking one
+// Every chat, newest first, in a menu that opens from the composer's Chats icon. Picking one
 // opens it as a tab. The toolbar keeps the menu inside the chat card, so it never reaches the
 // browser (a native view that would paint on top of it).
 

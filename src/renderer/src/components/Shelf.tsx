@@ -109,7 +109,7 @@ function ShelfCard({ app }: { app: CraftAppInfo }) {
     <article className={`shelf-card is-${state.installState}`} data-app={app.id} aria-label={app.name} style={{ '--a': app.accent } as React.CSSProperties}>
       <div className="shelf-top">
         <CraftIcon app={app} size={56} />
-        {installed ? <span className="shelf-chip is-ok">Installed</span> : <span className="shelf-chip">{sizeText(app.sizeBytes)}</span>}
+        {!installed && <span className="shelf-chip">{sizeText(app.sizeBytes)}</span>}
       </div>
       <div className="shelf-name">{app.name}</div>
       <div className="shelf-like">Like {app.likeName}</div>

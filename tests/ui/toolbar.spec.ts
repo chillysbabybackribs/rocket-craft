@@ -1,21 +1,22 @@
 import { test, expect, section } from './app'
 
-// The title strip keeps one button, Chats, whose menu stays inside the chat card; Browser and
-// Library are toggles at the dock's right end (docs/mockups/craft-studio.html). Rocket's Sections
-// drawer, Customize and the Tools panel are gone, and preferences saved for them load harmlessly.
-test('the strip holds Chats only, and Browser and Library toggle from the dock', async ({ rocket }) => {
+// Chats opens from an icon above the composer; Browser and Library are toggles at the dock's right
+// end (docs/mockups/craft-studio.html). Rocket's Sections drawer, Customize and the Tools panel
+// are gone, and preferences saved for them load harmlessly.
+test('Chats sits on the composer, and Browser and Library toggle from the dock', async ({ rocket }) => {
   const { page } = rocket
   const dock = page.getByRole('navigation', { name: 'Apps dock' })
 
-  await test.step('Only Chats is in the strip; the dock has Browser and Library', async () => {
-    await expect(page.locator('.toolbar [data-section]')).toHaveText(['Chats'])
+  await test.step('Chats is on the composer, not the title strip; the dock has Browser and Library', async () => {
+    await expect(page.locator('.titlebar [data-section="chats"]')).toHaveCount(0)
+    await expect(page.locator('.composer-shell [data-section="chats"]')).toHaveCount(1)
     await expect(page.getByRole('button', { name: 'Sections', exact: true })).toHaveCount(0)
     await expect(page.getByRole('button', { name: 'Tools', exact: true })).toHaveCount(0)
     await expect(dock.getByRole('button', { name: 'Browser', exact: true })).toBeVisible()
     await expect(dock.getByRole('button', { name: 'Library', exact: true })).toBeVisible()
   })
 
-  await test.step('The Chats menu opens under its name and stays inside the chat card', async () => {
+  await test.step('The Chats menu opens from the composer icon and stays inside the chat card', async () => {
     await (await section(page, 'Browser')).click()
     await expect(page.getByRole('region', { name: 'Browser', exact: true })).toBeVisible()
     await page.getByRole('button', { name: 'Chats', exact: true }).click()
@@ -51,7 +52,7 @@ test('the strip holds Chats only, and Browser and Library toggle from the dock',
     await (await section(page, 'Library')).click()
     await rocket.restart()
     const page2 = rocket.page
-    await expect(page2.locator('.toolbar [data-section]')).toHaveText(['Chats'])
+    await expect(page2.locator('.composer-shell [data-section="chats"]')).toHaveCount(1)
     await expect(page2.getByRole('complementary', { name: 'Library', exact: true })).toBeVisible()
   })
 })

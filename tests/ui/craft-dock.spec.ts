@@ -28,8 +28,7 @@ test('the dock holds installed apps, shows one in the right side, and hands the 
     await expect(dock.locator('[data-app]')).toHaveCount(0)
     await expect(dock.getByRole('button', { name: 'Add apps' })).toHaveAttribute('aria-pressed', 'true')
     await expect(dock.getByRole('button', { name: 'Browser', exact: true })).toHaveAttribute('aria-pressed', 'false')
-    // The old toolbar's sections are gone from the title strip; only Chats is left there.
-    await expect(page.locator('.toolbar [data-section]')).toHaveCount(1)
+    await expect(page.locator('.titlebar [data-section="chats"]')).toHaveCount(0)
     await expect(page.getByRole('button', { name: 'Sections', exact: true })).toHaveCount(0)
     await rocket.capture('first-run-shelf')
   })
@@ -45,7 +44,7 @@ test('the dock holds installed apps, shows one in the right side, and hands the 
     await expect(dock.getByRole('button', { name: 'PhotoCraft', exact: true })).toBeVisible()
     await expect(dock.locator('[data-app="photocraft"] .dock-label')).toHaveText('Photo')
     await expect(shelf.getByRole('button', { name: 'Open PhotoCraft' })).toBeVisible()
-    await expect(shelf.getByRole('article', { name: 'PhotoCraft' }).locator('.shelf-chip')).toHaveText('Installed')
+    await expect(shelf.getByRole('article', { name: 'PhotoCraft' }).locator('.shelf-chip')).toHaveCount(0)
     for (const [id, name] of [['gridcraft', 'GridCraft'], ['deckcraft', 'DeckCraft']] as const) {
       await shelf.getByRole('button', { name: `Install ${name}` }).click()
       await craftControl(page, 'finish', id)

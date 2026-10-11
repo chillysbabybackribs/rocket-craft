@@ -3,9 +3,7 @@ import { RefreshCw } from 'lucide-react'
 import { PROVIDERS, providerLabel, type ProviderId, type UsageSnapshot, type UsageWindow } from '../../../shared/types.ts'
 import { refreshUsage, useApp } from '../store.ts'
 import { ProviderGlyph } from './glyphs.tsx'
-import { Toolbar } from './Toolbar.tsx'
-
-// The title strip: window lights, the toolbar (Toolbar.tsx) and the usage notch
+// The title strip: window lights and the usage notch
 // (docs/mockups/usage-in-titlebar.html). The notch is the app's signature: a black tab hanging from
 // the window's top edge with one ring per provider, each showing how much of that subscription's
 // nearest limit is used. There is no rail; the chat card starts at the window's left edge.
@@ -203,16 +201,14 @@ function Traffic() {
 }
 
 /**
- * The strip above the cards: the window lights and the toolbar at its start, the usage tab at its
- * centre. The grid's two outer columns share the width equally, so the tab sits at the window's
- * centre until the toolbar outgrows its half, and then it moves right rather than overlapping.
+ * The strip above the cards: the window lights at its start, the usage tab at its centre. The grid's
+ * two outer columns share the width equally, so the tab sits at the window's centre.
  */
 export function TitleStrip() {
   return (
     <header className="titlebar">
       <div className="titlebar-start">
         <Traffic />
-        <Toolbar />
       </div>
       <UsageNotch />
     </header>
