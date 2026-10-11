@@ -1,0 +1,142 @@
+/* The library panel (docs/mockups/document-library.html): Ranch's arrangement in Craft Studio's
+   tokens. A filter rail, then a dense grid of 16:10 frames where photos fill the frame and pages
+   sit on a backdrop running off its foot, so a document's title and first lines read. */
+
+/* Its column width is shared with the tool ledger, in styles.css. */
+
+.library-panel {
+  margin-left: var(--gap);
+  border: 1px solid var(--line);
+  border-radius: var(--card-radius);
+  background: var(--sheen), var(--panel);
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Filter rail */
+.lib-filters { width: 200px; flex: none; border-right: 1px solid var(--line); padding: 14px 12px 12px; display: flex; flex-direction: column; gap: 12px; min-height: 0; overflow-y: auto; }
+.lib-scope { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 13.5px; padding: 2px 2px 0; }
+.lib-scope svg { color: var(--text-3); }
+.lib-field { position: relative; }
+.lib-label { display: block; font-size: 11px; color: var(--text-4); margin: 0 0 5px 2px; font-weight: 500; }
+.lib-select {
+  width: 100%; height: 32px; display: flex; align-items: center; gap: 8px; padding: 0 9px 0 10px;
+  border-radius: 8px; background: var(--raised); border: 1px solid var(--line-strong);
+  font: inherit; font-size: 12.5px; color: var(--text); text-align: left; cursor: pointer;
+}
+.lib-select:hover { border-color: var(--line-focus); }
+.lib-select span { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lib-select svg { color: var(--text-3); flex: none; }
+.lib-select.is-set { border-color: rgba(113, 112, 255, 0.55); background: rgba(113, 112, 255, 0.08); }
+.lib-menu {
+  position: absolute; z-index: 20; left: 0; right: 0; top: calc(100% + 4px); max-height: 320px; overflow-y: auto;
+  background: var(--menu); border-radius: 10px; box-shadow: var(--menu-shadow); padding: 4px;
+}
+.lib-menu button {
+  width: 100%; display: flex; align-items: center; gap: 8px; padding: 6px 8px; border: 0; border-radius: 6px;
+  background: none; font: inherit; font-size: 12.5px; color: var(--text-2); text-align: left; cursor: pointer;
+}
+.lib-menu button:hover, .lib-menu button:focus-visible { background: var(--selected); color: var(--text); outline: none; }
+.lib-tick { width: 14px; flex: none; color: var(--text); }
+.lib-opt { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lib-n { margin-left: auto; color: var(--text-4); font-size: 11.5px; font-variant-numeric: tabular-nums; }
+.lib-clear {
+  align-self: flex-start; margin: 2px 0 0 2px; border: 0; background: none; padding: 0; cursor: pointer;
+  font: inherit; font-size: 11px; letter-spacing: 0.08em; font-weight: 600; color: var(--danger); text-transform: uppercase;
+}
+.lib-clear:disabled { color: var(--text-4); opacity: 0.6; cursor: default; }
+.lib-foot { margin-top: auto; font-size: 11.5px; color: var(--text-4); line-height: 1.6; padding: 0 2px; }
+
+/* Head */
+.lib-browse { flex: 1; min-width: 0; display: flex; flex-direction: column; min-height: 0; }
+.lib-head { height: 52px; flex: none; display: flex; align-items: center; gap: 10px; padding: 0 10px 0 16px; border-bottom: 1px solid var(--line); }
+.lib-head h2 { font-size: 13.5px; font-weight: 600; margin: 0; white-space: nowrap; }
+.lib-count { color: var(--text-4); font-size: 12px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.lib-spacer { flex: 1; }
+.lib-search {
+  width: min(240px, 34%); min-width: 120px; height: 30px; display: flex; align-items: center; gap: 7px; padding: 0 10px;
+  border-radius: 8px; background: var(--raised); border: 1px solid var(--line-strong); color: var(--text-4);
+}
+.lib-search:focus-within { border-color: var(--line-focus); }
+.lib-search input { flex: 1; min-width: 0; border: 0; background: none; outline: none; font: inherit; font-size: 12.5px; color: var(--text); }
+.lib-search input::placeholder { color: var(--text-4); }
+.lib-seg { display: flex; padding: 2px; border-radius: 8px; background: var(--raised); border: 1px solid var(--line-strong); }
+.lib-seg button { height: 24px; width: 28px; border: 0; border-radius: 6px; background: none; color: var(--text-4); display: grid; place-items: center; cursor: pointer; }
+.lib-seg button[aria-pressed='true'] { background: rgba(255, 255, 255, 0.09); color: var(--text); }
+.lib-chips { display: flex; gap: 6px; padding: 10px 16px 0; flex-wrap: wrap; }
+.lib-chip {
+  display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 5px 0 9px; border-radius: 12px;
+  background: rgba(113, 112, 255, 0.12); border: 1px solid rgba(113, 112, 255, 0.35); font-size: 12px; color: var(--text);
+}
+.lib-chip > span { color: var(--text-3); }
+.lib-chip button { width: 16px; height: 16px; border: 0; border-radius: 50%; background: none; color: var(--text-3); display: grid; place-items: center; cursor: pointer; padding: 0; }
+.lib-chip button:hover { background: rgba(255, 255, 255, 0.1); color: var(--text); }
+.lib-scroll { flex: 1; min-height: 0; overflow: auto; padding: 14px 14px 20px; }
+.lib-empty { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 72px 24px; text-align: center; color: var(--text-3); margin: 0; }
+.lib-empty b { color: var(--text-2); font-weight: 550; }
+.lib-empty span { max-width: 380px; }
+
+/* Grid */
+.lib-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px 6px; }
+.lib-card {
+  position: relative; display: flex; flex-direction: column; min-width: 0; padding: 5px 5px 8px; border: 0; border-radius: 10px;
+  background: transparent; font: inherit; color: inherit; text-align: left; cursor: pointer;
+}
+.lib-card:hover { background: rgba(255, 255, 255, 0.035); }
+.lib-card.is-selected { background: rgba(113, 112, 255, 0.1); box-shadow: inset 0 0 0 1px rgba(113, 112, 255, 0.5); }
+.lib-card.is-missing .lib-frame { opacity: 0.45; }
+.lib-frame { position: relative; display: block; }
+.lib-thumb { position: relative; aspect-ratio: 16 / 10; border-radius: 6px; overflow: hidden; background: #141517; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05); }
+.lib-thumb.is-cover img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.35s ease; }
+.lib-card:hover .lib-thumb.is-cover img { transform: scale(1.03); }
+.lib-thumb.is-page { background: radial-gradient(120% 90% at 50% 0%, #24262b, #141517); }
+.lib-thumb.is-page > img, .lib-text-page {
+  position: absolute; left: 50%; top: 12%; width: 62%; transform: translateX(-50%); border-radius: 2px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.5), 0 8px 24px rgba(0, 0, 0, 0.45); transition: top 0.3s ease;
+}
+.lib-card:hover .lib-thumb.is-page > img, .lib-card:hover .lib-text-page { top: 9%; }
+/* A text file's first lines, set as a tiny page; the frame cuts it off like a rendered PDF. */
+.lib-text-page {
+  aspect-ratio: 8.5 / 11; overflow: hidden; background: #fff; color: #2b2b30; padding: 9% 8%;
+  font: 4.2px/1.5 var(--mono); white-space: pre; pointer-events: none;
+}
+.lib-text-page.is-markdown { font-family: var(--font); font-size: 4.6px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.lib-text-page .is-heading { font-weight: 700; font-size: 1.5em; margin: 0.4em 0 0.2em; color: #111; }
+.lib-thumb.is-mark { display: grid; place-items: center; color: var(--text-4); }
+.lib-thumb.is-loading { background: linear-gradient(100deg, #141517 30%, #1b1c1f 50%, #141517 70%) 0 0 / 300% 100%; animation: lib-shimmer 1.4s linear infinite; }
+@keyframes lib-shimmer { to { background-position: -150% 0; } }
+.lib-kind, .lib-pages, .lib-missing {
+  position: absolute; top: 6px; height: 18px; padding: 0 6px; border-radius: 5px; display: flex; align-items: center;
+  font-size: 10px; font-weight: 600; letter-spacing: 0.04em; color: #fff; background: rgba(10, 10, 12, 0.62);
+  backdrop-filter: blur(8px); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+.lib-kind { left: 6px; }
+.lib-pages { right: 6px; font-weight: 500; letter-spacing: 0; color: rgba(255, 255, 255, 0.8); }
+.lib-missing { left: 50%; top: 50%; transform: translate(-50%, -50%); background: rgba(235, 87, 87, 0.85); }
+.lib-name { margin: 7px 3px 0; font-size: 12.5px; font-weight: 500; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lib-sub { margin: 1px 3px 0; font-size: 11.5px; color: var(--text-4); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* List */
+.lib-list { width: 100%; border-collapse: collapse; font-size: 12.5px; table-layout: fixed; }
+.lib-list th { text-align: left; font-weight: 500; color: var(--text-4); font-size: 11.5px; padding: 0 8px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+.lib-list th:nth-child(1) { width: 38%; }
+.lib-list th:nth-child(2) { width: 52px; }
+.lib-list th:nth-child(5) { width: 64px; }
+.lib-list th:nth-child(6) { width: 72px; }
+.lib-list td { padding: 5px 8px; border-bottom: 1px solid var(--line); color: var(--text-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lib-list tr:hover td { background: rgba(255, 255, 255, 0.03); }
+.lib-list tr.is-selected td { background: rgba(113, 112, 255, 0.08); }
+.lib-list tr.is-missing td { color: var(--text-4); }
+.lib-cell-name button { display: flex; align-items: center; gap: 10px; width: 100%; min-width: 0; border: 0; background: none; padding: 0; font: inherit; color: var(--text); text-align: left; cursor: pointer; }
+.lib-row-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lib-mini { width: 40px; height: 26px; flex: none; border-radius: 4px; overflow: hidden; background: #1b1c1f; display: grid; place-items: center; color: var(--text-4); }
+.lib-mini img { width: 100%; height: 100%; object-fit: cover; }
+.lib-mini.is-page img { width: 62%; height: auto; align-self: start; margin-top: 3px; }
+.lib-num { text-align: right; font-variant-numeric: tabular-nums; }
+
+/* A library file open in the side panel */
+.library-back { display: inline-flex; align-items: center; gap: 4px; margin-right: 10px; }
+.attachment-title .library-back + span { overflow: hidden; text-overflow: ellipsis; }
+.library-image { display: block; max-width: 100%; margin: 0 auto; border-radius: 4px; }

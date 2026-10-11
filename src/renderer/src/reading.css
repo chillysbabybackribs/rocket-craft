@@ -1,0 +1,104 @@
+/* Hands-free reading, at the right of the browser's toolbar (ReadingControl.tsx). Reading, the
+   button opens leftward into a pill the height of the address field, so the toolbar keeps its
+   rhythm. */
+
+.browser-tools { justify-self: end; display: flex; align-items: center; gap: 2px; }
+
+.reading {
+  --fill-colour: var(--text-3);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 3px 0 2px;
+  border-radius: 15px;
+  background: rgba(255, 255, 255, 0.06);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+  animation: reading-open 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.reading.is-running { --fill-colour: var(--accent); }
+@keyframes reading-open {
+  from { opacity: 0; clip-path: inset(0 0 0 100% round 15px); }
+  to { opacity: 1; clip-path: inset(0 0 0 0 round 15px); }
+}
+
+/* Play and pause sit inside a ring that fills as the page goes by. */
+.reading-ring {
+  position: relative;
+  flex: none;
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: var(--text);
+}
+.reading-dial { position: absolute; inset: 0; transform: rotate(-90deg); }
+.reading-groove { stroke: rgba(255, 255, 255, 0.1); }
+.reading-done { stroke: var(--text-3); transition: stroke 160ms, stroke-dashoffset 250ms linear; }
+.reading-face { position: absolute; inset: 4px; border-radius: 50%; background: rgba(255, 255, 255, 0.06); transition: background 160ms; }
+.reading-glyph { position: relative; }
+.reading-ring:hover .reading-face { background: rgba(255, 255, 255, 0.12); }
+.reading.is-running .reading-done { stroke: var(--accent); }
+.reading.is-running .reading-face { background: color-mix(in srgb, var(--accent) 22%, transparent); }
+.reading.is-running .reading-ring:hover .reading-face { background: color-mix(in srgb, var(--accent) 34%, transparent); }
+.reading.is-end .reading-done { stroke: var(--ok); }
+.reading.is-end .reading-face { background: color-mix(in srgb, var(--ok) 18%, transparent); }
+
+/* The speed slider runs on a log scale (shared/reading.ts). Dots mark the round speeds it clicks onto. */
+.reading-slider { position: relative; flex: none; width: 104px; height: 26px; display: flex; align-items: center; }
+.reading-ticks { position: absolute; left: 6px; right: 6px; top: 50%; height: 0; pointer-events: none; }
+.reading-ticks i { position: absolute; top: -1.5px; width: 3px; height: 3px; margin-left: -1.5px; border-radius: 50%; background: rgba(255, 255, 255, 0.28); }
+.reading-ticks i.is-under { background: rgba(255, 255, 255, 0.55); }
+.reading-slider input {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 26px;
+  margin: 0;
+  background: none;
+  cursor: pointer;
+}
+.reading-slider input:focus-visible { outline: none; }
+.reading-slider input::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 2px;
+  background: linear-gradient(to right, var(--fill-colour) var(--fill), rgba(255, 255, 255, 0.12) var(--fill));
+}
+.reading-slider input::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 12px;
+  height: 12px;
+  margin-top: -4px;
+  border-radius: 50%;
+  background: #f2f2f4;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35), 0 1px 4px rgba(0, 0, 0, 0.5);
+  transition: transform 120ms;
+}
+.reading-slider input:hover::-webkit-slider-thumb,
+.reading-slider input:active::-webkit-slider-thumb { transform: scale(1.18); }
+.reading-slider input:focus-visible::-webkit-slider-thumb {
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35), 0 0 0 4px color-mix(in srgb, var(--accent) 45%, transparent);
+}
+
+/* The speed, and under it how long the rest of the page takes at that speed. */
+.reading-readout { flex: none; width: 46px; display: flex; flex-direction: column; line-height: 1.1; cursor: default; user-select: none; }
+.reading-speed { font: 600 12px var(--mono); color: var(--text); font-variant-numeric: tabular-nums; letter-spacing: -0.2px; }
+.reading-left { font-size: 10px; color: var(--text-3); white-space: nowrap; }
+.reading.is-end .reading-left { color: var(--ok); }
+.reading-sep { flex: none; width: 1px; height: 14px; background: var(--line-strong); }
+.reading-stop { flex: none; width: 24px; height: 24px; display: grid; place-items: center; border-radius: 50%; color: var(--text-3); }
+.reading-stop:hover { background: rgba(255, 255, 255, 0.1); color: var(--text); }
+
+/* While reading, both sides of the toolbar keep room for the pill, so the address field stays
+   centred; in a narrow browser the slider folds away and the speed keys and wheel still work. */
+.browser-frame { container: browser-bar / inline-size; }
+.browser-bar.is-reading { --bar-side: 228px; }
+@container browser-bar (max-width: 600px) {
+  .browser-bar.is-reading { --bar-side: 120px; }
+  .reading-slider { display: none; }
+}
+
+/* In the file panel the text takes focus when clicked (tabIndex -1), so Space and the reading keys
+   reach the panel; that focus is a means, not something to draw. */
+.artifact-content:focus { outline: none; }

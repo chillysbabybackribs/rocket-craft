@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>SPA fixture</title>
+  <style>
+    body { font: 16px system-ui; margin: 24px; }
+    [hidden] { display: none !important; }
+    .note { color: #444; }
+  </style>
+</head>
+<body>
+  <div id="list-view">
+    <h1>Records</h1>
+    <p class="note">Hash router fixture for browser Phase 0.</p>
+    <ul id="record-list">
+      <li><a href="#/record/alpha">Alpha Corp</a></li>
+      <li><a href="#/record/beta">Beta LLC</a></li>
+    </ul>
+    <button type="button" id="rerender">Rerender list</button>
+  </div>
+  <div id="detail-view" hidden>
+    <h1 id="detail-title">Loading…</h1>
+    <p id="detail-note" class="note"></p>
+    <a href="#/list">Back to list</a>
+  </div>
+  <script>
+    const listView = document.getElementById('list-view')
+    const detailView = document.getElementById('detail-view')
+    const detailTitle = document.getElementById('detail-title')
+    const detailNote = document.getElementById('detail-note')
+    const recordList = document.getElementById('record-list')
+
+    function renderList() {
+      recordList.innerHTML = ''
+      const rows = [
+        { id: 'alpha', label: 'Alpha Corp' },
+        { id: 'beta', label: 'Beta LLC' }
+      ]
+      for (let i = 0; i < 30; i++) rows.push({ id: 'decoy-' + i, label: 'Decoy row ' + i })
+      for (const row of rows) {
+        const li = document.createElement('li')
+        const a = document.createElement('a')
+        a.href = '#/record/' + row.id
+        a.textContent = row.label
+        li.appendChild(a)
+        recordList.appendChild(li)
+      }
+    }
+
+    async function route() {
+      const hash = location.hash.slice(1) || '/list'
+      if (hash.startsWith('/record/')) {
+        const id = hash.split('/')[2]
+        listView.hidden = true
+        detailView.hidden = false
+        detailTitle.textContent = 'Loading…'
+        detailNote.textContent = ''
+        const slow = Number(new URLSearchParams(location.search).get('slow') || 0)
+        if (slow > 0) await new Promise((resolve) => setTimeout(resolve, slow))
+        const res = await fetch('/spa/api/records/' + encodeURIComponent(id))
+        const data = await res.json()
+        detailTitle.textContent = data.name
+        detailNote.textContent = data.note
+      } else {
+        listView.hidden = false
+        detailView.hidden = true
+      }
+    }
+
+    document.getElementById('rerender').addEventListener('click', () => renderList())
+    window.addEventListener('hashchange', () => { void route() })
+    renderList()
+    void route()
+    // Tests wait for this before clicking: the list is rebuilt by renderList() and the
+    // hash router is only hooked once the script has run, so an earlier click can miss.
+    document.body.dataset.ready = 'true'
+  </script>
+</body>
+</html>

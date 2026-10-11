@@ -1,0 +1,44 @@
+/* The address field's dropdown: a page of its own, so it repeats the few tokens it needs. */
+
+* { box-sizing: border-box; }
+
+html, body { height: 100%; }
+
+body {
+  margin: 0;
+  overflow: hidden;
+  background: #1b1c1e;
+  color: #f7f8f8;
+  font-family: 'Inter Variable', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 12.5px;
+  letter-spacing: -0.006em;
+  font-feature-settings: 'cv01', 'ss03';
+  -webkit-font-smoothing: antialiased;
+  user-select: none;
+  cursor: default;
+}
+
+#root {
+  height: 100%;
+  padding: var(--pad);
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  border-radius: 10px;
+}
+
+.row {
+  height: var(--row);
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 0 9px;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+.row:hover { background: rgba(255, 255, 255, 0.045); }
+.row.is-selected { background: #7170ff; }
+
+.icon { flex: none; display: grid; width: 14px; height: 14px; color: #8a8f98; }
+.title { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.detail { flex: 1 10 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; color: #8a8f98; }
+.detail::before { content: '— '; }
+.is-selected .icon, .is-selected .detail { color: rgba(255, 255, 255, 0.75); }

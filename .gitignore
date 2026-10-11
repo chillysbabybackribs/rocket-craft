@@ -12,3 +12,6 @@ downloads/
 .cache/
 # Local logs and app data
 *.log
+# From Rocket Orchestrator
+*.tsbuildinfo
+.artifacts/

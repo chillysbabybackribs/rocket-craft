@@ -1,0 +1,48 @@
+{
+  "name": "craft-studio",
+  "productName": "Craft Studio",
+  "version": "0.1.0",
+  "description": "Craft Studio: one chat on the left and open-source creative apps on the right, driven by Codex, Claude, Cursor or Antigravity through their CLIs. Built on Rocket Orchestrator.",
+  "main": "out/main/index.js",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "node scripts/launch.mjs dev",
+    "build": "tsc --noEmit && electron-vite build",
+    "preview": "node scripts/launch.mjs preview",
+    "open": "node scripts/open.mjs",
+    "typecheck": "tsc --noEmit",
+    "test": "node --experimental-transform-types --disable-warning=ExperimentalWarning --test \"src/**/*.test.ts\" \"scripts/*.test.mjs\"",
+    "check:live": "node --experimental-transform-types --disable-warning=ExperimentalWarning src/host/live-check.ts",
+    "check:ui": "node scripts/ui-check.mjs",
+    "check:browser-phase0": "node scripts/browser-phase0-baseline.mjs",
+    "simulate:slow-turn": "node --experimental-transform-types --disable-warning=ExperimentalWarning src/host/simulate-slow-turn.ts",
+    "bench:transcript": "node --experimental-transform-types --disable-warning=ExperimentalWarning src/host/transcript-bench.ts",
+    "demo:video": "electron-vite build --outDir .artifacts/demo/app/out && xvfb-run -a --server-args='-screen 0 3200x1800x24' node scripts/demo-video.mjs .artifacts/demo/run && python3 scripts/demo-edit.py .artifacts/demo/run"
+  },
+  "dependencies": {
+    "@anthropic-ai/claude-agent-sdk": "^0.3.293",
+    "@fontsource-variable/geist-mono": "^5.3.0",
+    "@fontsource-variable/inter": "^5.3.0",
+    "@mozilla/readability": "^0.6.0",
+    "image-size": "^2.0.4",
+    "linkedom": "^0.18.13",
+    "lucide-react": "^1.33.0",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "react-markdown": "^10.1.0",
+    "remark-gfm": "^4.0.1"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.63.0",
+    "@types/node": "^24.0.0",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.4",
+    "@vitejs/plugin-react": "^5.2.0",
+    "electron": "^44.0.0",
+    "electron-vite": "^5.0.0",
+    "typescript": "^5.9.3",
+    "vite": "^7.3.6",
+    "zod": "^4.6.5"
+  }
+}

@@ -1,0 +1,145 @@
+/* Image controls share Craft Studio's composer tokens; only the receiving pane is a drop target. */
+.pane { position: relative; }
+.composer-entry { position: relative; }
+.composer-attach { flex: none; width: 28px; height: 28px; border-radius: 6px; color: var(--text-3); display: grid; place-items: center; }
+.composer-attach:hover { color: var(--text); background: var(--hover); }
+.composer-bar .composer-folder { min-width: 0; margin-right: auto; }
+.composer-bar { gap: 5px; }
+.image-attachments { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 8px; }
+.user-message { width: fit-content; max-width: 85%; margin: 0 0 24px auto; }
+.user-message > .image-attachments { justify-content: flex-end; margin-bottom: 10px; }
+.user-message > .image-attachments:last-child { margin-bottom: 0; }
+.user-message > .user-bubble { max-width: 100%; margin: 0 0 0 auto; }
+.steer .user-message { max-width: 100%; margin: 0; }
+.image-attachments.is-draft { flex-wrap: nowrap; overflow-x: auto; padding: 13px 12px 4px; margin: 0; }
+.image-attachment { position: relative; min-width: 0; width: 120px; flex: 0 0 120px; }
+.is-draft .image-attachment { width: 104px; flex-basis: 104px; }
+.image-thumbnail { display: grid; place-items: center; width: 100%; height: 82px; padding: 0; overflow: hidden; border: 0; border-radius: 7px; background: transparent; color: var(--text-3); font-size: 11px; }
+.is-draft .image-thumbnail { height: 68px; }
+.image-thumbnail img { width: 100%; height: 100%; object-fit: contain; }
+.image-name { display: block; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; color: var(--text-3); font-size: 10px; margin-top: 3px; }
+.image-remove { position: absolute; top: -5px; right: -5px; width: 21px; height: 21px; padding: 0; line-height: 0; display: grid; place-items: center; border: 1px solid var(--line-focus); background: var(--menu); color: var(--text-2); border-radius: 50%; }
+.image-remove svg { display: block; width: 12px; height: 12px; margin: 0; }
+.image-remove:hover { color: var(--text); background: var(--raised); }
+.image-error { color: var(--danger); }
+.image-drop-target { position: absolute; inset: 7px; z-index: 15; display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: none; gap: 9px; padding: 20px; text-align: center; border: 1px dashed var(--accent); border-radius: 9px; background: #12121bf5; }
+.image-drop-target svg { color: var(--accent); margin-bottom: 6px; }
+.image-drop-target strong { font-size: 16px; font-weight: 500; }
+.image-drop-target span { color: var(--text-2); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.image-drop-target small { color: var(--text-3); margin-top: 14px; }
+.image-preview { max-width: 90vw; max-height: 90vh; padding: 16px; border: 1px solid var(--line-focus); border-radius: 12px; background: var(--panel); color: var(--text); }
+.image-preview::backdrop { background: #000c; }
+.image-preview-bar { display: flex; gap: 24px; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.image-preview-bar span { overflow-wrap: anywhere; }
+.image-preview-bar button { display: grid; place-items: center; padding: 5px; color: var(--text-2); }
+.image-preview > img { display: block; max-width: 82vw; max-height: 76vh; object-fit: contain; }
+.image-thumbnail:focus-visible, .image-remove:focus-visible, .composer-attach:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* A draft with file cards wraps rather than scrolling sideways, as in the file mockup. */
+.image-attachments.is-draft:has(.file-attachment) { flex-wrap: wrap; overflow-x: visible; }
+
+/* File cards share the image row; the mark and spacing follow docs/mockups/file-attachments.html. */
+.file-attachment { position: relative; min-width: 0; flex: 0 0 220px; width: 220px; }
+.file-open { width: 100%; display: flex; align-items: center; gap: 11px; padding: 10px 12px 10px 4px; border: 0; border-radius: 8px; background: transparent; color: var(--text); text-align: left; }
+.file-open:hover { background: #ffffff05; }
+.file-open:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.file-mark { flex: 0 0 40px; width: 40px; height: 50px; display: block; }
+.file-mark svg { display: block; width: 40px; height: 50px; filter: drop-shadow(0 2px 2px #0003); }
+.file-mark.is-small { flex-basis: 22px; width: 22px; height: 28px; }
+.file-mark.is-small svg { width: 22px; height: 28px; }
+.file-copy { min-width: 0; }
+.file-copy b { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; font-weight: 500; line-height: 1.45; }
+.file-copy small { display: block; margin-top: 3px; font-size: 10px; color: var(--text-3); }
+.attachment-title { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.attachment-title > span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.attachment-text { white-space: pre-wrap; overflow-wrap: anywhere; margin: 0; }
+.attachment-page { display: block; width: 100%; height: auto; margin: 0 auto 14px; background: #fff; box-shadow: 0 3px 14px #0005; }
+.attachment-loading, .attachment-note { color: var(--text-3); font-size: 12px; }
+.attachment-error { color: var(--danger); font-size: 12px; background: color-mix(in srgb, var(--danger) 10%, transparent); border: 1px solid color-mix(in srgb, var(--danger) 35%, transparent); padding: 12px; border-radius: 8px; }
+.attachment-foot { padding: 10px 16px; border-top: 1px solid var(--line); font-size: 11px; color: var(--text-4); }
+
+/* Phase 2: one ⋯ menu per attachment (docs/mockups/attachment-reuse.html). It shows on hover or
+   focus, and stays while its menu is open. */
+.file-open { padding-right: 34px; }
+.attachment-more { position: absolute; z-index: 2; width: 24px; height: 24px; padding: 0; display: grid; place-items: center; border-radius: 6px; color: var(--text-2); opacity: 0; }
+.attachment-more:hover { background: rgba(255, 255, 255, 0.07); color: var(--text); }
+.attachment-more.is-file { right: 6px; top: 50%; transform: translateY(-50%); }
+.attachment-more.is-image { right: 5px; top: 53px; background: #0b0c0dcc; }
+.is-draft .attachment-more.is-image { top: 39px; }
+.image-attachment:hover .attachment-more, .image-attachment:focus-within .attachment-more,
+.file-attachment:hover .attachment-more, .file-attachment:focus-within .attachment-more,
+.attachment-more[aria-expanded=true] { opacity: 1; }
+.attachment-more[aria-expanded=true] { background: rgba(255, 255, 255, 0.09); }
+.attachment-more:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.is-fresh .file-open, .is-fresh .image-thumbnail { animation: attachment-arrive 1.6s ease-out; }
+@keyframes attachment-arrive { from { box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 70%, transparent); background: color-mix(in srgb, var(--accent) 11%, transparent); } to { box-shadow: 0 0 0 2px transparent; background: transparent; } }
+
+.attachment-menu { position: fixed; z-index: 60; width: 236px; padding: 5px; background: var(--menu); border: 1px solid #38393c; border-radius: 10px; box-shadow: var(--menu-shadow); }
+.attachment-menu.is-picker { width: 286px; }
+.attachment-menu-item, .attachment-chat { width: 100%; display: flex; align-items: center; gap: 10px; padding: 7px 9px; border: 0; border-radius: 6px; background: transparent; color: var(--text); text-align: left; font-size: 13px; }
+.attachment-menu-item svg, .attachment-chat svg { color: var(--text-3); flex: none; }
+.attachment-menu-item:hover, .attachment-menu-item:focus-visible, .attachment-chat:hover:not(:disabled), .attachment-chat:focus-visible { background: rgba(255, 255, 255, 0.05); outline: none; }
+.attachment-chat:disabled { opacity: 0.45; }
+.attachment-menu-chev { margin-left: auto; }
+.attachment-menu-sep { height: 1px; margin: 5px 4px; background: var(--line); }
+.attachment-menu-label { padding: 6px 9px 3px; font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-4); }
+.attachment-menu-empty { padding: 10px 9px; color: var(--text-3); font-size: 12px; }
+.attachment-picker-head { display: flex; align-items: center; gap: 6px; padding: 3px 3px 6px; min-width: 0; }
+.attachment-picker-head b { font-weight: 500; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.attachment-back { flex: none; width: 24px; height: 24px; padding: 0; display: grid; place-items: center; border-radius: 6px; color: var(--text-2); }
+.attachment-back:hover { background: rgba(255, 255, 255, 0.05); }
+.attachment-search { width: 100%; margin-bottom: 4px; padding: 6px 9px; border: 1px solid var(--line); border-radius: 7px; background: var(--canvas, #08090a); color: var(--text); outline: none; font: inherit; font-size: 12px; }
+.attachment-search:focus { border-color: var(--accent); }
+.attachment-chat span { min-width: 0; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.attachment-chat small { color: var(--text-4); font-size: 10px; white-space: nowrap; }
+.attachment-chat-dot { flex: none; width: 7px; height: 7px; margin: 0 4px; border-radius: 50%; background: #4a4d53; }
+.attachment-chat-dot.is-running { background: #e5b454; }
+.attachment-picker-foot { margin: 5px -5px -5px; padding: 8px 13px; border-top: 1px solid var(--line); font-size: 11px; color: var(--text-3); }
+/* Over the chat card, where the error toast sits, so the native browser view never hides it. */
+.attachment-notice { position: fixed; left: calc(var(--gap) + 20px); bottom: 28px; z-index: 70; max-width: min(560px, 60vw); display: flex; align-items: center; gap: 14px; padding: 9px 10px 9px 14px; background: var(--menu); border: 1px solid #38393c; border-radius: 9px; box-shadow: var(--menu-shadow); font-size: 12px; }
+.attachment-notice span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.attachment-notice button { flex: none; padding: 3px 7px; border-radius: 5px; color: #b9b8ff; }
+.attachment-notice button:hover { background: rgba(255, 255, 255, 0.05); }
+
+/* Phase 3: the camera, the window picker and the review dialog with the pen
+   (docs/mockups/screen-capture.html). */
+.capture-menu { width: 270px; }
+.capture-item > span { display: flex; flex-direction: column; min-width: 0; }
+.capture-item small { color: var(--text-3); font-size: 11px; }
+.capture-dialog { max-width: 92vw; padding: 16px; border: 1px solid var(--line-focus); border-radius: 12px; background: var(--panel); color: var(--text); }
+.capture-dialog::backdrop { background: #000000b8; }
+.capture-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.capture-head b { font-weight: 500; }
+.capture-picker { width: 820px; }
+.capture-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; max-height: 62vh; overflow: auto; }
+.capture-source { display: flex; flex-direction: column; gap: 7px; padding: 8px; border: 1px solid transparent; border-radius: 9px; background: transparent; color: var(--text); text-align: left; }
+.capture-source:hover, .capture-source:focus-visible { background: rgba(255, 255, 255, 0.04); border-color: var(--line-focus); outline: none; }
+.capture-thumb { height: 140px; display: grid; place-items: center; overflow: hidden; border-radius: 6px; background: #0a0a0b; border: 1px solid var(--line); }
+.capture-thumb img { max-width: 100%; max-height: 100%; object-fit: contain; }
+.capture-label { display: flex; align-items: center; gap: 7px; min-width: 0; font-size: 12px; }
+.capture-label > img, .capture-label > svg { flex: none; width: 14px; height: 14px; color: var(--text-3); }
+.capture-label > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.capture-empty { color: var(--text-3); padding: 30px 0; text-align: center; }
+.capture-foot { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; font-size: 11px; color: var(--text-3); }
+.capture-review { width: min(960px, 92vw); }
+.capture-paint { display: flex; align-items: center; gap: 6px; margin-bottom: 10px; }
+.capture-tool { height: 30px; padding: 0 10px; display: flex; align-items: center; gap: 6px; border: 1px solid var(--line); border-radius: 7px; background: transparent; color: var(--text-2); font-size: 12px; }
+.capture-tool:hover { background: rgba(255, 255, 255, 0.05); }
+.capture-tool[aria-pressed=true] { background: color-mix(in srgb, var(--accent) 16%, transparent); border-color: var(--accent); color: var(--text); }
+.capture-swatch { width: 20px; height: 20px; padding: 0; border-radius: 50%; border: 2px solid transparent; box-shadow: inset 0 0 0 1px #0006; }
+.capture-swatch[aria-pressed=true] { border-color: #fff; }
+.capture-sep { width: 1px; height: 20px; margin: 0 4px; background: var(--line); }
+.capture-grow { flex: 1; }
+.capture-hint { font-size: 11px; color: var(--text-3); }
+.capture-frame { display: grid; place-items: center; height: min(56vh, 520px); background: #0a0a0b; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.capture-canvas { position: relative; line-height: 0; max-width: 100%; max-height: 100%; }
+.capture-canvas img { display: block; max-width: 100%; max-height: min(56vh, 520px); object-fit: contain; user-select: none; }
+.capture-canvas canvas { position: absolute; inset: 0; width: 100%; height: 100%; cursor: crosshair; touch-action: none; }
+.capture-canvas canvas.is-erasing { cursor: cell; }
+.capture-fields { display: grid; grid-template-columns: 70px 1fr; gap: 8px 12px; align-items: center; margin-top: 12px; font-size: 12px; color: var(--text-3); }
+.capture-fields input { padding: 6px 9px; border: 1px solid var(--line); border-radius: 7px; background: var(--canvas); color: var(--text); outline: none; font: inherit; }
+.capture-fields input:focus { border-color: var(--accent); }
+.capture-value { color: var(--text-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.capture-actions { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 14px; }
+.capture-to { font-size: 11px; color: var(--text-3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.capture-buttons { display: flex; gap: 8px; flex: none; }

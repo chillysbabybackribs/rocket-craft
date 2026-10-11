@@ -1,0 +1,9 @@
+.run-controls { display: flex; flex: none; gap: 6px; }
+.run-control { border: 1px solid var(--line-strong); border-radius: 6px; padding: 4px 7px; font-size: 11px; white-space: nowrap; }
+.run-control.is-primary { background: var(--button); color: var(--button-text); }
+.run-control:disabled { opacity: .45; cursor: default; }
+.run-pause-banner { position: relative; flex: none; min-width: 0; padding: 8px 14px; color: var(--text-2); background: #f2c94c0c; border-bottom: 1px solid #f2c94c30; font-size: 12px; }
+.run-pause-text { display: block; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.run-pause-tooltip { display: none; position: absolute; z-index: 20; top: 100%; left: 8px; right: 8px; background: var(--panel); color: var(--text); padding: 10px; border: 1px solid var(--line-strong); border-radius: 6px; white-space: normal; }
+.run-pause-banner:hover .run-pause-tooltip, .run-pause-banner:focus .run-pause-tooltip { display: block; }
+.run-action-error { flex: none; margin: 0; padding: 8px 14px; color: var(--danger); font-size: 12px; }

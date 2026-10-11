@@ -1,0 +1,314 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Craft Studio — mockup</title>
+<!-- Mockup for docs/craft-studio-plan.md: Rocket's chat with the 12 Craft apps in place of the
+     side panels, chosen from a horizontal rail under the right side; Browser and Library remain
+     as toggles at the rail's right end. Apps are installed only when the user picks them from the
+     catalog; the rail shows the installed ones and an Add button. Two states: an app docked and
+     driven by a model, and the catalog with an install under way
+     state with no app open. -->
+<style>
+  :root {
+    --font: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter Variable', Inter, sans-serif;
+    --canvas: #08090a; --panel: #0f1011; --bubble: #1c1d20; --composer: #151617; --composer-line: #2f3031;
+    --line: rgba(255,255,255,.07); --text: #f7f8f8; --text-2: #8a8f98; --hover: rgba(255,255,255,.06);
+    --accent: #7170ff; --ok: #4cb782; --warn: #f2c94c; --gap: 8px; --toolbar: 48px;
+    --glass: rgba(255,255,255,.055);
+    --glass-edge: inset 0 .5px 0 rgba(255,255,255,.16), inset 0 0 0 .5px rgba(255,255,255,.08), 0 1px 3px rgba(0,0,0,.35);
+  }
+  * { box-sizing: border-box }
+  body { margin: 0; background: #000; color: var(--text); font: 13px/1.45 var(--font); padding: 24px }
+  h2 { font-size: 13px; font-weight: 500; color: var(--text-2); margin: 28px 0 10px }
+  h2:first-child { margin-top: 0 }
+  .window { width: 1360px; height: 800px; background: var(--canvas); border-radius: 12px; border: 1px solid var(--line);
+            display: flex; flex-direction: column; overflow: hidden }
+  .toolbar { height: var(--toolbar); display: flex; align-items: center; gap: 10px; padding: 0 12px }
+  .lights { display: flex; gap: 8px; margin-right: 6px }
+  .lights i { width: 12px; height: 12px; border-radius: 50%; background: #3a3b3e }
+  .title { color: var(--text-2); width: 170px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
+  .apps { display: flex; gap: 3px; padding: 4px; border-radius: 10px; background: var(--glass); box-shadow: var(--glass-edge) }
+  .app { width: 30px; height: 30px; border-radius: 7px; display: grid; place-items: center; font-size: 10.5px; font-weight: 650;
+         letter-spacing: -.2px; position: relative; cursor: default; color: #fff }
+  .app.on { outline: 1.5px solid var(--text); outline-offset: 1px }
+  .app.running::after { content: ''; position: absolute; bottom: -4px; width: 4px; height: 4px; border-radius: 50%; background: var(--text-2) }
+  .sep { width: 1px; height: 22px; background: var(--line); margin: 0 4px }
+  .toggle { height: 30px; padding: 0 11px; border-radius: 8px; display: flex; align-items: center; gap: 6px; color: var(--text-2);
+            background: var(--glass); box-shadow: var(--glass-edge) }
+  .toggle.on { color: var(--text) }
+  .spacer { flex: 1 }
+  .chats { height: 28px; padding: 0 10px; border-radius: 8px; display: flex; align-items: center; color: var(--text-2);
+           background: var(--glass); box-shadow: var(--glass-edge) }
+  /* The app rail: a horizontal strip under the right side, every app and then Browser and
+     Library. Each icon carries its short name under it rather than a hover tooltip, because a
+     tooltip would open upward over the docked app window, which paints over anything Rocket draws
+     there. */
+  .right { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px }
+  .rail { height: 54px; flex: none; display: flex; align-items: stretch; gap: 2px; padding: 0 4px }
+  .rail-item { position: relative; width: 54px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+               border-radius: 9px; color: var(--text-2); font-size: 10px; line-height: 1.1 }
+  .rail-item .app { width: 28px; height: 28px; font-size: 10px }
+  .rail-item.on { background: var(--hover); color: var(--text) }
+  .rail-item.on::before { content: ''; position: absolute; top: -4px; left: 14px; right: 14px; height: 3px; border-radius: 2px; background: var(--text) }
+  .rail-item.running .app::after { content: ''; position: absolute; right: -3px; top: -3px; width: 7px; height: 7px; border-radius: 50%;
+                                   background: var(--ok); box-shadow: 0 0 0 2px var(--canvas) }
+  .rail-sep { width: 1px; background: var(--line); margin: 12px 6px }
+  .rail-fill { flex: 1 }
+  .rail-tool { width: 28px; height: 28px; border-radius: 8px; display: grid; place-items: center; background: var(--glass); box-shadow: var(--glass-edge) }
+  .rail-item.on .rail-tool { background: rgba(255,255,255,.14) }
+  .window { position: relative }
+  /* The usage notch, as in TitleStrip.tsx: a tab hanging from the window's top edge, one ring per
+     provider. Kept as it is in Rocket, after the app strip and the two toggles. */
+  .toolbar { align-items: center }
+  .notch { --notch-fill: #151618; --notch-flare: 14px; position: relative; align-self: flex-start; height: 40px; padding: 0 12px;
+           display: flex; align-items: center; gap: 4px; background: var(--notch-fill); border-radius: 0 0 16px 16px; margin-left: 18px }
+  .notch::before, .notch::after { content: ''; position: absolute; top: 0; width: var(--notch-flare); height: var(--notch-flare) }
+  .notch::before { left: calc(-1 * var(--notch-flare)); background: radial-gradient(circle at 0 100%, transparent calc(var(--notch-flare) - .5px), var(--notch-fill) var(--notch-flare)) }
+  .notch::after { right: calc(-1 * var(--notch-flare)); background: radial-gradient(circle at 100% 100%, transparent calc(var(--notch-flare) - .5px), var(--notch-fill) var(--notch-flare)) }
+  .notch-item { display: flex; align-items: center; gap: 5px; height: 32px; padding: 0 7px 0 3px; border-radius: 999px }
+  .notch-item.hover { background: var(--hover) }
+  .ring { position: relative; display: grid; place-items: center; width: 26px; height: 26px; color: var(--text-2) }
+  .ring > svg.track { position: absolute; inset: 0 }
+  .ring-percent { font-size: 11px; font-weight: 510; font-variant-numeric: tabular-nums; color: var(--text-2); min-width: 24px }
+  /* The flyout is pulled left until it ends inside the chat card, because a docked app window
+     paints over anything drawn across it (the browser's rule, unchanged). */
+  .flyout { position: absolute; z-index: 5; width: 264px; padding: 13px 14px 12px; background: #1b1c1e; border: 1px solid rgba(255,255,255,.12);
+            border-radius: 12px; box-shadow: 0 8px 30px rgba(0,0,0,.5) }
+  .flyout-title { display: flex; align-items: center; gap: 8px; font-weight: 600; margin-bottom: 10px }
+  .flyout-title .r { margin-left: auto; color: var(--text-2) }
+  .flyout-row { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-2) }
+  .flyout-reset { color: #62666d }
+  .flyout-bar { height: 4px; margin: 6px 0 5px; border-radius: 2px; background: rgba(255,255,255,.08); overflow: hidden }
+  .flyout-fill { height: 100%; border-radius: 2px }
+  .flyout-used { font-size: 12px; color: var(--text-2); margin-bottom: 10px }
+  .flyout-note { font-size: 12px; color: #62666d; margin: 0 }
+  .reach { position: absolute; z-index: 4; border-left: 1px dashed var(--accent); opacity: .6 }
+  .callout { position: absolute; z-index: 5; font-size: 11px; color: var(--accent); width: 200px }
+  .body { flex: 1; display: flex; gap: var(--gap); padding: 0 var(--gap) var(--gap); min-height: 0 }
+  .chat { width: 420px; flex: none; background: var(--panel); border-radius: 12px; border: 1px solid var(--line); display: flex; flex-direction: column }
+  .msgs { flex: 1; padding: 16px; display: flex; flex-direction: column; gap: 12px; overflow: hidden }
+  .user { align-self: flex-end; max-width: 82%; background: var(--bubble); padding: 8px 12px; border-radius: 12px }
+  .tool { font: 11.5px/1.5 'Geist Mono Variable', ui-monospace, monospace; color: var(--text-2); padding: 6px 10px;
+          border-left: 2px solid var(--line) }
+  .tool b { color: var(--text); font-weight: 500 }
+  .tool .ok { color: var(--ok) }
+  .reply { color: var(--text) }
+  .composer { margin: 12px; background: var(--composer); border: 1px solid var(--composer-line); border-radius: 12px; padding: 10px 12px }
+  .composer .ph { color: var(--text-2) }
+  .composer .row { display: flex; justify-content: space-between; margin-top: 18px; color: var(--text-2); font-size: 12px }
+  .pill { padding: 2px 8px; border-radius: 6px; background: var(--hover) }
+  .side { flex: 1; border-radius: 12px; overflow: hidden; position: relative; border: 1px solid var(--line); display: flex; flex-direction: column }
+  .note { position: absolute; top: 10px; right: 12px; font-size: 11px; color: #000; background: var(--warn); padding: 2px 8px; border-radius: 6px; z-index: 2 }
+
+  /* A stand-in for PhotoCraft's own (egui) window; the real one is the app's native window. */
+  .pc { flex: 1; display: grid; grid-template-columns: 38px 1fr 230px; grid-template-rows: 26px 32px 1fr 22px; background: #2b2b2b; color: #ddd; font-size: 11.5px }
+  .pc .menu { grid-column: 1 / -1; background: #1f1f1f; display: flex; gap: 14px; align-items: center; padding: 0 10px; color: #bbb }
+  .pc .opts { grid-column: 1 / -1; background: #323232; border-bottom: 1px solid #1a1a1a; display: flex; gap: 10px; align-items: center; padding: 0 10px; color: #aaa }
+  .pc .tools { background: #323232; display: flex; flex-direction: column; align-items: center; gap: 6px; padding-top: 8px }
+  .pc .tools i { width: 22px; height: 22px; border-radius: 4px; background: #444 }
+  .pc .tools i.sel { background: #5a5a5a; outline: 1px solid #888 }
+  .pc .stage { background: #262626; display: grid; place-items: center; position: relative }
+  .pc .doc { width: 560px; height: 380px; background: linear-gradient(160deg, #f6c37a 0%, #e8875f 38%, #6b4a7a 70%, #1f2a4d 100%); position: relative; box-shadow: 0 4px 24px rgba(0,0,0,.5) }
+  .pc .doc .hill { position: absolute; bottom: 0; left: 0; right: 0; height: 46%; background: #17202f; clip-path: polygon(0 60%, 18% 30%, 34% 55%, 52% 18%, 70% 50%, 86% 28%, 100% 48%, 100% 100%, 0 100%) }
+  .pc .doc .sel { position: absolute; left: 120px; top: 40px; width: 240px; height: 150px; border: 1.5px dashed #fff; mix-blend-mode: difference }
+  .pc .cursor { position: absolute; left: calc(50% + 88px); top: calc(50% - 30px); font-size: 10px; color: #000; background: var(--accent); color: #fff; padding: 2px 6px; border-radius: 4px }
+  .pc .panels { background: #323232; border-left: 1px solid #1a1a1a; display: flex; flex-direction: column }
+  .pc .ph { padding: 6px 8px; background: #2a2a2a; border-bottom: 1px solid #1a1a1a; color: #bbb; font-weight: 600 }
+  .pc .layer { padding: 7px 8px; border-bottom: 1px solid #2a2a2a; display: flex; gap: 8px; align-items: center }
+  .pc .layer i { width: 26px; height: 18px; background: #555; border-radius: 2px }
+  .pc .layer.sel { background: #3d4a66 }
+  .pc .adj { padding: 8px; display: grid; gap: 8px }
+  .pc .bar { height: 4px; background: #555; border-radius: 2px; position: relative }
+  .pc .bar::after { content: ''; position: absolute; left: var(--v); top: -4px; width: 10px; height: 10px; border-radius: 50%; background: #ddd; transform: translateX(-50%) }
+  .pc .status { grid-column: 1 / -1; background: #1f1f1f; color: #999; display: flex; gap: 16px; align-items: center; padding: 0 10px }
+
+  /* Start state: no app open. */
+  .rail-add .rail-tool { border: 1px dashed rgba(255,255,255,.25); background: none; box-shadow: none; font-size: 16px; color: var(--text-2) }
+  .rail-item.installing .app { opacity: .45 }
+  .rail-item.installing .app::after { content: ''; position: absolute; left: 3px; right: 3px; bottom: 3px; height: 3px; border-radius: 2px;
+                                      background: linear-gradient(90deg, #fff 62%, rgba(255,255,255,.25) 62%) }
+  .catalog { flex: 1; background: var(--panel); padding: 22px 26px; display: flex; flex-direction: column; gap: 14px; overflow: hidden }
+  .catalog header { display: flex; align-items: baseline; gap: 12px }
+  .catalog h3 { margin: 0; font-size: 15px; font-weight: 600 }
+  .catalog header p { margin: 0; color: var(--text-2) }
+  .catalog header .disk { margin-left: auto; color: var(--text-2); font-size: 12px }
+  .catalog .grid { grid-template-columns: repeat(4, 1fr); gap: 10px }
+  .catalog .card { align-items: flex-start; padding: 12px 12px 12px 12px }
+  .catalog .card > div:not(.app) { flex: 1; min-width: 0 }
+  .catalog .card .what { color: var(--text-2); font-size: 11.5px; margin: 3px 0 9px; line-height: 1.35 }
+  .catalog .card .row { display: flex; align-items: center; gap: 8px; font-size: 11px; color: var(--text-2) }
+  .btn { height: 24px; padding: 0 10px; border-radius: 6px; display: inline-flex; align-items: center; font-size: 11.5px; color: var(--text);
+         background: rgba(255,255,255,.1); box-shadow: var(--glass-edge) }
+  .btn.primary { background: var(--accent); box-shadow: none }
+  .btn.quiet { background: none; box-shadow: none; color: var(--text-2); padding: 0 4px }
+  .progress { flex: 1; height: 4px; border-radius: 2px; background: rgba(255,255,255,.1); overflow: hidden }
+  .progress i { display: block; height: 100%; width: 62%; background: var(--accent) }
+  .card.installed { border-color: rgba(76,183,130,.35) }
+  .ask { border: 1px solid var(--line); background: var(--hover); border-radius: 10px; padding: 10px 12px; display: flex; flex-direction: column; gap: 8px }
+  .ask .row { display: flex; align-items: center; gap: 10px }
+  .start { flex: 1; background: var(--panel); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px }
+  .start p { color: var(--text-2); margin: 0 }
+  .grid { display: grid; grid-template-columns: repeat(4, 150px); gap: 10px }
+  .card { padding: 12px; border-radius: 10px; background: var(--hover); border: 1px solid var(--line); display: flex; gap: 10px; align-items: center }
+  .card .app { flex: none }
+  .card small { display: block; color: var(--text-2); font-size: 11px }
+  .card .state { font-size: 10.5px; color: var(--text-2) }
+</style>
+</head>
+<body>
+
+<h2>1 · PhotoCraft docked beside the chat, being driven by the model (the native app window sits inside Rocket's panel). The app rail along the bottom of the right side holds only the apps you installed (here Photo, Grid and Deck), then + Add to open the catalog; Browser and Library sit at its right end. PhotoCraft is shown and GridCraft runs in the background (green dot). The subscription notch stays; hovering Claude's ring opens its flyout, pulled left into the chat card so the docked app can't cover it.</h2>
+<div class="window">
+  <div class="toolbar">
+    <div class="lights"><i></i><i></i><i></i></div>
+    <div class="title">Poster — sunset edit</div>
+    <div class="chats">Chats ▾</div>
+    <div class="notch" data-hover="claude" style="margin-left:6px"></div>
+    <div class="spacer"></div>
+  </div>
+  <div class="flyout" style="left:150px; top:46px">
+    <div class="flyout-title"><span class="g" data-g="claude"></span>Claude Usage<span class="r">↻</span></div>
+    <div class="flyout-row"><span>5-hour limit</span><span class="flyout-reset">resets in 3 h 12 min</span></div>
+    <div class="flyout-bar"><div class="flyout-fill" style="width:15%; background:var(--ok)"></div></div>
+    <div class="flyout-used">15% Used</div>
+    <div class="flyout-row"><span>Weekly limit</span><span class="flyout-reset">resets Thu</span></div>
+    <div class="flyout-bar"><div class="flyout-fill" style="width:42%; background:var(--ok)"></div></div>
+    <div class="flyout-used">42% Used</div>
+  </div>
+  <div class="body">
+    <div class="chat">
+      <div class="msgs">
+        <div class="user">Select the sky, warm it up a little and add a soft vignette. Then export a 2048px JPEG to the poster folder.</div>
+        <div class="tool"><b>photocraft · command_run</b> select.sky <span class="ok">✓</span></div>
+        <div class="tool"><b>photocraft · command_run</b> layer.newAdjustment · color balance (+12 red, −8 blue) <span class="ok">✓</span></div>
+        <div class="tool"><b>photocraft · command_run</b> filter.vignette · amount 0.35 <span class="ok">✓</span></div>
+        <div class="tool"><b>photocraft · screenshot</b> window <span class="ok">✓</span></div>
+        <div class="tool"><b>photocraft · command_run</b> file.export · poster/sunset-2048.jpg …</div>
+        <div class="reply">The sky is selected and warmed through a Color Balance layer, so you can still tweak it. The vignette is on its own layer. Exporting now.</div>
+      </div>
+      <div class="composer">
+        <div class="ph">Ask about the open app, or anything…</div>
+        <div class="row"><span class="pill">PhotoCraft · sunset.psd</span><span>Claude ▾</span></div>
+      </div>
+    </div>
+    <div class="right">
+    <div class="side">
+      <div class="note">Native PhotoCraft window, docked</div>
+      <div class="pc">
+        <div class="menu"><b>PhotoCraft</b><span>File</span><span>Edit</span><span>Image</span><span>Layer</span><span>Select</span><span>Filter</span><span>View</span><span>Window</span></div>
+        <div class="opts">Marquee · Feather 0 px · Anti-alias ✓ · Select Subject · Select and Mask…</div>
+        <div class="tools"><i class="sel"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+        <div class="stage">
+          <div class="doc"><div class="hill"></div><div class="sel"></div></div>
+          <div class="cursor">Claude</div>
+        </div>
+        <div class="panels">
+          <div class="ph">Adjustments</div>
+          <div class="adj">Cyan — Red<div class="bar" style="--v:62%"></div>Yellow — Blue<div class="bar" style="--v:42%"></div></div>
+          <div class="ph">Layers</div>
+          <div class="layer"><i></i>Vignette</div>
+          <div class="layer sel"><i></i>Color Balance 1</div>
+          <div class="layer"><i></i>Background</div>
+        </div>
+        <div class="status"><span>sunset.psd @ 66.7%</span><span>3000 × 2000 px</span><span>RGB/8</span><span style="margin-left:auto">Agent connected</span></div>
+      </div>
+    </div>
+    <nav class="rail" id="rail1" data-installed="0,11,8" data-on="0" data-running="0,11" aria-label="Apps"></nav>
+    </div>
+  </div>
+</div>
+
+<h2>2 · The catalog, shown by + Add (and on first run, when nothing is installed yet). All 12 are listed; you install the ones you want. Installed ones get an icon in the rail; one that is installing shows its progress there too. When a model needs an app you haven't installed, it asks in the chat with a one-click install, and never installs on its own.</h2>
+<div class="window" style="height:620px">
+  <div class="toolbar">
+    <div class="lights"><i></i><i></i><i></i></div>
+    <div class="title">New chat</div>
+    <div class="chats">Chats ▾</div>
+    <div class="notch" style="margin-left:6px"></div>
+    <div class="spacer"></div>
+  </div>
+  <div class="body">
+    <div class="chat">
+      <div class="msgs">
+        <div class="user">Make a simple vector logo for the flyer: a rocket in a circle.</div>
+        <div class="reply">That needs Vector, which isn't installed yet.</div>
+        <div class="ask">
+          <div class="row"><span class="app" style="background:#d9822b;width:28px;height:28px;font-size:10px">Ve</span><div>Install Vector?<br><small style="color:var(--text-2)">Illustrator-style drawing · 79 MB download</small></div></div>
+          <div class="row"><span class="btn primary">Install Vector</span><span class="btn quiet">Not now</span></div>
+        </div>
+      </div>
+      <div class="composer"><div class="ph">Reply…</div><div class="row"><span class="pill">Apps catalog</span><span>Codex ▾</span></div></div>
+    </div>
+    <div class="right">
+    <div class="side">
+      <div class="catalog">
+        <header><h3>Apps</h3><p>Install only what you use. Each can be removed again.</p><span class="disk" id="disk"></span></header>
+        <div class="grid" id="grid"></div>
+      </div>
+    </div>
+    <nav class="rail" id="rail2" data-installed="0,11,8" data-installing="8" data-on="add" data-running="" aria-label="Apps"></nav>
+    </div>
+  </div>
+</div>
+
+<script>
+  // App identities: initials and a color each, until the real icons from the release tarballs are used.
+  const APPS = [
+    ['Ph', 'PhotoCraft', 'Photoshop', '#1f6feb', '0.7.0'], ['Ve', 'VectorCraft', 'Illustrator', '#d9822b', '0.9.0'],
+    ['Fi', 'FilmCraft', 'Premiere Pro', '#7c3aed', '0.6.0'], ['Li', 'LightCraft', 'Lightroom', '#0e9fb8', '0.6.0'],
+    ['Pd', 'PdfCraft', 'Acrobat', '#d93f3f', '0.6.0'], ['Ef', 'EffectCraft', 'After Effects', '#a855f7', '0.8.0'],
+    ['De', 'DesignCraft', 'InDesign', '#e0457b', '0.6.0'], ['So', 'SoundCraft', 'Pro Tools', '#16a34a', '0.5.0'],
+    ['Dk', 'DeckCraft', 'PowerPoint', '#ea580c', '0.5.0'], ['Ca', 'CADCraft', 'AutoCAD', '#0284c7', '0.5.0'],
+    ['Wo', 'WordCraft', 'Word', '#2563eb', '0.5.0'], ['Gr', 'GridCraft', 'Excel', '#15803d', '0.5.0'],
+  ]
+  // Provider glyphs and rings as TitleStrip.tsx and glyphs.tsx draw them; the readings are the
+  // user's real ones on 2026-10-10.
+  const GLYPH = {
+    claude: [0,45,90,135,180,225,270,315].map(a => `<line x1="12" y1="3" x2="12" y2="8.5" transform="rotate(${a} 12 12)"/>`).join(''),
+    codex: '<path d="M12 3l7.8 4.5v9L12 21l-7.8-4.5v-9z"/><path d="M9.5 10l-2 2 2 2M14.5 10l2 2-2 2"/>',
+    cursor: '<path d="M5 4l14 7.2-6.1 1.7L11.2 19z"/>',
+    antigravity: '<path d="M4.5 19.5C7 9 9.5 4.5 12 4.5s5 4.5 7.5 15"/><path d="M8.5 14.5h7"/>',
+  }
+  const glyph = (id, size) => `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${GLYPH[id]}</svg>`
+  const USAGE = [['claude', 15], ['codex', 20], ['cursor', 34], ['antigravity', 0]]
+  const R = (26 - 2.5) / 2, C = 2 * Math.PI * R
+  const level = p => p >= 80 ? '#eb5757' : p >= 50 ? 'var(--warn)' : 'var(--ok)'
+  for (const notch of document.querySelectorAll('.notch')) {
+    notch.innerHTML = USAGE.map(([id, p]) => `<div class="notch-item ${notch.dataset.hover === id ? 'hover' : ''}"><span class="ring">
+      <svg class="track" width="26" height="26" viewBox="0 0 26 26"><circle cx="13" cy="13" r="${R}" stroke="rgba(255,255,255,.09)" stroke-width="2.5" fill="none"/>
+      <circle cx="13" cy="13" r="${R}" stroke="${level(p)}" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-dasharray="${Math.max(p, 1.5) / 100 * C} ${C}" transform="rotate(-90 13 13)"/></svg>
+      ${glyph(id, 13)}</span><span class="ring-percent">${p}%</span></div>`).join('')
+  }
+  for (const g of document.querySelectorAll('.g')) g.innerHTML = glyph(g.dataset.g, 18)
+  const chip = ([k, name, , color], cls = '') => `<div class="app ${cls}" title="${name}" style="background:${color}">${k}</div>`
+  const SHORT = ['Photo', 'Vector', 'Film', 'Light', 'PDF', 'Effect', 'Design', 'Sound', 'Deck', 'CAD', 'Word', 'Grid']
+  const TOOL = {
+    Browser: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.5 3 14.5 0 18M12 3c-3 3.5-3 14.5 0 18"/></svg>',
+    Library: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 4v16M10 4v16M15 5l4 15"/></svg>',
+  }
+  const list = v => (v || '').split(',').filter(Boolean).map(Number)
+  for (const rail of document.querySelectorAll('.rail')) {
+    const on = rail.dataset.on, running = list(rail.dataset.running), installing = list(rail.dataset.installing)
+    rail.innerHTML = list(rail.dataset.installed).map(i => { const a = APPS[i]; return (
+      `<div class="rail-item ${String(i) === on ? 'on' : ''} ${running.includes(i) ? 'running' : ''} ${installing.includes(i) ? 'installing' : ''}" title="${a[1]} · ${a[2]}">${chip(a)}<span>${SHORT[i]}</span></div>`) }).join('')
+      + `<div class="rail-item rail-add ${on === 'add' ? 'on' : ''}" title="Install or remove apps"><span class="rail-tool">+</span><span>Add</span></div>`
+      + '<div class="rail-fill"></div><div class="rail-sep"></div>'
+      + Object.entries(TOOL).map(([name, svg]) => `<div class="rail-item"><span class="rail-tool">${svg}</span><span>${name}</span></div>`).join('')
+  }
+  // Download sizes are the upstream 0.x Linux x86_64 tar.gz sizes on 2026-10-10.
+  const SIZE = [72, 79, 64, 93, 78, 58, 67, 14, 71, 21, 85, 16]
+  const WHAT = ['Photos, layers, masks, PSD', 'Logos, paths, illustration', 'Video editing and timelines', 'Photo library and RAW develop',
+    'Read, sign, combine PDFs', 'Motion graphics, compositing', 'Page layout, magazines, books', 'Multitrack audio and mixing',
+    'Slides and presentations', '2D drafting and plans', 'Documents and letters', 'Spreadsheets and charts']
+  const state = i => i === 0 || i === 11 ? 'installed' : i === 8 ? 'installing' : 'none'
+  document.getElementById('grid').innerHTML = APPS.map((a, i) => {
+    const st = state(i)
+    const row = st === 'installed' ? `<span class="btn">Open</span><span class="btn quiet">Remove</span><span style="margin-left:auto">Installed · ${a[4]}</span>`
+      : st === 'installing' ? `<span class="progress"><i></i></span><span>Installing · 62%</span>`
+      : `<span class="btn">Install</span><span style="margin-left:auto">${SIZE[i]} MB</span>`
+    return `<div class="card ${st}">${chip(a)}<div>${a[1]}<small>like ${a[2]}</small><div class="what">${WHAT[i]}</div><div class="row">${row}</div></div></div>` }).join('')
+  document.getElementById('disk').textContent = '2 installed · 185 MB on disk'
+</script>
+</body>
+</html>

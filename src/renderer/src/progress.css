@@ -1,0 +1,145 @@
+/* The progress view (ProgressView.tsx), in the side panel. Grey on dark, with colour kept for what
+   needs attention: amber for an open question or an unseen change, red for a rejected worker. The
+   main button of a group is white with black text, so the choice to make stands out. */
+
+.progress-view { font-size: 13.5px; line-height: 1.55; }
+.pv-head { padding: 10px 14px; }
+.pv-title { display: inline-flex; align-items: center; gap: 8px; min-width: 0; font-weight: 600; }
+.pv-meta { font-weight: 400; font-size: 12px; color: var(--text-4); overflow: hidden; text-overflow: ellipsis; }
+.pv-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--text-4); flex: none; }
+.pv-dot.is-running { background: var(--ok); }
+.pv-dot.is-draining { background: var(--warn); }
+.pv-pending { font-size: 12px; color: var(--warn); cursor: pointer; white-space: nowrap; }
+.pv-pending:hover { text-decoration: underline; }
+.pv-section .pv-checks { font-size: 12px; color: var(--text-4); margin-top: 10px; }
+.pv-warn { color: var(--warn); }
+.pv-faint { color: var(--text-4); }
+
+.pv-body { flex: 1; min-height: 0; display: grid; grid-template-columns: 132px 1fr; }
+.pv-nav { border-right: 1px solid var(--line); padding: 12px 8px; display: flex; flex-direction: column; gap: 2px; overflow-y: auto; }
+.pv-nav button { display: flex; align-items: center; padding: 5px 9px; border-radius: 6px; color: var(--text-3); font-size: 13px; text-align: left; cursor: pointer; }
+.pv-nav button:hover { color: var(--text); }
+.pv-nav button[aria-current='true'] { color: var(--text); background: var(--selected); }
+.pv-n { margin-left: auto; font-size: 11.5px; color: var(--text-4); font-variant-numeric: tabular-nums; }
+.pv-n.is-attn { color: #111; background: var(--warn); border-radius: 999px; min-width: 18px; text-align: center; padding: 0 5px; font-weight: 600; }
+
+.pv-content { position: relative; overflow-y: auto; min-height: 0; scroll-behavior: smooth; }
+.pv-content:focus { outline: none; }
+.pv-doc { max-width: 780px; margin: 0 auto; padding: 2px 22px 50vh; }
+.pv-section { padding: 18px 0 20px; border-bottom: 1px solid var(--line); }
+.pv-section:last-child { border-bottom: 0; }
+.pv-section h2 { font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text-4); font-weight: 600; margin: 0 0 10px; }
+.pv-section.is-flash h2 { animation: pv-flash 0.9s ease; }
+@keyframes pv-flash { from { color: var(--text); } to { color: var(--text-4); } }
+.pv-section p { margin: 4px 0; }
+.pv-section code { font: 12px var(--mono); background: var(--raised); padding: 1px 4px; border-radius: 4px; }
+.pv-section a { color: var(--text); text-decoration: underline; text-decoration-color: var(--line-focus); text-underline-offset: 3px; cursor: pointer; }
+.pv-none { color: var(--text-4); }
+.pv-link { color: var(--text-3); font-size: 12px; cursor: pointer; }
+.pv-link:hover { color: var(--text); }
+.pv-indent { margin: 6px 0 0 33px; }
+
+.pv-button { font-size: 12.5px; border: 1px solid var(--line-strong); border-radius: 6px; padding: 2px 10px; color: var(--text-2); white-space: nowrap; cursor: pointer; }
+.pv-button:hover { color: var(--text); border-color: var(--line-focus); }
+.pv-button.is-primary { color: var(--button-text); background: var(--button); border-color: var(--button); font-weight: 500; }
+.pv-button.is-primary:hover { color: var(--button-text); background: #ffffff; border-color: #ffffff; }
+.progress-view input { font: inherit; font-size: 13px; color: var(--text); background: var(--raised); border: 1px solid var(--line-strong); border-radius: 6px; padding: 3px 8px; min-width: 0; }
+.progress-view input:focus { outline: none; border-color: var(--line-focus); }
+
+/* Now */
+.pv-reason { color: var(--text-3); font-size: 12.5px; }
+.pv-now { font-size: 14.5px; line-height: 1.6; }
+.pv-next { margin-top: 8px; display: flex; gap: 12px; }
+.pv-next > :first-child { flex: none; }
+.pv-brief { margin-top: 12px; }
+.pv-brief summary { cursor: pointer; color: var(--text-4); font-size: 12px; list-style: none; }
+.pv-brief summary::-webkit-details-marker { display: none; }
+.pv-brief summary::before { content: '▸ '; }
+.pv-brief[open] summary::before { content: '▾ '; }
+.pv-brief p { color: var(--text-3); font-size: 13px; white-space: pre-wrap; }
+
+/* Needs you: only what work cannot continue without. */
+.pv-ask { display: flex; align-items: center; gap: 14px; padding: 8px 0; border-top: 1px solid var(--line); }
+.pv-ask:first-child { border-top: 0; }
+.pv-ask-q { flex: 1 1 auto; }
+.pv-ask-from { display: block; color: var(--text-4); font-size: 12px; }
+.pv-ask-opts { display: flex; gap: 6px; flex: none; }
+
+/* Plan */
+.pv-progress { display: flex; align-items: center; gap: 12px; margin: 0 0 14px; }
+.pv-bar { flex: 1 1 auto; height: 4px; border-radius: 999px; background: var(--line-strong); overflow: hidden; }
+.pv-fill { height: 100%; background: var(--text); border-radius: 999px; transition: width 0.25s ease; }
+.pv-progress-label { color: var(--text-3); font-size: 12px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.pv-group + .pv-group { margin-top: 16px; }
+.pv-group-head { display: flex; align-items: center; gap: 8px; color: var(--text-3); font-size: 12px; font-weight: 600; margin: 0 0 4px 8px; }
+.pv-group-head button { color: inherit; font-weight: inherit; display: flex; gap: 8px; align-items: center; cursor: pointer; }
+.pv-group-head button:hover { color: var(--text); }
+.pv-count { color: var(--text-4); font-weight: 400; font-variant-numeric: tabular-nums; }
+.pv-items { list-style: none; margin: 0; padding: 0; }
+.pv-item { position: relative; border-radius: 7px; }
+.pv-item:hover, .pv-item.is-menu, .pv-item.is-open { background: var(--hover); }
+/* Top-aligned, with the box on the first line, so wrapped steps stay tidy. */
+.pv-row { display: flex; align-items: flex-start; gap: 10px; padding: 4px 8px; }
+.pv-check { flex: none; width: 16px; height: 16px; border-radius: 4px; border: 1.5px solid var(--text-3); display: inline-grid; place-items: center; margin-top: 3px; color: transparent; font-size: 10.5px; line-height: 1; cursor: pointer; }
+button.pv-check:hover { border-color: var(--text); }
+.pv-check.is-done { background: var(--text); border-color: var(--text); color: var(--canvas); font-weight: 700; }
+.pv-check.is-active { border-color: var(--text); }
+.pv-check.is-active::after { content: ''; width: 6px; height: 6px; border-radius: 2px; background: var(--text); }
+.pv-check.is-off { border-style: dashed; border-color: var(--text-4); color: var(--text-4); cursor: default; }
+.pv-text { flex: 1 1 auto; min-width: 0; cursor: pointer; }
+.pv-item.is-done .pv-text { color: var(--text-3); }
+.pv-item.is-dropped .pv-words { text-decoration: line-through; color: var(--text-4); }
+.pv-item.is-kept .pv-words { color: var(--text-3); }
+.pv-tag { font-size: 11px; color: var(--text-4); margin-left: 8px; white-space: nowrap; }
+.pv-tag.is-next { color: var(--text); border: 1px solid var(--line-strong); border-radius: 4px; padding: 0 5px; }
+.pv-lock { margin-left: 6px; color: var(--text-4); display: inline-flex; vertical-align: -1px; }
+.pv-who { margin-left: 8px; font-size: 11.5px; color: var(--text-3); border: 1px solid var(--line); border-radius: 999px; padding: 0 7px; white-space: nowrap; cursor: pointer; }
+.pv-who:hover { color: var(--text); border-color: var(--line-focus); }
+.pv-more { line-height: 22px; opacity: 0; color: var(--text-4); padding: 0 6px; border-radius: 5px; flex: none; letter-spacing: 1px; cursor: pointer; }
+.pv-item:hover .pv-more, .pv-item.is-menu .pv-more, .pv-more:focus-visible { opacity: 1; }
+.pv-more:hover { color: var(--text); background: var(--selected); }
+.pv-menu { position: absolute; right: 6px; top: 28px; z-index: 3; background: var(--menu); border-radius: 8px; padding: 4px; min-width: 170px; box-shadow: var(--menu-shadow); }
+.pv-menu-id { padding: 3px 10px 4px; font-size: 11px; color: var(--text-4); font-variant-numeric: tabular-nums; }
+.pv-menu button { display: block; width: 100%; text-align: left; padding: 5px 10px; border-radius: 5px; font-size: 13px; color: var(--text-2); cursor: pointer; }
+.pv-menu button:hover, .pv-menu button:focus-visible { background: var(--selected); color: var(--text); outline: none; }
+.pv-menu hr { border: 0; border-top: 1px solid var(--line-strong); margin: 4px 2px; }
+.pv-detail { padding: 0 8px 8px 34px; font-size: 12.5px; color: var(--text-3); }
+.pv-detail-row { display: flex; gap: 10px; padding: 2px 0; align-items: baseline; }
+.pv-detail-title { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text); text-align: left; cursor: pointer; }
+.pv-editing { display: flex; gap: 8px; align-items: center; flex: 1 1 auto; }
+.pv-editing input { flex: 1 1 auto; }
+.pv-left { font-size: 11.5px; color: var(--text-4); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.pv-left.is-over { color: var(--high); }
+.pv-add { display: flex; gap: 8px; align-items: center; }
+.pv-add input { flex: 1 1 auto; }
+.pv-add-open { font-size: 12.5px; }
+
+/* Workers */
+.pv-table { width: 100%; border-collapse: collapse; font-size: 13px; table-layout: fixed; }
+.pv-table td { padding: 5px 10px 5px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+.pv-table tr:last-child td { border-bottom: 0; }
+.pv-td-id { color: var(--text-4); font-variant-numeric: tabular-nums; width: 42px; }
+.pv-td-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pv-td-title button { color: var(--text); cursor: pointer; text-align: left; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+.pv-td-title button:hover { text-decoration: underline; text-decoration-color: var(--line-focus); }
+.pv-td-who { color: var(--text-3); white-space: nowrap; width: 120px; overflow: hidden; text-overflow: ellipsis; }
+.pv-td-verdict { white-space: nowrap; width: 112px; overflow: hidden; text-overflow: ellipsis; }
+.pv-td-report { width: 50px; text-align: right; }
+.pv-verdict { color: var(--text-3); }
+.pv-verdict.is-bad { color: var(--high); }
+.pv-verdict.is-warn { color: var(--warn); }
+/* A worktree task's merge state sits under its verdict, in the same cell. */
+.pv-td-verdict .pv-merge { display: block; font-size: 12px; overflow: hidden; text-overflow: ellipsis; }
+.pv-detail-row .pv-merge { white-space: nowrap; }
+
+/* Activity */
+.pv-day { color: var(--text-4); font-size: 11.5px; margin: 12px 0 2px; }
+.pv-event { display: grid; grid-template-columns: 40px 84px 1fr; gap: 10px; padding: 3px 0; font-size: 13px; }
+.pv-time { color: var(--text-4); font-variant-numeric: tabular-nums; }
+.pv-by { color: var(--text-4); }
+.pv-by.is-you { color: var(--text); }
+.pv-state { display: block; font-size: 12px; color: var(--text-4); }
+.pv-state.is-wait { color: var(--warn); }
+.pv-notice { border: 1px solid var(--line-strong); border-radius: 8px; padding: 9px 12px; margin-bottom: 12px; font-size: 13px; }
+.pv-notice summary { cursor: pointer; color: var(--text-4); font-size: 12px; margin-top: 4px; }
+.pv-notice pre { white-space: pre-wrap; font: 12px/1.5 var(--mono); color: var(--text-3); margin: 6px 0 0; }
