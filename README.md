@@ -16,6 +16,18 @@ Desktop workspace with a chat on the left and creative tools on the right: insta
 
 ![PhotoCraft beside chat](docs/images/photocraft.png)
 
+**FilmCraft** — video editing with a timeline beside the chat.
+
+![FilmCraft beside chat](docs/images/filmcraft.png)
+
+**EffectCraft** — motion graphics and compositing.
+
+![EffectCraft beside chat](docs/images/effectcraft.png)
+
+**WordCraft** — documents and letters.
+
+![WordCraft beside chat](docs/images/wordcraft.png)
+
 **Browser** — Google and the sites you use, in a tab beside the chat.
 
 ![Built-in browser on Google](docs/images/browser.png)
