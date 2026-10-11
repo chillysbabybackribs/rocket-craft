@@ -12,6 +12,16 @@ downloads/
 .cache/
 # Local logs and app data
 *.log
+*.pid
 # From Rocket Orchestrator
 *.tsbuildinfo
 .artifacts/
+# Secrets and local env (Craft Studio user data lives under XDG_CONFIG_HOME, never here)
+.env
+.env.*
+!.env.example
+# Spike and UI test run output
+spikes/**/run/
+# OS / editor
+.DS_Store
+Thumbs.db

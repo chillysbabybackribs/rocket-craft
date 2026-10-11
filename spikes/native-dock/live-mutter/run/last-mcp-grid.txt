@@ -1,5 +1,0 @@
-{
-  "height": 804,
-  "path": "/tmp/lm-home/g.png",
-  "width": 1020
-}
