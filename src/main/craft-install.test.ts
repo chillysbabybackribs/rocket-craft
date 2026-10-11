@@ -35,7 +35,7 @@ async function fixture(options: { members?: (folder: string) => Promise<void>; t
     id: 'fakecraft', name: 'FakeCraft', likeName: 'Nothing', shortName: 'Fake', initials: 'Fa', accent: '#123456',
     description: 'A test app', repo: 'test/fakecraft', version: '1.2.3', tag: 'v1.2.3', asset, sha256: sha,
     downloadBytes: tarball.length, unpackedBytes: 6000, folder, bin: 'bin/fakecraft', cli: 'bin/fakecraft-cli',
-    control: { kind: 'port', flag: '--control' }, auth: { kind: 'none' }, roots: null, bridge: null, extensions: ['fake'], verified: '2026-10-11'
+    control: { kind: 'port', flag: '--control' }, auth: { kind: 'none' }, roots: null, bridge: null, extensions: ['fake'], seedSettings: null, configEnv: null, verified: '2026-10-11'
   }
   const files = new Map<string, Buffer | string>([
     [asset, options.tamper ? Buffer.concat([tarball.subarray(0, tarball.length - 1), Buffer.from([tarball[tarball.length - 1]! ^ 1])]) : tarball],

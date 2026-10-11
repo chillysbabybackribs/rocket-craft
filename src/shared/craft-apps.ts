@@ -35,6 +35,21 @@
 //   only when it runs with the same XDG_CONFIG_HOME, or reads WORDCRAFT_CONTROL_KEY.
 // - GridCraft 0.5.0: no token at all: any local process can drive it while it runs.
 //
+// Seeded settings (`seedSettings`, written once before a launch, merged under the user's own), from
+// the branding research (spikes/branding/REPORT.md), source read at each pinned tag on 2026-10-11:
+// - PhotoCraft 0.7.0: `PHOTOCRAFT_CONFIG_DIR` (app_dirs.rs:65) is the folder holding
+//   `preferences.json` (services.rs:168-170), camelCase keys (prefs.rs:277).
+//   `interface.systemTitleBar` makes the window decorated, so no in-app caption buttons or mark
+//   (main.rs:63-69); `general.autoShowHomeScreen=false` hides the start screen's Discord links
+//   (prefs.rs:192, canvas.rs:1607).
+// - VectorCraft 0.9.0: `$XDG_CONFIG_HOME/vectorcraft/ui.json` (prefs_dir.rs:13-20); its engine
+//   prefs sit under `engine_prefs` (state.rs:332); `showHomeScreen` is engine lib.rs:432 and
+//   `systemTitleBar` is read at main.rs:407.
+// - WordCraft 0.5.0: `$XDG_CONFIG_HOME/wordcraft/ui.json` (main.rs:75); `showDiscord`
+//   (ui-egui lib.rs:105) hides the title-bar Discord pill.
+// - EffectCraft 0.8.0: nothing to seed: its home screen is skipped whenever `--control` is given
+//   (main.rs:188), which every docked launch passes.
+//
 // The ArtCraft name and marks are trademarks: they must not appear in anything shown to the user.
 // The names, colours, initials and one-line descriptions below are the agreed mockup's
 // (docs/mockups/craft-studio.html).
@@ -86,12 +101,24 @@ export type CraftAppManifest = {
    */
   bridge: string[] | null
   extensions: string[]
+  /**
+   * Settings written before a launch, merged under the user's own (only keys the file lacks are
+   * added). `file` is relative to the app's XDG_CONFIG_HOME. Null when there is nothing to seed.
+   */
+  seedSettings: { file: string; values: Record<string, unknown> } | null
+  /**
+   * An environment variable that moves the app's whole settings folder, set to this subfolder of
+   * its XDG_CONFIG_HOME so the app's config sits in one known place.
+   */
+  configEnv: { name: string; folder: string } | null
   /** When the values above were last checked against the pinned release. */
   verified: string
 }
 
-function entry(app: Omit<CraftAppManifest, 'repo' | 'tag' | 'asset' | 'folder' | 'bin' | 'cli' | 'verified'>): CraftAppManifest {
+function entry(app: Omit<CraftAppManifest, 'repo' | 'tag' | 'asset' | 'folder' | 'bin' | 'cli' | 'verified' | 'seedSettings' | 'configEnv'> & Partial<Pick<CraftAppManifest, 'seedSettings' | 'configEnv'>>): CraftAppManifest {
   return {
+    seedSettings: null,
+    configEnv: null,
     ...app,
     repo: `storytold/${app.id}`,
     tag: `v${app.version}`,
@@ -116,6 +143,8 @@ export const CRAFT_APPS: readonly CraftAppManifest[] = [
     control: PORT, auth: { kind: 'tokenFile', flag: '--control-token-file' },
     roots: { read: '--automation-read-root', write: '--automation-write-root' },
     bridge: [...BRIDGE, '--control-token-file', '{tokenFile}'],
+    configEnv: { name: 'PHOTOCRAFT_CONFIG_DIR', folder: 'photocraft' },
+    seedSettings: { file: 'photocraft/preferences.json', values: { interface: { systemTitleBar: true }, general: { autoShowHomeScreen: false } } },
     extensions: ['pcraft', 'psd', 'psb', 'png', 'jpg', 'jpeg', 'tif', 'tiff', 'webp', 'gif', 'bmp', 'tga', 'exr', 'avif', 'ora', 'pdn']
   }),
   entry({
@@ -125,6 +154,7 @@ export const CRAFT_APPS: readonly CraftAppManifest[] = [
     control: PORT, auth: NONE,
     roots: { read: '--automation-read-root', write: '--automation-write-root' },
     bridge: CONNECT,
+    seedSettings: { file: 'vectorcraft/ui.json', values: { engine_prefs: { showHomeScreen: false, systemTitleBar: true } } },
     extensions: ['vectorcraft', 'svg', 'svgz', 'pdf', 'ai', 'eps', 'png', 'jpg', 'jpeg', 'tif', 'tiff', 'psd', 'dxf', 'emf', 'wmf', 'afdesign']
   }),
   entry({
@@ -188,6 +218,7 @@ export const CRAFT_APPS: readonly CraftAppManifest[] = [
     description: 'Documents and letters',
     version: '0.5.0', sha256: '994bb376479ef6d76735cf4029e5ef3c2d52a85a4c9acde2b37c33b19c570203', downloadBytes: 90_044_436, unpackedBytes: 160_952_993,
     control: PORT, auth: { kind: 'keyFile', path: 'wordcraft/control-key.local-{port}' }, roots: null, bridge: CONNECT,
+    seedSettings: { file: 'wordcraft/ui.json', values: { showDiscord: false } },
     extensions: ['docx', 'docm', 'dotx', 'doc', 'odt', 'rtf', 'txt', 'md', 'html', 'htm', 'tex']
   }),
   entry({
