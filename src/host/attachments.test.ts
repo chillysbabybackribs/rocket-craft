@@ -1,11 +1,11 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { mkdtemp, readdir, readFile, rm } from 'node:fs/promises'
+import { mkdtemp, readdir, readFile, rm, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 import { jpegBase64 } from '../../tests/fixtures/image.ts'
 import { pdfBytes } from '../../tests/fixtures/pdf.ts'
-import { AttachmentStore, decodeText, inspectImage, validateAttachments } from './attachments.ts'
+import { AttachmentStore, decodeText, generatedName, inspectImage, validateAttachments } from './attachments.ts'
 import { Store } from './store.ts'
 import { attachmentInput, claudeImageContent, codexImageContent, cursorImageContent } from './providers/images.ts'
 
@@ -112,6 +112,38 @@ test('PDFs and text files are stored by content, previewed, and given to provide
     const ids = new Set([code.id, pdf.id, scanned.id, big.id])
     assert.ok(stored.every(name => ids.has(name.split('.')[0])))
     assert.ok(stored.includes(`${pdf.id}.extracted.txt`) && stored.includes(`${pdf.id}.pages`))
+  } finally {
+    store.close()
+    await rm(root, { recursive: true, force: true })
+  }
+})
+
+test('a picture a model made is kept from its file, or from its bytes when the file is gone, and named after its prompt', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'craft-generated-'))
+  const store = new Store(join(root, 'craft.db'))
+  try {
+    const images = new AttachmentStore(store, join(root, 'attachments'))
+    const made = join(root, 'made.jpg')
+    await writeFile(made, Buffer.from(jpegBase64, 'base64'))
+    const fromFile = await images.keepGenerated({ path: made, base64: 'not used' }, 'A neon horizon, over: the city!')
+    assert.equal(fromFile.name, 'a-neon-horizon-over-the-city.jpg')
+    assert.equal(fromFile.mimeType, 'image/jpeg')
+    assert.equal(fromFile.width, 2)
+    await rm(made)
+    assert.deepEqual(await readFile(images.resolve([fromFile.id])[0]!.path), Buffer.from(jpegBase64, 'base64'), 'the copy outlives the provider\'s file')
+    assert.match(await images.read(fromFile.id, true), /^data:image\/jpeg;base64,/, 'a thumbnail, or the picture standing in for one')
+    const fromBytes = await images.keepGenerated({ path: made, base64: jpegBase64 }, '')
+    assert.equal(fromBytes.name, 'generated-image.jpg')
+    await assert.rejects(images.keepGenerated({}, 'x'), /could not find the generated image/)
+    await assert.rejects(images.keepGenerated({ base64: Buffer.from('<svg/>').toString('base64') }, 'x'), /not a PNG, JPEG, WebP or GIF/)
+    assert.equal(generatedName('x'.repeat(80), 'image/png'), `${'x'.repeat(48)}.png`)
+
+    // Kept by the reply that shows it, however old; one no reply shows is swept like any other.
+    store.createChat({ id: 'c1', title: 'c', cwd: root, lastProvider: null, createdAt: 1, updatedAt: 1 })
+    store.createTurn({ id: 't1', chatId: 'c1', provider: 'codex', model: null, status: 'completed', error: null, handoffTurns: 0, changes: null, tokens: null, sources: null, startedAt: 1, endedAt: 2 })
+    store.putItem('c1', { type: 'image', id: 'g1', turnId: 't1', status: 'done', caption: 'A neon horizon', image: fromFile })
+    assert.deepEqual(store.unusedAttachments([], Date.now() + 1000).map((each) => each.id), [fromBytes.id])
+    assert.deepEqual(store.generatedImages().map((each) => [each.attachment.id, each.chatId, each.provider]), [[fromFile.id, 'c1', 'codex']])
   } finally {
     store.close()
     await rm(root, { recursive: true, force: true })

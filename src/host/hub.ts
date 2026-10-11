@@ -1,7 +1,7 @@
 import { isSearchUrl, webReadProblem } from '../shared/web-evidence.ts'
 import { randomUUID } from 'node:crypto'
 import { validateAttachments, type ProviderAttachment } from './attachments.ts'
-import type { Chat, ChatSnapshot, OlderTurns, HostEvent, Attachment, MessageDraft, Item, ModelInfo, ProviderId, QueuedMessage, Turn, TurnTokens, UsageSnapshot , TurnSources } from '../shared/types.ts'
+import type { Chat, ChatSnapshot, OlderTurns, HostEvent, Attachment, GeneratedImageSource, ImageAttachment, MessageDraft, Item, ModelInfo, ProviderId, QueuedMessage, Turn, TurnTokens, UsageSnapshot , TurnSources } from '../shared/types.ts'
 import { isFileAttachment } from '../shared/types.ts'
 import { buildHandoff, type Handoff, type MissedTurn } from './handoff.ts'
 import { messageOf, oneLine } from './json.ts'
@@ -69,7 +69,11 @@ type LiveTurn = {
   /** The pages the app saw the turn open, in order, for its sources record at the end. */
   opened: TurnSources['opened']
   stopRequested: boolean
+  /** Pictures the turn made that are still being copied into Craft Studio's store; the turn ends after them. */
+  saving: Array<Promise<void>>
 }
+
+type ImageItem = Extract<Item, { type: 'image' }>
 
 export class Hub {
   private closing = false
@@ -93,7 +97,10 @@ export class Hub {
      * `fresh` says the provider's session is new and has been told nothing yet.
      */
     private readonly context: ((chatId: string, provider: ProviderId, fresh: boolean) => Promise<string | null>) | null = null,
-    private readonly resolveAttachments: (ids: string[]) => ProviderAttachment[] = () => []
+    private readonly resolveAttachments: (ids: string[]) => ProviderAttachment[] = () => [],
+    /** Keep Craft Studio's own copy of a picture a provider made, stored like an attachment. */
+    private readonly saveImage: (source: GeneratedImageSource, caption: string) => Promise<ImageAttachment> =
+      () => Promise.reject(new Error('Craft Studio has nowhere to keep generated images in this run.'))
   ) {
     for (const entry of store.queues()) if (store.chat(entry.chatId)) this.queues.set(entry.chatId, entry.messages)
     for (const [provider, adapter] of Object.entries(adapters) as Array<[ProviderId, ProviderAdapter]>) {
@@ -239,7 +246,7 @@ export class Hub {
       endedAt: null
     })
     const clock = { sent: performance.now(), firstEvent: null, firstText: null }
-    const live: LiveTurn = { turn, adapter, clock, items: new Map(), opened: [], stopRequested: false }
+    const live: LiveTurn = { turn, adapter, clock, items: new Map(), opened: [], stopRequested: false, saving: [] }
     this.live.set(chatId, live)
 
     const named = chat.lastProvider === null
@@ -537,6 +544,8 @@ export class Hub {
       result = { status: 'failed', error: messageOf(error) }
     }
     if (result.sessionLost) result = { status: 'failed', error: `${provider} could not start a session for this chat` }
+    // Only a turn that made pictures waits; any other ends in the same tick as before.
+    if (live.saving.length) await Promise.all(live.saving)
     this.endTurn(live, result, session.id)
   }
 
@@ -553,7 +562,7 @@ export class Hub {
       id: randomUUID(), chatId, provider, model: null, status: 'running', error: null,
       handoffTurns: 0, changes: null, tokens: null, sources: null, startedAt: Date.now(), endedAt: null
     })
-    const live: LiveTurn = { turn, adapter, clock: { sent: performance.now(), firstEvent: null, firstText: null }, items: new Map(), opened: [], stopRequested: false }
+    const live: LiveTurn = { turn, adapter, clock: { sent: performance.now(), firstEvent: null, firstText: null }, items: new Map(), opened: [], stopRequested: false, saving: [] }
     this.live.set(chatId, live)
     const updated: Chat = { ...chat, lastProvider: provider, updatedAt: Date.now() }
     this.store.updateChat(updated)
@@ -568,7 +577,9 @@ export class Hub {
       finish: (result) => {
         if (ended) return
         ended = true
-        this.endTurn(live, result.sessionLost ? { status: 'failed', error: result.error ?? 'The session was lost' } : result, session.id)
+        const end = (): void => this.endTurn(live, result.sessionLost ? { status: 'failed', error: result.error ?? 'The session was lost' } : result, session.id)
+        if (live.saving.length) void Promise.all(live.saving).then(end)
+        else end()
       }
     }
   }
@@ -585,7 +596,8 @@ export class Hub {
     return {
       item: (item) => {
         mark(readable(item) && 'text' in item && item.text.length > 0)
-        this.putItem(live, item)
+        if (item.type === 'image' && item.source) this.keepImage(live, item)
+        else this.putItem(live, item)
       },
       delta: (itemId, delta) => {
         mark(delta.length > 0 && readable(live.items.get(itemId)))
@@ -624,6 +636,8 @@ export class Hub {
       if ((item.type === 'assistant' || item.type === 'reasoning') && item.streaming) this.putItem(live, { ...item, streaming: false })
       else if (item.type === 'tool' && item.status === 'running') {
         this.putItem(live, { ...item, status: result.status === 'completed' ? 'done' : 'failed' })
+      } else if (item.type === 'image' && item.status === 'generating') {
+        this.putItem(live, { ...item, status: 'failed', error: 'The turn ended before the image was finished. Ask for it again.' })
       }
     }
     // Words the model never said it read: a stopped turn dropped them, so they go first in the
@@ -673,7 +687,10 @@ export class Hub {
   private handoffFor(chatId: string, seenSeq: number, beforeSeq = Number.MAX_SAFE_INTEGER): Handoff | null {
     const missed: MissedTurn[] = this.store.turnsWithItems(chatId, seenSeq, beforeSeq)
       .map(({ turn, items }) => ({ provider: turn.provider, model: turn.model, status: turn.status, items }))
-    return buildHandoff(missed, undefined, this.store.chat(chatId)?.cwd ?? null)
+    const locate = (id: string): string | null => {
+      try { return this.resolveAttachments([id])[0]?.path ?? null } catch { return null }
+    }
+    return buildHandoff(missed, undefined, this.store.chat(chatId)?.cwd ?? null, locate)
   }
 
   private releaseTurnWaiters(chatId: string, turn: Turn): void {
@@ -708,7 +725,24 @@ export class Hub {
     live?.opened.push({ url, via: 'browser' })
   }
 
+  /**
+   * A finished picture: it keeps its place as "generating" while Craft Studio copies the file into its
+   * own store, then shows from that copy. The provider's file and bytes go no further than here.
+   */
+  private keepImage(live: LiveTurn, { source, ...item }: ImageItem): void {
+    this.putItem(live, { ...item, status: 'generating' })
+    live.saving.push(this.saveImage(source ?? {}, item.caption).then(
+      (image) => this.putItem(live, { ...item, status: 'done', image }),
+      (error: unknown) => this.putItem(live, { ...item, status: 'failed', error: messageOf(error) })
+    ))
+  }
+
   private putItem(live: LiveTurn, item: Item): void {
+    // A picture's start is kept from its first report, so its placeholder's clock survives a reload.
+    if (item.type === 'image' && item.startedAt === undefined) {
+      const before = live.items.get(item.id)
+      item = { ...item, startedAt: before?.type === 'image' && before.startedAt !== undefined ? before.startedAt : Date.now() }
+    }
     // Providers may return textual failures without an error flag. Apply the same evidence
     // check to every adapter; empty output, search pages and challenges prove no source read.
     if (item.type === 'tool' && item.kind === 'web' && item.status === 'done' && pageKey(item.label) && !isSearchUrl(item.label)) {

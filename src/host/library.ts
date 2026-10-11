@@ -4,16 +4,17 @@ import { existsSync } from 'node:fs'
 import { mkdir, open, readFile, readdir, stat } from 'node:fs/promises'
 import { basename, dirname, isAbsolute, join, relative } from 'node:path'
 import { promisify } from 'node:util'
-import { isFileAttachment, type Attachment, type BrowserDownload, type Turn } from '../shared/types.ts'
+import { isFileAttachment, providerLabel, type Attachment, type BrowserDownload, type ProviderId, type Turn } from '../shared/types.ts'
 import { kindOf, type LibraryEntry, type LibraryKind, type LibraryPreview, type LibrarySource, type LibraryView } from '../shared/library.ts'
 import { decodeText, type AttachmentStore } from './attachments.ts'
 import { repoRoot } from './git.ts'
 import type { Store } from './store.ts'
 
-// The library's index and previews (docs/library-plan.md, slice 1). Entries come from four
-// places: attachments a chat sent (read live from the store, so nothing is copied twice), and
-// files on disk the store records by path: a model's downloads, Markdown files a turn wrote, and
-// files opened from a chat. Nothing else on the disk is ever listed.
+// The library's index and previews (docs/library-plan.md, slice 1). Entries come from five
+// places: attachments a chat sent and pictures a model made (both stored as attachments and read
+// live from the store, so nothing is copied twice), and files on disk the store records by path:
+// a model's downloads, Markdown files a turn wrote, and files opened from a chat. Nothing else on
+// the disk is ever listed.
 //
 // Previews are made by the same outside tools the attachments use (poppler for PDFs, ImageMagick
 // for pictures, unzip for an Office file's own thumbnail), cached by path, size and time, and at
@@ -40,6 +41,8 @@ export type LibraryOptions = {
   downloads: (chatId: string, since: number) => Promise<BrowserDownload[]>
   /** Folders whose files are never shelved: worktrees are deleted when their task ends, so a path in one would soon be missing. */
   skipRoots?: () => string[]
+  /** Chats whose pictures stay off the shelf: generate_image's hidden Codex chats, whose picture joins the asking chat's shelf instead. */
+  hidden?: (chatId: string) => boolean
 }
 
 export class Library {
@@ -54,6 +57,11 @@ export class Library {
     const entries: LibraryEntry[] = []
     for (const { attachment, chatId, addedAt } of this.store.sentAttachments()) {
       const entry = this.attachmentEntry(attachment, chatId, addedAt)
+      if (entry) entries.push(entry)
+    }
+    for (const { attachment, chatId, provider, addedAt } of this.store.generatedImages()) {
+      if (this.options.hidden?.(chatId)) continue
+      const entry = this.attachmentEntry(attachment, chatId, addedAt, provider)
       if (entry) entries.push(entry)
     }
     for (const file of this.store.libraryFiles()) {
@@ -180,10 +188,16 @@ export class Library {
     return { type: 'none', reason: `Craft Studio cannot show ${entry.kind === 'office' ? 'Office files' : 'this kind of file'} yet. It is at ${entry.path}.` }
   }
 
-  private attachmentEntry(attachment: Attachment, chatId: string, addedAt: number): LibraryEntry | null {
+  /**
+   * An attachment's entry. `madeBy` marks a picture a model made: it is not something the user
+   * attached, and "Made by a model" is how someone looks for it again.
+   */
+  private attachmentEntry(attachment: Attachment, chatId: string, addedAt: number, madeBy?: ProviderId | null): LibraryEntry | null {
     let path: string
     try { path = this.attachments.resolve([attachment.id])[0]!.path } catch { return null }
-    const common = { id: attachment.id, attachmentId: attachment.id, name: attachment.name, source: 'attachment' as const, origin: 'attachment', chatId, path, size: attachment.size, addedAt, missing: !existsSync(path) }
+    const source: LibrarySource = madeBy === undefined ? 'attachment' : 'generated'
+    const origin = madeBy === undefined ? 'attachment' : madeBy ? providerLabel(madeBy) : 'model'
+    const common = { id: attachment.id, attachmentId: attachment.id, name: attachment.name, source, origin, chatId, path, size: attachment.size, addedAt, missing: !existsSync(path) }
     if (!isFileAttachment(attachment)) return { ...common, kind: 'image', width: attachment.width, height: attachment.height }
     if (attachment.format === 'pdf') return { ...common, kind: 'pdf', pages: attachment.pages }
     return { ...common, kind: kindOf(attachment.name) === 'markdown' ? 'markdown' : 'text' }

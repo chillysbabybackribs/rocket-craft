@@ -12,7 +12,7 @@ import { loadLibrary, loadLibraryPreview, setLibraryOpen, useApp } from '../stor
 // opening a file go through the app map, so a model and a click change the panel the same way.
 
 const KIND_LABEL: Record<LibraryKind, string> = { pdf: 'PDF', markdown: 'MD', text: 'TXT', image: 'IMG', office: 'DOC', other: 'FILE' }
-const SOURCE_LABEL: Record<LibraryEntry['source'], string> = { attachment: 'Attachment', download: 'Download', plan: 'Plan', opened: 'Opened' }
+const SOURCE_LABEL: Record<LibraryEntry['source'], string> = { attachment: 'Attachment', download: 'Download', plan: 'Plan', opened: 'Opened', generated: 'Generated' }
 
 type FilterName = 'source' | 'kind' | 'chat' | 'added'
 type Option = { value: string; label: string }
@@ -124,7 +124,7 @@ function FilterRail({ entries, filters, chatTitle }: { entries: LibraryEntry[]; 
         )
       })}
       <button type="button" className="lib-clear" disabled={!filtered} onClick={() => void act('library.clear')}>Clear filters</button>
-      <div className="lib-foot">{entries.length} {entries.length === 1 ? 'file' : 'files'} · {formatSize(total)}<br />Chats' attachments, downloads, plans and opened files only.</div>
+      <div className="lib-foot">{entries.length} {entries.length === 1 ? 'file' : 'files'} · {formatSize(total)}<br />Chats' attachments, downloads, plans, opened files and pictures models made only.</div>
     </nav>
   )
 }

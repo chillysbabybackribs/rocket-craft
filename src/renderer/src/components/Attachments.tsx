@@ -8,7 +8,7 @@ import { AttachmentMenu } from './AttachmentMenu.tsx'
 
 type MenuRequest = { point: { x: number; y: number } | null; at: number } | null
 /** Right-click, Shift+F10 or the context-menu key on a tile opens the same menu as its ⋯ button. */
-function useMenuRequest() {
+export function useMenuRequest() {
   const [request, setRequest] = useState<MenuRequest>(null)
   return {
     request,
@@ -32,37 +32,54 @@ export function useImagePreviewOpen(): boolean {
   return useSyncExternalStore(listener => { previewListeners.add(listener); return () => { previewListeners.delete(listener) } }, () => previewOpen)
 }
 
-function ImageTile({ image, remove, fresh }: { image: ImageAttachment; remove?: () => void; fresh?: boolean }) {
-  const menu = useMenuRequest()
-  const [src, setSrc] = useState<string | null>(null)
+/**
+ * The full-size viewer an image opens in, shared by attached and generated pictures: a modal
+ * dialog that loads the stored original when opened. `open` shows it; `dialog` is its element.
+ */
+export function useImagePreview(image: ImageAttachment) {
   const [full, setFull] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const dialog = useRef<HTMLDialogElement>(null)
+  const ref = useRef<HTMLDialogElement>(null)
   useEffect(() => {
-    let alive = true
-    const element = dialog.current
-    void call('attachment.read', { id: image.id, thumbnail: true }).then(value => { if (alive) setSrc(value) }, reason => { if (alive) setError(String(reason.message)) })
-    return () => { alive = false; if (element?.open) setPreviewOpen(false) }
+    const element = ref.current
+    return () => { if (element?.open) setPreviewOpen(false) }
   }, [image.id])
-  const enlarge = async (): Promise<void> => {
+  const open = async (): Promise<void> => {
     setPreviewOpen(true)
-    dialog.current?.showModal()
+    ref.current?.showModal()
     try { setFull(await call('attachment.read', { id: image.id })) }
     catch (reason) { setError(reason instanceof Error ? reason.message : 'This image could not be opened.') }
   }
+  const dialog = (
+    <dialog ref={ref} className="image-preview" aria-label={`Image preview: ${image.name}`} onClick={event => { if (event.target === event.currentTarget) ref.current?.close() }} onClose={() => { setFull(null); setPreviewOpen(false) }}>
+      <div className="image-preview-bar"><span>{image.name}</span><button type="button" aria-label="Close image preview" onClick={() => ref.current?.close()}><X size={18} /></button></div>
+      {full ? <img src={full} alt={image.name} /> : <p>{error ?? 'Loading image…'}</p>}
+    </dialog>
+  )
+  return { open, dialog }
+}
+
+function ImageTile({ image, remove, fresh }: { image: ImageAttachment; remove?: () => void; fresh?: boolean }) {
+  const menu = useMenuRequest()
+  const [src, setSrc] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const preview = useImagePreview(image)
+  useEffect(() => {
+    let alive = true
+    void call('attachment.read', { id: image.id, thumbnail: true }).then(value => { if (alive) setSrc(value) }, reason => { if (alive) setError(String(reason.message)) })
+    return () => { alive = false }
+  }, [image.id])
+  const enlarge = (): void => void preview.open()
   return (
     <div className={`image-attachment${fresh ? ' is-fresh' : ''}`} {...menu.handlers}>
-      <button type="button" className="image-thumbnail" aria-label={`Preview ${image.name}`} onClick={() => void enlarge()} draggable
+      <button type="button" className="image-thumbnail" aria-label={`Preview ${image.name}`} onClick={enlarge} draggable
         onDragStart={event => { event.dataTransfer.setData(ATTACHMENT_DRAG_TYPE, JSON.stringify(image)); event.dataTransfer.effectAllowed = 'copy' }}>
         {src ? <img src={src} alt={image.name} draggable={false} /> : <span>{error ? 'Unavailable' : 'Loading…'}</span>}
       </button>
-      <AttachmentMenu attachment={image} onPreview={() => void enlarge()} className="is-image" request={menu.request} />
+      <AttachmentMenu attachment={image} onPreview={enlarge} className="is-image" request={menu.request} />
       {remove && <button type="button" className="image-remove" aria-label={`Remove ${image.name}`} onClick={remove}><X size={12} /></button>}
       <span className="image-name" title={image.name}>{image.name}</span>
-      <dialog ref={dialog} className="image-preview" aria-label={`Image preview: ${image.name}`} onClick={event => { if (event.target === event.currentTarget) dialog.current?.close() }} onClose={() => { setFull(null); setPreviewOpen(false) }}>
-        <div className="image-preview-bar"><span>{image.name}</span><button type="button" aria-label="Close image preview" onClick={() => dialog.current?.close()}><X size={18} /></button></div>
-        {full ? <img src={full} alt={image.name} /> : <p>{error ?? 'Loading image…'}</p>}
-      </dialog>
+      {preview.dialog}
     </div>
   )
 }

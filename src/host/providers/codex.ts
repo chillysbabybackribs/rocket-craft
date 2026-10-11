@@ -1,7 +1,9 @@
 // Image input: turn/start accepts localImage paths (official app-server docs read
 // 2026-10-06; image turns not yet verified live against the installed CLI).
 import { codexImageContent } from './images.ts'
+import { appendFileSync } from 'node:fs'
 import { homedir } from 'node:os'
+import { basename } from 'node:path'
 import type { Item, ModelInfo, ToolStatus, TurnTokens, UsageSnapshot } from '../../shared/types.ts'
 import { clipOutput, jsonPreview, messageOf, recordOf, stringOf } from '../json.ts'
 import { StdioJsonRpcClient, type JsonRpcNotification, type JsonRpcRequest } from '../stdio-json-rpc.ts'
@@ -40,11 +42,40 @@ import {
 // - (codex-cli 0.160.0, config/read verified 2026-10-05) Process-local `-c
 //   plugins.<name>@openai-bundled.enabled=false` overrides inherited plugin settings.
 //   Do not quote the key inside the argument: the CLI treats those quotes as part of its name.
+// - Generated images, codex-cli 0.161.0, 2026-10-10. `codex features list` shows `image_generation`
+//   stable and on. (Schema only, `app-server generate-ts`) The thread item is `{type:
+//   'imageGeneration', id, status, revisedPrompt, result, transparentBackground?, failure:
+//   {type: 'usageLimitExceeded', limitId, resetsAt} | null, savedPath?}`, and `{type: 'imageView',
+//   id, path}` is Codex looking at a picture on disk. (Seen in Codex's own rollout files under
+//   ~/.codex/sessions, 113 generations from 2026-09-02 to 2026-10-10, stored there as `{type:
+//   'Extension', kind: 'image_gen.generation'}` with the same fields) `result` is the picture as
+//   base64 PNG, about 2 MB of text, and `savedPath` is the file Codex already wrote,
+//   ~/.codex/generated_images/<threadId>/<itemId>.png. Statuses seen there: 'completed', and once
+//   'failed' with `failure: null` and an empty `result`. (Seen live over app-server in rocketv1,
+//   2026-10-11, one turn, traced with its ROCKET_CODEX_TRACE, now CRAFT_CODEX_TRACE) Codex first reads its bundled imagegen
+//   skill with a command, then `item/started` brings `{status: 'in_progress', revisedPrompt: null,
+//   result: '', transparentBackground: null, failure: null}` with no `savedPath`; about 18 s later
+//   `item/completed` brings `status: 'completed'`, the revised prompt, `result` (3.4 M characters
+//   of base64) and `savedPath`. A `usageLimitExceeded` failure has not been seen; `resetsAt` is
+//   read as epoch seconds, like the rate-limit windows. A rollout's imageView path was a file://
+//   URL; no imageView has been seen over app-server yet.
+//
+// `CRAFT_CODEX_TRACE=<file>` appends every app-server notification to that file, long strings
+// cut, for re-verifying the behaviour above against a new CLI without guessing.
 //
 // Threads run with approvalPolicy 'never' and full access, like the Codex CLI in its
 // unattended mode: the app has no approval prompts yet.
 
 const TOOL_TIMEOUT_SEC = 150
+const TRACE = process.env.CRAFT_CODEX_TRACE || null
+
+/** A payload for the trace: strings over 300 characters (a picture's base64) kept to their head and length. */
+function traced(value: unknown): unknown {
+  if (typeof value === 'string') return value.length > 300 ? `${value.slice(0, 80)}…<${value.length} chars>` : value
+  if (Array.isArray(value)) return value.map(traced)
+  if (value && typeof value === 'object') return Object.fromEntries(Object.entries(value).map(([key, entry]) => [key, traced(entry)]))
+  return value
+}
 
 type ActiveTurn = {
   request: RunRequest
@@ -308,6 +339,9 @@ export class CodexAdapter implements ProviderAdapter {
 
   private onNotification(notification: JsonRpcNotification): void {
     const params = recordOf(notification.params)
+    if (TRACE) {
+      try { appendFileSync(TRACE, `${JSON.stringify({ at: Date.now(), method: notification.method, params: traced(params) })}\n`) } catch {}
+    }
     if (notification.method === 'account/rateLimits/updated') {
       const snapshot = this.snapshot(params.rateLimits)
       if (snapshot) this.onUsage(snapshot)
@@ -491,9 +525,48 @@ export function codexItem(value: unknown, turnId: string, completed: boolean): I
     }
     case 'webSearch':
       return { type: 'tool', id, turnId, kind: 'web', status, label: stringOf(item.query) || 'web search', output: '' }
+    case 'imageGeneration':
+      return codexImage(item, id, turnId, completed)
+    case 'imageView': {
+      // Codex looking at a picture on disk. The path is the step's output, for opening it.
+      const path = stringOf(item.path).replace(/^file:\/\//, '')
+      return { type: 'tool', id, turnId, kind: 'other', status: 'done', label: `Viewed ${basename(path) || 'an image'}`, output: path }
+    }
     default:
       return null
   }
+}
+
+/**
+ * A picture Codex is making or has made. A finished one carries what the hub needs to keep its
+ * own copy: the file Codex saved and the base64 bytes it also sends, either of which will do.
+ */
+function codexImage(item: Record<string, unknown>, id: string, turnId: string, completed: boolean): Item {
+  const caption = stringOf(item.revisedPrompt).trim()
+  const status = stringOf(item.status)
+  const failure = recordOf(item.failure)
+  const failed = (error: string): Item => ({ type: 'image', id, turnId, status: 'failed', caption, error })
+  if (failure.type === 'usageLimitExceeded') return failed(imageLimitText(failure.resetsAt))
+  if (status === 'failed' || status === 'declined') {
+    return failed('Codex could not make this image. Ask again, or reword the request if it may have been refused.')
+  }
+  if (!completed && status !== 'completed') return { type: 'image', id, turnId, status: 'generating', caption }
+  const path = stringOf(item.savedPath)
+  const base64 = stringOf(item.result)
+  if (!path && !base64) return failed('Codex finished the image but did not send it. Ask for it again.')
+  return { type: 'image', id, turnId, status: 'done', caption, source: { ...(path ? { path } : {}), ...(base64 ? { base64 } : {}) } }
+}
+
+/** The usage-limit failure as a sentence. `resetsAt` is epoch seconds, as in Codex's rate limits. */
+export function imageLimitText(resetsAt: unknown, now = Date.now()): string {
+  const head = 'Codex has used up its image generation limit for now.'
+  if (typeof resetsAt !== 'number' || resetsAt <= 0) return `${head} Codex did not say when it resets; try again later.`
+  const at = new Date(resetsAt > 1e12 ? resetsAt : resetsAt * 1_000)
+  const sameDay = at.toDateString() === new Date(now).toDateString()
+  const when = at.toLocaleString(undefined, sameDay
+    ? { hour: 'numeric', minute: '2-digit' }
+    : { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
+  return `${head} Try again after ${when}.`
 }
 
 function toolStatus(value: unknown, completed: boolean): ToolStatus {

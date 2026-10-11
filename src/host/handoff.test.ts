@@ -129,3 +129,17 @@ test('a history too long to fit even cut down keeps the newest turns and says ho
   assert.match(handoff.text, /The \d+ turns before these are left out/)
   assert.equal(handoff.turns, handoff.messages.filter((message) => message.role === 'user').length)
 })
+
+test('a picture another provider made is named with the path of Craft Studio\'s copy and its prompt', () => {
+  const image = { kind: 'image' as const, id: 'img1', name: 'neon-horizon.png', mimeType: 'image/png' as const, size: 10, width: 1536, height: 1024 }
+  const handoff = buildHandoff([
+    turn('codex', 'make a neon horizon', 'Here it is.', [
+      { type: 'image', id: 'g1', turnId: 't', status: 'done', caption: 'A neon horizon over a desert city', image },
+      { type: 'image', id: 'g2', turnId: 't', status: 'failed', caption: 'A second take', error: 'Codex has used up its image generation limit for now.' }
+    ])
+  ], undefined, null, (id) => (id === 'img1' ? '/data/attachments/img1.png' : null))!
+  assert.match(handoff.text, /- made an image from the prompt "A neon horizon over a desert city": \/data\/attachments\/img1\.png \(1536×1024; open the file to look at it\)/)
+  assert.match(handoff.text, /- tried to make an image from the prompt "A second take", which failed/)
+  assert.match(handoff.messages.at(-1)!.text, /\/data\/attachments\/img1\.png/, 'Codex is told too, as history')
+  assert.equal(handoff.attachments, undefined, 'the pixels are not sent')
+})

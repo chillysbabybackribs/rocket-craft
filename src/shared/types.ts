@@ -105,6 +105,31 @@ export type Item =
    * is shown beside the chat, not in the transcript's flow.
    */
   | { type: 'plan'; id: string; turnId: string; steps: PlanStep[] }
+  /**
+   * A picture a model made (Codex's image generation), shown in the reply where it was made.
+   * `image` is Craft Studio's own copy, stored like an attachment, so it outlives the provider's file.
+   */
+  | {
+      type: 'image'
+      id: string
+      turnId: string
+      status: 'generating' | 'done' | 'failed'
+      /** What the picture was made from (the model's revised prompt), shown as its caption. */
+      caption: string
+      image?: ImageAttachment
+      /** Why there is no picture, as a sentence for the user. */
+      error?: string
+      /** When the host first heard of it, for the elapsed time the placeholder shows. */
+      startedAt?: number
+      /**
+       * From an adapter only: the provider's file and/or its base64 bytes. The hub stores a copy
+       * and drops this before the item is saved or sent anywhere.
+       */
+      source?: GeneratedImageSource
+    }
+
+/** Where a provider put a picture it made; the hub reads the file first and the bytes if that fails. */
+export type GeneratedImageSource = { path?: string; base64?: string }
 
 /** One clickable answer: a short label and what picking it means. */
 export type QuestionOption = { label: string; detail: string }

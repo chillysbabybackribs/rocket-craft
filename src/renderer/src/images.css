@@ -143,3 +143,30 @@
 .capture-actions { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 14px; }
 .capture-to { font-size: 11px; color: var(--text-3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .capture-buttons { display: flex; gap: 8px; flex: none; }
+
+/* A picture a model made, in the reply where it was made (docs/mockups/generated-images.html). */
+.gen { position: relative; margin: 14px 0 16px; max-width: 520px; }
+.gen-frame { display: block; border-radius: 10px; overflow: hidden; background: #131416; border: 1px solid rgba(255, 255, 255, 0.06); }
+.gen-image { padding: 0; width: fit-content; max-width: 100%; cursor: zoom-in; }
+.gen-image:hover { border-color: rgba(255, 255, 255, 0.14); }
+.gen-image:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.gen-image img { display: block; max-width: 100%; max-height: 520px; width: auto; height: auto; }
+.gen-loading { display: block; width: 520px; max-width: 100%; }
+.gen-made { position: relative; width: fit-content; max-width: 100%; }
+.attachment-more.is-generated { right: 8px; top: 8px; background: #0b0c0dcc; }
+.gen-made:hover .attachment-more, .gen-made:focus-within .attachment-more { opacity: 1; }
+/* While it is made: only a field of dots with a slow wave out from the centre, no frame or label. */
+.gen-pending { position: relative; aspect-ratio: 16 / 10; border: 0; background: none; }
+.gen-field { position: absolute; inset: 14px; display: grid; grid-template-columns: repeat(32, 1fr); grid-template-rows: repeat(20, 1fr); place-items: center; }
+.gen-field i { width: 3px; height: 3px; border-radius: 50%; background: #2e2f33; animation: gen-ripple 2.4s ease-in-out infinite; }
+@keyframes gen-ripple { 0%, 100% { transform: scale(1); background: #2e2f33; } 30% { transform: scale(1.9); background: #8d8cff; } }
+/* When it arrives, the picture comes into focus where the dots were. */
+.gen-image img.is-arriving { animation: gen-focus 0.9s ease both; }
+@keyframes gen-focus { from { opacity: 0; filter: blur(22px); transform: scale(1.03); } to { opacity: 1; filter: none; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .gen-field i, .gen-image img.is-arriving { animation: none; } }
+.gen-caption { margin-top: 7px; color: var(--text-3); font-size: 12px; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
+.gen-caption.is-open { display: block; }
+.gen-more { padding: 0; margin-top: 2px; font-size: 11px; color: var(--text-2); }
+.gen-more:hover { color: var(--text); }
+.gen-failed { display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; border: 1px solid #553134; background: #1d1517; border-radius: 10px; color: #edaca5; font-size: 13px; }
+.gen-failed svg { flex-shrink: 0; margin-top: 3px; }

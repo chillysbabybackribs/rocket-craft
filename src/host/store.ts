@@ -158,6 +158,8 @@ export class Store {
       if (item.type === 'user') for (const image of item.attachments ?? []) kept.add(image.id)
     }
     for (const queue of this.queues()) for (const message of queue.messages) for (const image of message.attachments ?? []) kept.add(image.id)
+    // Pictures a model made are kept by the reply that shows them.
+    for (const { attachment } of this.generatedImages()) kept.add(attachment.id)
     return this.sql('SELECT id, data FROM attachments WHERE created_at < ?').all(before)
       .filter(row => !kept.has(String(row.id))).map(row => JSON.parse(String(row.data)) as Attachment)
   }
@@ -175,6 +177,11 @@ export class Store {
       if (!seen.has(attachment.id)) seen.set(attachment.id, { attachment, chatId: String(row.chat_id), addedAt: Number(row.created_at) })
     }
     return [...seen.values()]
+  }
+
+  /** Pictures models made, with the chat, the provider that made each and when it was stored. */
+  generatedImages(): Array<{ attachment: Attachment; chatId: string; provider: ProviderId | null; addedAt: number }> {
+    return this.sql(`${GENERATED} ORDER BY i.seq`).all().map(generatedRow)
   }
 
   /** Put a file on the library's shelf. A path already there keeps where it first came from. */
@@ -467,4 +474,19 @@ function turnOf(row: Row): StoredTurn {
 
 function itemOf(row: Row): Item {
   return JSON.parse(String(row.data)) as Item
+}
+
+/** Image items whose picture Craft Studio kept; the LIKE lets SQLite skip every other row before parsing JSON. */
+const GENERATED = `SELECT i.chat_id, t.provider, a.created_at, a.data AS stored FROM items i
+  JOIN attachments a ON a.id = json_extract(i.data, '$.image.id')
+  LEFT JOIN turns t ON t.id = i.turn_id
+  WHERE i.data LIKE '%"image":{%' AND json_extract(i.data, '$.type') = 'image'`
+
+function generatedRow(row: Row): { attachment: Attachment; chatId: string; provider: ProviderId | null; addedAt: number } {
+  return {
+    attachment: JSON.parse(String(row.stored)) as Attachment,
+    chatId: String(row.chat_id),
+    provider: row.provider ? String(row.provider) as ProviderId : null,
+    addedAt: Number(row.created_at)
+  }
 }

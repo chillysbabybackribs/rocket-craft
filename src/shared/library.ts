@@ -3,8 +3,11 @@
 // what a model lists and what the user sees under the same filters are one answer.
 
 export type LibraryKind = 'pdf' | 'markdown' | 'text' | 'image' | 'office' | 'other'
-/** Where a file came from: attached in a chat, downloaded by a model's browsing, a Markdown file a turn wrote, or a file opened from a chat. */
-export type LibrarySource = 'attachment' | 'download' | 'plan' | 'opened'
+/**
+ * Where a file came from: attached in a chat, downloaded by a model's browsing, a Markdown file a
+ * turn wrote, a file opened from a chat, or a picture a model made (Codex's image generation).
+ */
+export type LibrarySource = 'attachment' | 'download' | 'plan' | 'opened' | 'generated'
 export type LibraryAdded = 'today' | 'yesterday' | 'week' | 'older'
 
 export type LibraryEntry = {
@@ -13,7 +16,7 @@ export type LibraryEntry = {
   name: string
   kind: LibraryKind
   source: LibrarySource
-  /** A download's host name, a plan's folder, or "attachment". */
+  /** A download's host name, a plan's folder, the provider that made a picture, or "attachment". */
   origin: string
   chatId: string | null
   /** Absolute path on disk. */
@@ -52,7 +55,7 @@ export type LibraryView =
   | { type: 'none'; reason: string }
 
 export const LIBRARY_SOURCES: ReadonlyArray<[LibrarySource, string]> = [
-  ['attachment', 'Attachments'], ['download', 'Downloads'], ['plan', 'Plans'], ['opened', 'Opened from chat']
+  ['attachment', 'Attachments'], ['download', 'Downloads'], ['plan', 'Plans'], ['opened', 'Opened from chat'], ['generated', 'Made by a model']
 ]
 export const LIBRARY_KINDS: ReadonlyArray<[LibraryKind, string]> = [
   ['pdf', 'PDF'], ['markdown', 'Markdown'], ['text', 'Text and code'], ['image', 'Images'], ['office', 'Office'], ['other', 'Other']

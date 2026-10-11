@@ -6,6 +6,7 @@ import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 import type { BrowserDownload, Item, Turn } from '../shared/types.ts'
 import { pdfBytes } from '../../tests/fixtures/pdf.ts'
+import { jpegBase64 } from '../../tests/fixtures/image.ts'
 import { AttachmentStore } from './attachments.ts'
 import { Library } from './library.ts'
 import { Store } from './store.ts'
@@ -170,6 +171,32 @@ test('Markdown a turn wrote inside a skipped root (a worktree) is not shelved', 
     store.createTurn(turn('c2'))
     await skipping.turnEnded(turn('c2'), [join(root, 'kept.md')])
     assert.deepEqual(skipping.list().map((each) => each.name), ['kept.md'])
+  } finally {
+    await done()
+  }
+})
+
+test('a picture a model made is on the shelf as generated, named for its provider, and looked up by id', async () => {
+  const { root, store, attachments, library, chat, done } = await setup()
+  try {
+    chat('c1')
+    const image = await attachments.keepGenerated({ base64: jpegBase64 }, 'A neon horizon')
+    store.createTurn({ ...turn('c1'), provider: 'codex' })
+    store.putItem('c1', { type: 'image', id: 'g1', turnId: 't-c1', status: 'done', caption: 'A neon horizon', image })
+    const [entry] = library.list()
+    assert.equal(entry!.source, 'generated')
+    assert.equal(entry!.origin, 'Codex')
+    assert.equal(entry!.kind, 'image')
+    assert.equal(entry!.chatId, 'c1')
+    assert.equal(library.entry(image.id).name, 'a-neon-horizon.jpg')
+    assert.equal((await library.view(image.id)).type, 'image')
+    assert.equal((await library.preview(image.id)).type, 'image')
+    const listed = await libraryTools(library, store)[0]!.run({ source: 'generated' }, { provider: 'claude', chatId: 'c1' })
+    assert.match(JSON.stringify(listed), /a-neon-horizon\.jpg/)
+
+    // generate_image's own Codex chat is hidden; its picture shows once, under the chat that asked.
+    const hiding = new Library(store, attachments, join(root, 'previews'), { changed: () => {}, downloads: async () => [], hidden: (chatId) => chatId === 'c1' })
+    assert.deepEqual(hiding.list(), [])
   } finally {
     await done()
   }
