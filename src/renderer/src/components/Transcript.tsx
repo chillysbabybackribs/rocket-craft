@@ -1,7 +1,9 @@
-import { Attachments } from './Attachments.tsx'
+import { Attachments, useImagePreview, useMenuRequest } from './Attachments.tsx'
+import { AttachmentMenu } from './AttachmentMenu.tsx'
+import { call } from '../host.ts'
 import { createContext, Fragment, memo, useContext, useDeferredValue, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { ChatMarkdown } from './ChatMarkdown.tsx'
-import { Check, ChevronRight, FileDiff, FileText, Globe, PencilLine, Plug, Search, SquareTerminal, Wrench } from 'lucide-react'
+import { AlertCircle, Check, ChevronRight, FileDiff, FileText, Globe, PencilLine, Plug, Search, SquareTerminal, Wrench } from 'lucide-react'
 import { citationMarks } from '../../../shared/sources.ts'
 import { planItemId, providerLabel, type Item, type MessageDraft, type ToolKind, type Turn, type TurnSources } from '../../../shared/types.ts'
 import { splitBlocks } from '../markdown-blocks.ts'
@@ -269,6 +271,87 @@ function QuestionCard({ item }: { item: QuestionItem }) {
   )
 }
 
+type ImageItem = Extract<Item, { type: 'image' }>
+
+/** The placeholder's dots, 32 by 20, each delayed by its distance from the centre so a wave spreads out. */
+const DOT_DELAYS = Array.from({ length: 32 * 20 }, (_, index) => {
+  const col = index % 32
+  const row = Math.floor(index / 32)
+  return `${(Math.hypot((col - 15.5) / 1.6, row - 9.5) * 0.09).toFixed(2)}s`
+})
+
+/** The prompt a picture was made from, two lines until the reader asks for the rest. */
+function Caption({ text }: { text: string }) {
+  const box = useRef<HTMLElement>(null)
+  const [open, setOpen] = useState(false)
+  const [long, setLong] = useState(false)
+  useLayoutEffect(() => {
+    const element = box.current
+    if (!element || open) return
+    const measure = (): void => setLong(element.scrollHeight > element.clientHeight + 1)
+    measure()
+    const observer = new ResizeObserver(measure)
+    observer.observe(element)
+    return () => observer.disconnect()
+  }, [text, open])
+  if (!text) return null
+  return (
+    <>
+      <figcaption ref={box} className={`gen-caption${open ? ' is-open' : ''}`}>{text}</figcaption>
+      {(long || open) && <button type="button" className="gen-more" aria-expanded={open} onClick={() => setOpen(!open)}>{open ? 'Less' : 'More'}</button>}
+    </>
+  )
+}
+
+/** A finished picture from Craft Studio's own copy: click for full size, right-click for the attachment menu. */
+function MadeImage({ image, caption, arriving }: { image: NonNullable<ImageItem['image']>; caption: string; arriving: boolean }) {
+  const [src, setSrc] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const preview = useImagePreview(image)
+  const menu = useMenuRequest()
+  useEffect(() => {
+    let alive = true
+    void call('attachment.read', { id: image.id }).then((value) => { if (alive) setSrc(value) }, (reason: Error) => { if (alive) setError(reason.message) })
+    return () => { alive = false }
+  }, [image.id])
+  if (error) return <div className="gen-failed" role="alert"><AlertCircle size={13} /><span>{error}</span></div>
+  return (
+    <div className="gen-made" {...menu.handlers}>
+      <button type="button" className="gen-frame gen-image" aria-label={`Open ${image.name} full size`} onClick={() => void preview.open()}>
+        {src
+          ? <img className={arriving ? 'is-arriving' : undefined} src={src} alt={caption || image.name} width={image.width} height={image.height} draggable={false} />
+          : <span className="gen-loading" style={{ aspectRatio: `${image.width} / ${image.height}` }} />}
+      </button>
+      <AttachmentMenu attachment={image} onPreview={() => void preview.open()} className="is-generated" request={menu.request} />
+      {preview.dialog}
+    </div>
+  )
+}
+
+/**
+ * A picture a model made, where it was made in the reply (docs/mockups/generated-images.html):
+ * a field of rippling dots while it comes, with no frame or words over it, then the picture coming into
+ * focus, or a sentence saying why there is none. The prompt it was made from is the caption.
+ */
+function GeneratedImage({ item }: { item: ImageItem }) {
+  // Only a picture seen arriving animates in; one already made when the chat opened just shows.
+  const [sawWaiting] = useState(item.status === 'generating')
+  return (
+    <figure className="gen">
+      {item.status === 'generating' && (
+        <div className="gen-frame gen-pending" role="status" aria-label="Generating image">
+          <div className="gen-field" aria-hidden>{DOT_DELAYS.map((delay, index) => <i key={index} style={{ animationDelay: delay }} />)}</div>
+        </div>
+      )}
+      {item.status === 'failed' && (
+        <div className="gen-failed" role="alert"><AlertCircle size={13} /><span>{item.error ?? 'The image could not be made. Ask for it again.'}</span></div>
+      )}
+      {item.status === 'done' && item.image && <MadeImage image={item.image} caption={item.caption} arriving={sawWaiting} />}
+      <Caption text={item.caption} />
+    </figure>
+  )
+}
+
 function UserMessage({ text, attachments }: MessageDraft) {
   const prompt = text.trim() ? <div className="user-bubble"><ChatMarkdown text={text} /></div> : null
   if (!attachments?.length) return prompt
@@ -287,6 +370,8 @@ const ItemRow = memo(function ItemRow({ id }: { id: string }) {
       return <p className={`notice is-${item.tone}`}>{item.text}</p>
     case 'question':
       return <QuestionCard item={item} />
+    case 'image':
+      return <GeneratedImage item={item} />
     default:
       return null
   }
@@ -360,17 +445,22 @@ function TurnHead({ turn, thoughts, plan, open, onToggle }: { turn: Turn; though
  * place rather than piling up: a summary of the steps so far, then the model's latest words, and,
  * while it runs, the thinking and tool call under way. Notices and questions keep to the end.
  */
-function stageOf(ids: string[], running: boolean): { reply: string | null; steps: string[]; live: string[]; notices: string[] } {
+function stageOf(ids: string[], running: boolean): { reply: string | null; steps: string[]; live: string[]; notices: string[]; before: string[]; after: string[] } {
   const trailing = (id: string): boolean => {
     const type = peekItem(id)?.type
     return type === 'notice' || type === 'question'
   }
+  // Pictures are part of the answer, not its steps: they stand before or after the reply, as made.
+  const picture = (id: string): boolean => peekItem(id)?.type === 'image'
   const notices = ids.filter(trailing)
-  const work = ids.filter((id) => !trailing(id))
+  const work = ids.filter((id) => !trailing(id) && !picture(id))
   const at = work.findLastIndex((id) => peekItem(id)?.type === 'assistant')
   const reply = at === -1 ? null : work[at]
-  if (!running) return { reply, steps: work.filter((id) => id !== reply), live: [], notices }
-  return { reply, steps: at === -1 ? [] : work.slice(0, at), live: work.slice(at + 1), notices }
+  const pictures = ids.filter(picture)
+  const before = reply === null ? pictures : pictures.filter((id) => ids.indexOf(id) < ids.indexOf(reply))
+  const after = pictures.filter((id) => !before.includes(id))
+  if (!running) return { reply, steps: work.filter((id) => id !== reply), live: [], notices, before, after }
+  return { reply, steps: at === -1 ? [] : work.slice(0, at), live: work.slice(at + 1), notices, before, after }
 }
 
 /**
@@ -409,14 +499,20 @@ function partsOf(ids: string[]): Array<{ steer: string | null; ids: string[] }> 
 
 /** One part of a turn's response: the summary of its steps, its latest words, and, if live, the work under way. */
 function Stage({ ids, running, thoughtsOpen }: { ids: string[]; running: boolean; thoughtsOpen: boolean }) {
-  const { reply, steps, live } = stageOf(ids, running)
-  return (
-    <>
-      {steps.length > 0 && <Activity ids={steps} live={false} thoughtsOpen={thoughtsOpen} />}
-      {reply && <ItemRow key={reply} id={reply} />}
-      {live.length > 0 && <Activity key={live[0]} ids={live} live thoughtsOpen={false} />}
-    </>
-  )
+  const { reply, steps, live, before, after } = stageOf(ids, running)
+  // One keyed list, so a picture that moves from after the reply to before it (when the final
+  // reply arrives) is moved rather than mounted again. Pictures after the reply keep their place
+  // around the work under way, in the order they came.
+  const liveAt = live.length ? ids.indexOf(live[0]!) : Infinity
+  const rows = [
+    steps.length > 0 && <Activity key="steps" ids={steps} live={false} thoughtsOpen={thoughtsOpen} />,
+    ...before.map((id) => <ItemRow key={id} id={id} />),
+    reply && <ItemRow key={reply} id={reply} />,
+    ...after.filter((id) => ids.indexOf(id) < liveAt).map((id) => <ItemRow key={id} id={id} />),
+    live.length > 0 && <Activity key={`live:${live[0]}`} ids={live} live thoughtsOpen={false} />,
+    ...after.filter((id) => ids.indexOf(id) > liveAt).map((id) => <ItemRow key={id} id={id} />)
+  ]
+  return <>{rows}</>
 }
 
 /** Whether a worker chat's message is the assignment the orchestration sent it. */

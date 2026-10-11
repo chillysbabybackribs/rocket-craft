@@ -12,6 +12,8 @@ import { oneLine } from './json.ts'
 // other tool call. The newest turns go whole; older ones keep their files and a shortened request
 // and reply, since what they did is mostly on disk and the newest turns build on it. Left out:
 // reasoning and tool output. Files other providers changed are on disk for the model to read.
+// Pictures a turn made are named with the path of Craft Studio's copy and their prompt, so the next
+// provider can open or reuse them; their pixels are not sent, which a model can do itself.
 //
 // For Claude, Cursor and Antigravity the block becomes part of their session's history, read
 // again with every later message, so what is cut here is saved many times over.
@@ -47,9 +49,14 @@ export type Handoff = {
   messages: Array<{ role: 'user' | 'assistant'; text: string }>
 }
 
-/** Null when there is nothing to hand over. */
-export function buildHandoff(turns: MissedTurn[], budget = HANDOFF_BUDGET_CHARS, root: string | null = null): Handoff | null {
-  const blocks = turns.map((turn) => blockOf(turn, root)).filter((block) => block.user || block.reply || actionsOf(block).length)
+/**
+ * Null when there is nothing to hand over. `locate` gives the path of Craft Studio's stored copy of an
+ * attachment, for naming the pictures a turn made.
+ */
+export function buildHandoff(
+  turns: MissedTurn[], budget = HANDOFF_BUDGET_CHARS, root: string | null = null, locate: (attachmentId: string) => string | null = () => null
+): Handoff | null {
+  const blocks = turns.map((turn) => blockOf(turn, root, locate)).filter((block) => block.user || block.reply || actionsOf(block).length)
   if (blocks.length === 0) return null
   for (const block of blocks.slice(0, -RECENT_TURNS)) {
     block.steps = []
@@ -91,7 +98,7 @@ export function withHandoff(handoff: Handoff | null, text: string): string {
 }
 
 /** `root` is the chat's folder; paths inside it are given relative to it. */
-function blockOf(turn: MissedTurn, root: string | null): Block {
+function blockOf(turn: MissedTurn, root: string | null, locate: (attachmentId: string) => string | null): Block {
   const name = providerLabel(turn.provider) + (turn.model ? ` (${turn.model})` : '')
   const ending = turn.status === 'interrupted'
     ? ', stopped by the user before it finished'
@@ -109,13 +116,20 @@ function blockOf(turn: MissedTurn, root: string | null): Block {
   const files = (verb: string, list: string[]): string[] => (list.length
     ? [`- ${verb}: ${list.slice(0, MAX_FILES_PER_LINE).join(', ')}${list.length > MAX_FILES_PER_LINE ? ` (+${list.length - MAX_FILES_PER_LINE} more)` : ''}`]
     : [])
+  // A picture is a file the turn made, kept with the files when older turns are cut down.
+  const images = turn.items.flatMap((item) => {
+    if (item.type !== 'image' || item.status === 'generating') return []
+    const prompt = item.caption ? ` from the prompt "${oneLine(item.caption, 200)}"` : ''
+    if (item.status === 'failed' || !item.image) return [`- tried to make an image${prompt}, which failed`]
+    return [`- made an image${prompt}: ${locate(item.image.id) ?? item.image.name} (${item.image.width}×${item.image.height}; open the file to look at it)`]
+  })
   const others = tools.filter((tool) => !isFile(tool))
   // A question the user has not answered is still open; one they have shows up in their next message.
   const asked = turn.items.filter((item) => item.type === 'question')
     .map((item) => `- asked the user: ${oneLine(item.text, 160)}${item.answer === null ? ' (no answer yet)' : ''}`)
   const steps = others.slice(0, MAX_ACTIONS_PER_TURN).map((tool) => `- ${tool.kind}: ${oneLine(tool.label, 160)}${tool.status === 'failed' ? ' (failed)' : ''}`)
   if (others.length > MAX_ACTIONS_PER_TURN) steps.push(`- …and ${others.length - MAX_ACTIONS_PER_TURN} more`)
-  return { head: `### Turn answered by ${name}${ending}`, user, reply, files: [...files('edited', edited), ...files('read', read)], steps, asked }
+  return { head: `### Turn answered by ${name}${ending}`, user, reply, files: [...files('edited', edited), ...files('read', read), ...images], steps, asked }
 }
 
 /**

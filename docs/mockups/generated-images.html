@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Craft Studio · Generated images in the reply</title>
+<style>
+@font-face{font-family:Inter;src:url('../../node_modules/@fontsource-variable/inter/files/inter-latin-wght-normal.woff2')}
+:root{color-scheme:dark;--canvas:#08090a;--panel:#0f1011;--composer:#151617;--line:#2f3031;--line-focus:#444546;--text:#f7f8f8;--text-2:#b4b8c0;--text-3:#8a8f98;--accent:#7170ff;--error:#ef9c92}
+*{box-sizing:border-box}
+body{margin:0;background:var(--canvas);color:var(--text);font:13px/1.5 Inter,system-ui,sans-serif}
+button{font:inherit;color:inherit;background:transparent;border:0;cursor:pointer}
+button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+svg{width:13px;height:13px;flex-shrink:0;vertical-align:middle}
+header{max-width:1180px;margin:auto;padding:28px 28px 18px}
+.eyebrow{color:var(--text-3);font-size:11px;letter-spacing:.12em;text-transform:uppercase}
+h1{font-size:25px;letter-spacing:-.7px;font-weight:550;margin:6px 0}
+header p{color:var(--text-2);margin:0;max-width:760px}
+.nav{display:flex;gap:5px;flex-wrap:wrap;margin-top:20px}
+.nav button{padding:8px 13px;border-radius:7px;color:#a4a8b0;border:1px solid transparent}
+.nav button[aria-pressed=true]{background:#1c1d20;border-color:var(--line);color:var(--text)}
+main{max-width:1180px;margin:auto;padding:0 28px 28px;display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:18px}
+.pane{background:linear-gradient(#ffffff03,transparent 140px),var(--panel);border:1px solid #ffffff13;border-radius:12px;overflow:hidden;min-height:640px;display:flex;flex-direction:column}
+.pane-title{padding:13px 20px;border-bottom:1px solid #ffffff09;color:var(--text-3);font-size:12px;display:flex;justify-content:space-between}
+.pane-title b{font-weight:500;color:#c8cbd0}
+.transcript{padding:26px 34px;flex:1;overflow:auto}
+.user-bubble{margin:0 0 24px auto;width:fit-content;max-width:80%;padding:10px 13px;background:#1c1d20;border-radius:10px;font-size:14px}
+.turn-head{display:flex;justify-content:space-between;color:var(--text-3);font-size:12px;padding-bottom:8px;border-bottom:1px solid #ffffff0d;margin-bottom:14px}
+.shimmer{background:linear-gradient(90deg,#8a8f98 0%,#e6e8eb 50%,#8a8f98 100%);background-size:200% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:shimmer 1.8s linear infinite}
+@keyframes shimmer{from{background-position:100% 0}to{background-position:-100% 0}}
+.activity-summary{display:flex;align-items:center;gap:6px;color:var(--text-3);font-size:12px;padding:2px 0}
+.activity-summary:hover{color:var(--text-2)}
+.chev{transition:transform .15s}.is-open .chev{transform:rotate(90deg)}
+.steps{margin:6px 0 4px 2px;display:none}.is-open+.steps{display:block}
+.tool-line{display:flex;align-items:center;gap:7px;color:var(--text-3);font-size:12px;padding:3px 0}
+.tool-line .path{color:#62666d;font-size:11px;margin-left:4px}
+.prose{font-size:14px;line-height:1.65;color:#d7d9de;max-width:640px}
+.prose p{margin:0 0 10px}
+
+/* The generated image: a figure in the reply's flow, its prompt beneath as the caption. */
+.gen{margin:14px 0 16px;max-width:520px}
+.gen-frame{display:block;width:100%;padding:0;border-radius:10px;overflow:hidden;background:#151617;border:1px solid #ffffff10;cursor:zoom-in;aspect-ratio:var(--ratio,16/10)}
+.gen-frame img{display:block;width:100%;height:100%;object-fit:cover}
+.gen-frame:hover{border-color:#ffffff24}
+.gen-caption{margin-top:7px;color:var(--text-3);font-size:12px;line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.gen-caption.is-open{display:block}
+.gen-more{color:var(--text-2);font-size:11px;padding:0;margin-top:2px}
+.gen-meta{display:flex;gap:10px;align-items:center;margin-top:4px;font-size:11px;color:#62666d}
+
+/* While it is being made: a field of dots with a slow wave out from the centre (option 7). */
+.gen-pending{position:relative;cursor:default;background:#131416}
+.gen-pending .field{position:absolute;inset:14px;display:grid;grid-template-columns:repeat(32,1fr);grid-template-rows:repeat(20,1fr);place-items:center}
+.gen-pending .dot{width:3px;height:3px;border-radius:50%;background:#2e2f33;animation:ripple 2.4s ease-in-out infinite;animation-delay:var(--d)}
+@keyframes ripple{0%,100%{transform:scale(1);background:#2e2f33}30%{transform:scale(1.9);background:#8d8cff}}
+.gen-label{position:absolute;left:10px;bottom:9px;display:flex;align-items:center;gap:7px;padding:3px 9px 3px 7px;border-radius:6px;background:#0f1011d9;backdrop-filter:blur(6px);font-size:12px;color:var(--text-2)}
+.gen-label .clock,.gen-label .slow{color:var(--text-3);font-variant-numeric:tabular-nums}
+@media (prefers-reduced-motion:reduce){.gen-pending .dot{animation:none}}
+/* Arrival: the picture comes into focus where the dots were. */
+.gen-frame img.arriving{animation:focus-in .9s ease both}
+@keyframes focus-in{from{opacity:0;filter:blur(22px);transform:scale(1.03)}to{opacity:1;filter:none;transform:none}}
+
+.gen-failed{display:flex;gap:10px;align-items:flex-start;padding:12px 14px;border:1px solid #553134;background:#1d1517;border-radius:10px;color:#edaca5;font-size:13px;max-width:520px}
+.gen-failed svg{margin-top:3px}
+
+dialog{max-width:90vw;max-height:90vh;padding:16px;border:1px solid var(--line-focus);border-radius:12px;background:var(--panel);color:var(--text)}
+dialog::backdrop{background:#000c}
+.dialog-bar{display:flex;gap:24px;justify-content:space-between;align-items:center;margin-bottom:12px}
+.dialog-bar button{padding:5px;color:var(--text-2);display:grid;place-items:center}
+dialog img{display:block;max-width:82vw;max-height:76vh;object-fit:contain}
+
+aside.notes{color:var(--text-2);font-size:12px}
+aside h2{font-size:12px;font-weight:550;color:var(--text);margin:0 0 6px;letter-spacing:.01em}
+aside section{border:1px solid #ffffff10;border-radius:10px;padding:14px;margin-bottom:12px;background:#0c0d0e}
+aside p{margin:0 0 8px}aside ul{margin:0;padding-left:16px}aside li{margin-bottom:5px}
+code{font:11.5px ui-monospace,monospace;color:#c3c8d4}
+
+/* Library card, as the shelf would show the same picture. */
+.lib-card{border:1px solid #ffffff10;border-radius:9px;overflow:hidden;background:#111214;margin-top:8px}
+.lib-card img{display:block;width:100%;aspect-ratio:16/10;object-fit:cover}
+.lib-card div{padding:8px 10px}.lib-card b{display:block;font-weight:500;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.lib-card small{color:var(--text-3);font-size:11px}
+.chip{display:inline-block;border:1px solid var(--line);border-radius:999px;padding:2px 9px;font-size:11px;color:var(--text-2);margin:2px 3px 2px 0}
+.chip.on{background:#1c1d20;color:var(--text);border-color:#3a3b3e}
+@media(max-width:900px){main{grid-template-columns:1fr}}
+</style>
+
+<header>
+  <div class="eyebrow">Craft Studio · Codex image generation</div>
+  <h1>Pictures appear where they were made.</h1>
+  <p>A picture Codex generates shows in its reply, with the prompt it was made from as the caption. Click it to open it full size in the same viewer as an attached image. Switch between the states below.</p>
+  <nav class="nav" aria-label="Mockup states">
+    <button data-state="generating" aria-pressed="false">01 · Generating</button>
+    <button data-state="done" aria-pressed="true">02 · Made</button>
+    <button data-state="failed" aria-pressed="false">03 · Limit reached</button>
+  </nav>
+</header>
+
+<main>
+  <section class="pane" aria-label="Chat">
+    <div class="pane-title"><b>Neon poster</b><span>Codex · gpt-6.1-sol</span></div>
+    <div class="transcript" id="transcript"></div>
+  </section>
+  <aside class="notes">
+    <section>
+      <h2>In the reply</h2>
+      <ul>
+        <li>The picture sits in the reply's flow, after the steps and before the words that follow it, in the order Codex made them. It is not folded into "Worked · N steps".</li>
+        <li>It is shown up to 520 px wide at its own proportions. The caption is the revised prompt, cut to two lines with <b>More</b> to read the rest.</li>
+        <li>Clicking it opens the existing image viewer (<code>.image-preview</code>). Right-clicking opens the same menu as an attached image: Preview, Save as…, Reveal stored file.</li>
+        <li>While it is being made: a 16:10 field of dots with a slow wave out from the centre, and "Generating image" with the real elapsed time. Codex reports no progress, so there is no bar. After 40 s (three in four of your 113 past images were done by then) it adds "taking longer than usual". With reduced motion on, the dots hold still.</li><li>When it arrives, the picture comes into focus where the dots were.</li>
+        <li>A failure is one sentence in the error colour, saying what happened and when to try again.</li>
+        <li>Codex looking at a picture is a step like any other: <code>Viewed neon-horizon.png</code>.</li>
+      </ul>
+    </section>
+    <section>
+      <h2>In the library</h2>
+      <p>A new source, <b>Made by a model</b>, lists every picture a model generated. The card says which provider made it.</p>
+      <div><span class="chip">All sources</span><span class="chip">Attachments</span><span class="chip on">Made by a model</span><span class="chip">Downloads</span></div>
+      <div class="lib-card"><img src="generated-images-assets/neon-horizon.jpg" alt=""><div><b>a-neon-horizon-over-a-desert-city-at-dusk.png</b><small>Generated · Codex · 1.5 MB</small></div></div>
+    </section>
+  </aside>
+</main>
+
+<dialog id="viewer" aria-label="Image preview">
+  <div class="dialog-bar"><span>a-neon-horizon-over-a-desert-city-at-dusk.png</span><button type="button" aria-label="Close image preview" onclick="viewer.close()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
+  <img src="generated-images-assets/neon-horizon.jpg" alt="A neon horizon over a desert city at dusk">
+</dialog>
+
+<script>
+const icon = {
+  chev: '<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m9 18 6-6-6-6"/></svg>',
+  term: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m7 11 2-2-2-2M11 13h4"/><rect x="3" y="3" width="18" height="18" rx="2"/></svg>',
+  wrench: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>',
+  image: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21"/></svg>',
+  alert: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>'
+}
+const caption = 'A neon horizon over a desert city at dusk: a low magenta sun behind layered mesas, cyan grid lines running to the horizon, a lone highway with light trails, wide 16:10 framing, synthwave poster style, no text.'
+const ask = '<div class="user-bubble">Make me a synthwave poster: a neon horizon over a desert city at dusk. Then check it against the reference in ~/photocraft-agent-demo.</div>'
+
+function steps(count, open) {
+  return `<button class="activity-summary${open ? ' is-open' : ''}" onclick="this.classList.toggle('is-open')">Worked · ${count} ${count === 1 ? 'step' : 'steps'} ${icon.chev}</button>
+  <div class="steps">
+    <div class="tool-line">${icon.term}<span>ls ~/photocraft-agent-demo</span></div>
+    <div class="tool-line">${icon.wrench}<span>Viewed neon-horizon.png</span></div>
+  </div>`
+}
+
+function dots() {
+  let out = ''
+  for (let row = 0; row < 20; row++) for (let col = 0; col < 32; col++) {
+    out += `<i class="dot" style="--d:${(Math.hypot((col - 15.5) / 1.6, row - 9.5) * 0.09).toFixed(2)}s"></i>`
+  }
+  return out
+}
+let arriving = false, startedAt = performance.now() - 18_000, arrival = null
+setInterval(() => {
+  const clock = document.getElementById('clock')
+  if (!clock) return
+  const seconds = Math.floor((performance.now() - startedAt) / 1000)
+  clock.textContent = `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`
+  document.getElementById('slow').textContent = seconds >= 40 ? '· taking longer than usual' : ''
+}, 250)
+
+const states = {
+  generating: () => `${ask}
+    <div class="turn-head"><span class="shimmer">Thinking</span><span>Working for 18s</span></div>
+    <figure class="gen" style="margin-left:0">
+      <div class="gen-frame gen-pending" role="status" aria-label="Generating image"><div class="field">${dots()}</div><div class="gen-label">${icon.image}<span>Generating image</span><span class="clock" id="clock">0:18</span><span class="slow" id="slow"></span></div></div>
+      <figcaption class="gen-caption">${caption}</figcaption>
+    </figure>`,
+  done: () => `${ask}
+    <div class="turn-head"><span>Thought</span><span>Worked for 46s</span></div>
+    ${steps(2, false)}
+    <figure class="gen" style="margin-left:0">
+      <button class="gen-frame" aria-label="Open the generated image full size" onclick="viewer.showModal()"><img class="${arriving ? 'arriving' : ''}" src="generated-images-assets/neon-horizon.jpg" alt="${caption}"></button>
+      <figcaption class="gen-caption" id="cap">${caption}</figcaption>
+      <button class="gen-more" onclick="cap.classList.toggle('is-open');this.textContent=cap.classList.contains('is-open')?'Less':'More'">More</button>
+    </figure>
+    <div class="prose"><p>Here is the poster. Next to your reference it keeps the magenta sun and grid, but the city sits lower so the highway leads the eye; say if you want it closer to the reference's framing.</p></div>`,
+  failed: () => `${ask}
+    <div class="turn-head"><span>Thought</span><span>Worked for 9s</span></div>
+    ${steps(2, false)}
+    <figure class="gen" style="margin-left:0">
+      <div class="gen-failed" role="alert">${icon.alert}<span>Codex has used up its image generation limit for now. Try again after 3:40 PM.</span></div>
+      <figcaption class="gen-caption">${caption}</figcaption>
+    </figure>
+    <div class="prose"><p>I couldn't make the image: the image generation limit is reached until 3:40 PM.</p></div>`
+}
+
+function show(state, fromWait = false) {
+  clearTimeout(arrival)
+  arriving = fromWait
+  if (state === 'generating') {
+    startedAt = performance.now() - 18_000
+    // The demo's picture arrives after a while, the way a real one would.
+    arrival = setTimeout(() => show('done', true), 9_000)
+  }
+  document.getElementById('transcript').innerHTML = states[state]()
+  document.querySelectorAll('[data-state]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.state === state)))
+}
+document.querySelectorAll('[data-state]').forEach((b) => b.onclick = () => show(b.dataset.state))
+show('done')
+</script>
+</html>

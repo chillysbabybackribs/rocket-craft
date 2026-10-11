@@ -11,7 +11,7 @@ import { failureResult, textResult, type Tool } from './registry.ts'
 const LIMIT = 50
 const LIMIT_MAX = 200
 
-const DESCRIPTION = `List the files on Craft Studio's library shelf: attachments sent in chats, files a model downloaded with the browser, Markdown plans a turn wrote, and files opened from a chat. Newest first, each with its id, kind, where it came from, its chat and its path on disk (read a file with your own tools).
+const DESCRIPTION = `List the files on Craft Studio's library shelf: attachments sent in chats, files a model downloaded with the browser, Markdown plans a turn wrote, files opened from a chat, and pictures a model generated. Newest first, each with its id, kind, where it came from, its chat and its path on disk (read a file with your own tools).
 Filters are the panel's: source, kind, chat ("this" for the calling chat, or a chat id), added, and q (words in the name, origin, path or chat title). To show the user the shelf, call studio_ui_go with place library and the same filters.`
 
 const choices = (options: ReadonlyArray<[string, string]>): string[] => options.map(([id]) => id)

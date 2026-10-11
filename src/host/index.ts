@@ -11,6 +11,7 @@ import { dispatchRunControl } from './orchestrator-control.ts'
 import { Orchestrator } from './orchestrator.ts'
 import { orchestratorTools } from './tools/orchestrator.ts'
 import { Library } from './library.ts'
+import { ImageRunner } from './image.ts'
 import { describeTiming, Hub } from './hub.ts'
 import { messageOf, oneLine } from './json.ts'
 import { Journal } from './journal.ts'
@@ -22,6 +23,7 @@ import { CursorAdapter } from './providers/cursor.ts'
 import type { ProviderAdapter } from './providers/provider.ts'
 import { Store } from './store.ts'
 import { answerMessage, askTools } from './tools/ask.ts'
+import { imageTools } from './tools/image.ts'
 import { roleContext } from './agent-situation.ts'
 import { browserContext, browserTools } from './tools/browser.ts'
 import { ToolChannel } from './tools/channel.ts'
@@ -140,7 +142,8 @@ function onBrowserReply(reply: BrowserAgentReply): void {
 const library = new Library(store, attachments, join(dataDir, 'library-previews'), {
   changed: () => emit({ type: 'library' }),
   downloads: async (chat, since) => await askBrowser({ op: 'downloads', chat, since }) as BrowserDownload[],
-  skipRoots: () => [join(dataDir, 'worktrees')]
+  skipRoots: () => [join(dataDir, 'worktrees')],
+  hidden: (chatId) => { const chat = store.chat(chatId); return chat !== null && images.owns(chat.cwd) }
 })
 void library.backfill().catch((error) => journal.add('host', 'warn', 'library', `The library could not add earlier plans: ${messageOf(error)}`))
 
@@ -165,6 +168,7 @@ const toolRegistry = new ToolRegistry((name, message, { provider, chatId }) => j
   .add(...memoryTools(store, cwd => orchestration?.worktreeOf(cwd)?.main ?? cwd))
   .add(...libraryTools(library, store))
   .add(...askTools(() => hub))
+  .add(...imageTools(() => images))
   .add(...orchestratorTools(() => {
     if (!orchestration) throw new Error('The orchestrator is still starting.')
     return orchestration
@@ -191,6 +195,9 @@ const adapters: Record<ProviderId, ProviderAdapter> = testProfile ? {
 }
 /** Events go to the renderer; the ones that end a chat's use of the browser go to main as well. */
 function onEvent(event: HostEvent): void {
+  // A picture's chat (generate_image) says nothing to the window, and its turn is not the folder's
+  // work: the orchestrator, the teamwork commit and the library never see it.
+  if (images.observe(event)) return
   emit(event)
   if (event.type === 'turn' && event.turn.status !== 'running') {
     void askBrowser({ op: 'rest', chat: event.turn.chatId }).catch(() => {})
@@ -236,8 +243,22 @@ const hub: Hub = new Hub(
       nudge: () => selfCheck ? journal.nudge(chatId) : null
     })
   },
-  ids => attachments.resolve(ids)
+  ids => attachments.resolve(ids),
+  // A picture a model made joins the library as soon as Craft Studio has its copy.
+  async (source, caption) => {
+    const image = await attachments.keepGenerated(source, caption)
+    emit({ type: 'library' })
+    return image
+  }
 )
+
+// generate_image: one hidden Codex turn per picture, for every provider (image.ts).
+const images: ImageRunner = new ImageRunner(
+  store, hub, join(dataDir, 'image-chats'), join(dataDir, 'generated-images'),
+  (id) => attachments.resolve([id])[0]!.path,
+  (message) => journal.add('host', 'warn', 'image', message)
+)
+void images.recover().catch((error) => journal.add('host', 'warn', 'image', `Pictures left by the last exit could not be cleared: ${messageOf(error)}`))
 
 // Code workers get worktrees (docs/worktree-plan.md). UI checks keep them off unless a spec asks,
 // because their scratch workspaces sit inside this repository's ignored folders.
@@ -269,7 +290,7 @@ const handlers: { [M in HostMethod]: (params: HostApi[M][0]) => HostApi[M][1] | 
   'attachment.export': async ({ id, path }) => { await attachments.export(id, path); return null },
   'attachment.locate': ({ id }) => attachments.resolve([id])[0].path,
   'attachment.collect': async ({ keepIds }) => { await attachments.collect(keepIds); return null },
-  'chats.list': () => hub.listChats(),
+  'chats.list': () => hub.listChats().filter((chat) => !images.owns(chat.cwd)),
   'chat.create': ({ cwd }) => hub.createChat(cwd),
   'chat.open': ({ chatId }) => {
     // What is queued goes out ahead of the snapshot, which already holds it; sent after, it would be applied twice.
@@ -376,6 +397,7 @@ async function shutdown(): Promise<void> {
   if (exiting) return
   exiting = true
   orchestration?.shutdown()
+  await images.shutdown()
   await uiRuns.shutdown()
   await liveUi.shutdown()
   await Promise.race([hub.shutdown(), new Promise((resolve) => setTimeout(resolve, 1_500))])

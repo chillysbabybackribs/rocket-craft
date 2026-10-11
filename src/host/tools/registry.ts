@@ -8,6 +8,8 @@ import { messageOf } from '../json.ts'
 export type ToolRole = 'ordinary' | 'leader' | 'worker'
 
 export function toolAllowed(role: ToolRole, name: string): boolean {
+  // Pictures are for every role: a worker asked for one makes it the same way.
+  if (name === 'generate_image') return true
   if (role === 'ordinary') return true
   if (role === 'leader') return name !== 'ask_user'
   return name.startsWith('browser_') || ['web_read', 'web_search', 'library_list', 'remember', 'studio_ui_run'].includes(name)

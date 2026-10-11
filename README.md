@@ -407,16 +407,65 @@ limit) with a notice offering Undo; Retake and Cancel change nothing, and nothin
 destination is fixed when the camera is pressed, so switching chats meanwhile does not
 redirect it.
 
+#### Generated images
+
+Codex makes pictures with its built-in image generation when asked in plain words or with
+`$imagegen` (on by default in codex-cli 0.161.0; image turns use the usage limits faster than text
+turns). Its `imageGeneration` thread item becomes an `image` item in the transcript, at the point
+in the reply where it was made: `generating` while Codex works, then `done` or `failed` with a
+sentence saying why, such as a used-up limit and when it resets. Codex sends the picture both as
+the file it saved (`savedPath`, under `~/.codex/generated_images/`) and as base64 PNG (`result`).
+The adapter passes both on, and the hub keeps Craft Studio's own copy in the attachments folder (from the
+file, or the bytes if the file cannot be read), with a thumbnail made by ImageMagick when it is
+installed, so the picture survives Codex cleaning its folder. The item then carries the stored
+`ImageAttachment` and nothing of the provider's bytes; a turn that made pictures ends after they
+are saved, and one still `generating` when its turn ends is marked failed. The attachment sweep
+keeps any picture a reply shows. Codex's `imageView` item (Codex looking at a picture on disk) is a
+small step, "Viewed <file name>". `CRAFT_CODEX_TRACE=<file>` appends every app-server notification,
+long strings cut, to a file; the header of `codex.ts` records what one live image turn sent.
+
+Pictures for every provider: `generate_image` (`src/host/tools/image.ts`, `src/host/image.ts`)
+lends Codex's image generation to Claude, Cursor and Antigravity, so nobody has to switch to a Codex
+model for one. Arguments are `prompt`, an optional `aspect` (square, landscape or portrait) and up to
+four `reference_images` (absolute paths, named in the brief for Codex to look at first). `ImageRunner`
+runs one hidden Codex turn per call: a chat of its own in a folder of
+its own under `image-chats/` in the profile, kept out of the chat list, the window's events, the
+library, the orchestrator and the teamwork commit, and deleted with its folder when the turn ends (`recover` clears any a crash left). The turn
+is told to make one picture and stop. The calling chat gets an `image` item of its own through
+`hub.addItem`, so whichever provider asked shows the same animated placeholder as a Codex picture
+while Codex works, then the picture (the stored `ImageAttachment`) or a sentence saying why not; that
+item is also what puts it on the library shelf (its maker reads as the calling provider). The picture
+is copied to `generated-images/` in the profile too, and the tool answers with that path, not the
+pixels: a model that wants to look reads the file, and an installed Craft app opens it with `craft_open`
+(the app named in the call). None of Codex's own steps or tokens join the calling chat. At most two
+pictures are made at once, a run is given five minutes, and a used-up image limit, a refusal or
+Codex not being signed in come back as sentences the caller can read. Like any tool, it needs the app
+restarted and fresh provider sessions before a session sees it. Its description tells models to use
+it only when the user asks for a picture or a generative edit, never to crop, zoom or resize.
+
+The reply shows the picture where it was made (`GeneratedImage` in `Transcript.tsx`, agreed in
+`docs/mockups/generated-images.html`). Pictures are not folded into the turn's steps:
+they stand before or after the reply text, and around the work under way, by where they came, in
+one keyed list so a picture is moved, not mounted again, when the final reply arrives. While one is made, a field of dots
+ripples out from the centre on its own, with no frame, label or clock over it (screen readers hear
+"Generating image"). The hub still stamps `startedAt` on the item's first report. The finished picture comes into focus in place (only when it was seen arriving), up
+to 520 px wide at its own proportions, with the prompt as a two-line caption and More. Clicking it
+opens the same full-size viewer as an attached image (`useImagePreview` in `Attachments.tsx`), and
+it has the same ⋯ menu: Preview, Copy to chat, Save as… and Reveal stored file. A failure is its
+sentence in the error colour. Reduced motion holds the dots still. `UI check: image` in
+`ui-test.ts` drives it in `tests/ui/generated-images.spec.ts`.
+
 ### Library
 
 The dock's Library toggle opens every file the chats have touched, on the right side
 (`components/LibraryPanel.tsx`, agreed in `docs/mockups/document-library.html`; the plan is
-`docs/library-plan.md`). Four sources fill it, and nothing else on the disk is listed:
-attachments a chat has sent (a draft's are not on the shelf until sent), files a model downloaded
+`docs/library-plan.md`). Five sources fill it, and nothing else on the disk is listed:
+attachments a chat has sent (a draft's are not on the shelf until sent), pictures a model
+generated ("Made by a model", with the provider as their origin), files a model downloaded
 with the browser (indexed when the turn ends, from main's record of the chat's downloads), Markdown
 files a turn wrote (from the turn's changed files), and files opened from a chat (a link or
-`npm run open`). Attachments are read live from the store; the others are rows in `library_files`,
-keyed by path, so a file keeps the source it first arrived with.
+`npm run open`). Attachments and generated pictures are read live from the store; the others are rows in `library_files`,
+keyed by path, so a file keeps the source it first arrived with. `generate_image`'s own hidden Codex chats stay off it.
 On the first start with a library, the Markdown files earlier turns wrote are added once from the
 turn patches the store kept, each dated by the last turn that wrote it; files since deleted are
 skipped.
@@ -730,10 +779,10 @@ questions and blockers in their report and finish; leaders ask blocking question
 checkpoint `needs`, shown in the progress view. Context is still injected each turn; session
 context caching is separate work.
 
-Besides the browser and UI tools there is `library_list` (see Library), `remember` (see Workspace and memory), `ask_user` (below)
+Besides the browser and UI tools there is `library_list` (see Library), `generate_image` (see Generated images), `remember` (see Workspace and memory), `ask_user` (below)
 and, with `CRAFT_SELF_CHECK=1`, the three self-check tools. Every
 enabled tool's schema is available from session start. Workers receive browser and web research,
-`library_list`, `remember`, and `studio_ui_run` with explicit `target: "isolated"` only. Leaders
+`library_list`, `remember`, `generate_image`, and `studio_ui_run` with explicit `target: "isolated"` only. Leaders
 receive every registered tool except `ask_user`; ordinary chats receive all tools. Calls through
 cached schemas are checked against the saved role too. What a model should simply know goes ahead of the
 user's message instead (tabs, the file map, notes, trouble reports), and a tool is added only for
@@ -1007,6 +1056,7 @@ outside UI test mode.
 - `CRAFT_SELF_CHECK=1` serves the self-check tools and nudges described above.
 - `CRAFT_DATA_DIR=<dir>` moves the host's data (transcript, journal, tool channel) and is set by main to the profile folder; set it by hand only for scripts that run the host without the app.
 - `CRAFT_USER_DATA=<dir>` uses another profile folder, so test runs never touch real chats.
+- `CRAFT_CODEX_TRACE=<file>` appends every Codex app-server notification to a file, long strings cut (see Generated images).
 - `CRAFT_CAPTURE=<file.png>` saves a picture of the UI after load; `CRAFT_CAPTURE_SCRIPT`,
   `CRAFT_CAPTURE_DELAY_MS` and `CRAFT_CAPTURE_EXIT=1` script a flow first and quit after.
 - `npm run check:live -- claude codex cursor antigravity` runs a real conversation across

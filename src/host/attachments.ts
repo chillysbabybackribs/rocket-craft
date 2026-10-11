@@ -6,8 +6,9 @@ import { promisify } from 'node:util'
 import { imageSize } from 'image-size'
 import {
   MAX_FILE_BYTES, MAX_IMAGE_BYTES, MAX_MESSAGE_ATTACHMENTS, MAX_MESSAGE_FILE_BYTES, MAX_MESSAGE_IMAGE_BYTES,
-  isFileAttachment, type Attachment, type AttachmentPreview, type FileAttachment, type ImageAttachment
+  isFileAttachment, type Attachment, type AttachmentPreview, type FileAttachment, type GeneratedImageSource, type ImageAttachment
 } from '../shared/types.ts'
+import { messageOf } from './json.ts'
 import type { Store } from './store.ts'
 
 // Attachments are copies the host owns: the original bytes, an image's thumbnail, and for a PDF
@@ -23,9 +24,9 @@ const PREVIEW_PAGES = 12
 const PREVIEW_CHARS = 200_000
 
 /** Inspect bytes before trusting names or browser MIME labels. Full decoding happens in the composer. */
-export function inspectImage(bytes: Uint8Array): { mimeType: ImageAttachment['mimeType']; width: number; height: number } {
-  if (!(bytes instanceof Uint8Array) || !bytes.byteLength || bytes.byteLength > MAX_IMAGE_BYTES) {
-    throw new Error('Choose an image smaller than 5 MB.')
+export function inspectImage(bytes: Uint8Array, maxBytes = MAX_IMAGE_BYTES): { mimeType: ImageAttachment['mimeType']; width: number; height: number } {
+  if (!(bytes instanceof Uint8Array) || !bytes.byteLength || bytes.byteLength > maxBytes) {
+    throw new Error(`Choose an image smaller than ${Math.round(maxBytes / 1024 / 1024)} MB.`)
   }
   try {
     const { type, width, height } = imageSize(bytes)
@@ -52,6 +53,20 @@ export function validateAttachments(attachments: Attachment[]): void {
   const bytes = (files: boolean) => attachments.filter(each => isFileAttachment(each) === files).reduce((sum, each) => sum + each.size, 0)
   if (bytes(false) > MAX_MESSAGE_IMAGE_BYTES) throw new Error('Send images totaling at most 20 MB in one message.')
   if (bytes(true) > MAX_MESSAGE_FILE_BYTES) throw new Error('Send files totaling at most 50 MB in one message.')
+}
+
+/** A model's picture is not limited to what a message may carry; this only keeps a runaway file out. */
+const MAX_GENERATED_BYTES = 50 * 1024 * 1024
+
+/** A generated picture is named after the start of its prompt, which is what a person would call it. */
+export function generatedName(caption: string, mimeType: ImageAttachment['mimeType']): string {
+  const words = caption.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').trim().split(' ').filter(Boolean)
+  let stem = ''
+  for (const word of words) {
+    if (stem && stem.length + word.length + 1 > 48) break
+    stem = stem ? `${stem}-${word}` : word.slice(0, 48)
+  }
+  return `${stem || 'generated-image'}.${mimeType === 'image/jpeg' ? 'jpg' : mimeType.split('/')[1]}`
 }
 
 const cleanName = (name: string, fallback: string): string => String(name).split(/[\\/]/).at(-1)!.replace(/[\x00-\x1f]/g, '').slice(0, 180) || fallback
@@ -126,6 +141,36 @@ export class AttachmentStore {
     }
   }
 
+  /**
+   * Keep Craft Studio's own copy of a picture a model made: from the provider's file, or its base64
+   * bytes when the file cannot be read. The thumbnail is made here, since no composer made one;
+   * without ImageMagick the picture is its own thumbnail.
+   */
+  async keepGenerated(source: GeneratedImageSource, caption: string): Promise<ImageAttachment> {
+    let bytes: Buffer | null = null
+    if (source.path && isAbsolute(source.path)) bytes = await readFile(source.path).catch(() => null)
+    if (!bytes?.length && source.base64) bytes = Buffer.from(source.base64, 'base64')
+    if (!bytes?.length) throw new Error('Craft Studio could not find the generated image to keep a copy. Ask for it again.')
+    let info: ReturnType<typeof inspectImage>
+    try {
+      info = inspectImage(bytes, MAX_GENERATED_BYTES)
+    } catch {
+      throw new Error('The generated image is not a PNG, JPEG, WebP or GIF Craft Studio can keep, or it is too large. Ask for it again in one of those formats.')
+    }
+    const image: ImageAttachment = { kind: 'image', ...info, id: randomUUID(), name: generatedName(caption, info.mimeType), size: bytes.length }
+    await mkdir(this.directory, { recursive: true })
+    try {
+      await writeFile(this.path(image), bytes)
+      await run('convert', [`${this.path(image)}[0]`, '-auto-orient', '-thumbnail', '320x320>', '-quality', '82', this.path(image, true)], { timeout: 30_000 })
+        .catch(() => {})
+      this.store.saveAttachment(image)
+      return image
+    } catch (error) {
+      await this.remove(image.id)
+      throw new Error(`Craft Studio could not save the generated image (${messageOf(error)}). Check there is free disk space, then ask for it again.`)
+    }
+  }
+
   resolve(ids: string[]): ProviderAttachment[] {
     if (!Array.isArray(ids) || ids.some(id => typeof id !== 'string')) throw new Error('Attach the files again.')
     return ids.map(id => {
@@ -140,8 +185,10 @@ export class AttachmentStore {
     const [image] = this.resolve([id])
     if (isFileAttachment(image)) throw new Error('Only images have a picture to show. Open the file to preview it.')
     try {
-      const bytes = await readFile(this.path(image, thumbnail))
-      return `data:${thumbnail ? 'image/jpeg' : image.mimeType};base64,${bytes.toString('base64')}`
+      // A generated picture kept without ImageMagick has no thumbnail; the original stands in.
+      const small = thumbnail ? await readFile(this.path(image, true)).catch(() => null) : null
+      if (small) return `data:image/jpeg;base64,${small.toString('base64')}`
+      return `data:${image.mimeType};base64,${(await readFile(this.path(image))).toString('base64')}`
     } catch {
       throw new Error('This image file is missing. Attach it again.')
     }

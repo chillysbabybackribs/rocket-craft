@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { codexTokens, CodexAdapter } from './codex.ts'
+import { codexItem, codexTokens, CodexAdapter, imageLimitText } from './codex.ts'
 import type { TurnSink } from './provider.ts'
 
 const tick = (): Promise<void> => new Promise((resolve) => setImmediate(resolve))
@@ -57,4 +57,59 @@ test("a turn's tokens are the thread's running count less where it stood before 
   const second = codexTokens(usage([162_000, 120_000, 2_800], [32_000, 30_000, 800]), first.base)!
   assert.deepEqual(second.tokens, { input: 62_000, cached: 55_000, output: 1_300, context: 32_000, contextWindow: 272_000 })
   assert.equal(codexTokens({}, null), null)
+})
+
+// The thread item shapes from `codex app-server generate-ts` (codex-cli 0.161.0), with the
+// values Codex's rollout files show for real generations.
+const generation = (fields: Record<string, unknown>) => ({
+  type: 'imageGeneration', id: 'ig_1', status: 'in_progress', revisedPrompt: 'A neon horizon over a desert city', result: '', failure: null, ...fields
+})
+
+test('an image being made is a placeholder with its caption', () => {
+  assert.deepEqual(codexItem(generation({ revisedPrompt: null }), 't', false), {
+    type: 'image', id: 't:ig_1', turnId: 't', status: 'generating', caption: ''
+  })
+})
+
+test('a finished image carries the file Codex saved and its bytes for the hub to keep', () => {
+  const savedPath = '/home/me/.codex/generated_images/thread/ig_1.png'
+  assert.deepEqual(codexItem(generation({ status: 'completed', result: 'iVBORw0KGgo=', savedPath }), 't', true), {
+    type: 'image', id: 't:ig_1', turnId: 't', status: 'done', caption: 'A neon horizon over a desert city',
+    source: { path: savedPath, base64: 'iVBORw0KGgo=' }
+  })
+})
+
+test('a finished image with only its base64 result still has something to keep', () => {
+  const item = codexItem(generation({ status: 'completed', result: 'iVBORw0KGgo=' }), 't', true)
+  assert.equal(item?.type === 'image' && item.status, 'done')
+  assert.deepEqual(item?.type === 'image' && item.source, { base64: 'iVBORw0KGgo=' })
+})
+
+test('a finished image with nothing to keep is a failure that says so', () => {
+  const item = codexItem(generation({ status: 'completed' }), 't', true)
+  assert.equal(item?.type === 'image' && item.status, 'failed')
+  assert.match(item?.type === 'image' ? item.error ?? '' : '', /did not send it\. Ask for it again\./)
+})
+
+test('a usage-limit failure says what happened and when to try again', () => {
+  const resetsAt = Math.floor(new Date(2026, 9, 11, 15, 40).getTime() / 1000)
+  const item = codexItem(generation({ status: 'failed', failure: { type: 'usageLimitExceeded', limitId: 'images', resetsAt } }), 't', true)
+  assert.equal(item?.type === 'image' && item.status, 'failed')
+  const error = item?.type === 'image' ? item.error ?? '' : ''
+  assert.match(error, /^Codex has used up its image generation limit for now\. Try again after .*3:40.*\.$/)
+  assert.ok(!('source' in (item ?? {})))
+  assert.match(imageLimitText(null), /did not say when it resets; try again later\.$/)
+  assert.doesNotMatch(imageLimitText(resetsAt, new Date(2026, 9, 11, 9).getTime()), /Oct/, 'the same day gives only the time')
+})
+
+test('a failure without a reason, as seen in a rollout, is still a sentence', () => {
+  const item = codexItem(generation({ status: 'failed', transparentBackground: null }), 't', true)
+  assert.deepEqual(item, { type: 'image', id: 't:ig_1', turnId: 't', status: 'failed', caption: 'A neon horizon over a desert city',
+    error: 'Codex could not make this image. Ask again, or reword the request if it may have been refused.' })
+})
+
+test('Codex viewing an image is a small step naming the file', () => {
+  assert.deepEqual(codexItem({ type: 'imageView', id: 'v1', path: 'file:///tmp/kit/prompt-kit.png' }, 't', true), {
+    type: 'tool', id: 't:v1', turnId: 't', kind: 'other', status: 'done', label: 'Viewed prompt-kit.png', output: '/tmp/kit/prompt-kit.png'
+  })
 })
