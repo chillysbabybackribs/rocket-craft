@@ -16,9 +16,9 @@ Desktop workspace with a chat on the left and creative tools on the right: insta
 
 ![PhotoCraft beside chat](docs/images/photocraft.png)
 
-**Browser** — tabs and an address bar for reference pages and downloads.
+**Browser** — Google and the sites you use, in a tab beside the chat.
 
-![Built-in browser](docs/images/browser.png)
+![Built-in browser on Google](docs/images/browser.png)
 
 **Library** — attachments, downloads, plans, and files opened from chat.
 
